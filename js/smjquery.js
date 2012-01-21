@@ -504,7 +504,7 @@ if (!JSON) {
 
   console = {
     log: function() {
-      var args = arraycp(arguments);
+      var args = vec(arguments);
       map(comp(print, JSON.stringify), args);
     }
   };
@@ -512,6 +512,9 @@ if (!JSON) {
   $ = {
     isArray: function(a) {
       return a instanceof Array;
+    },
+    isFunction: function(a) {
+      return typeof(a) == "function";
     }
   };
 
