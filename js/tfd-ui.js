@@ -98,7 +98,8 @@
           name  = jself.attr("name");
 
       jself.click(function() {
-        jself.trigger("change");
+        if (! jself.is("[disabled]"))
+          jself.trigger("change");
       }).css("cursor", "pointer");
     });
     return elem;
@@ -308,6 +309,23 @@
           });
 
           doTest();
+        },
+
+
+      "depends-on":
+        function(elem, match, val) {
+          var dep = $("[name='"+val+"']"),
+              f   = elem.attr("depends-do") || "toggle",
+              v   = getVal(dep);
+
+          f = TFD_UI.dependsAction[f];
+
+          for (var i in elem.attrMap())
+            if (i.match(/^depends-val-/))
+              return;
+          console.log(dep);
+
+          dep.change(function() { return f(elem, true, v) });
         },
 
       "val-(.*)": 
