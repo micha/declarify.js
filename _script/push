@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+rsync -v -qaz --delete --exclude .git . static@bicycle:static.thefreshdiet.com/tfd-ui/
