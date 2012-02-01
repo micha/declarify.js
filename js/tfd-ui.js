@@ -194,6 +194,17 @@
     }
   }
 
+  function getDependsActions(elem) {
+    var fnames = elem.attr("depends-do")
+      ? elem.attr("depends-do").split(",")
+      : [ "toggle" ];
+    return map(partial(dot, TFD_UI.dependsAction), fnames);
+  }
+
+  function doDependsActions(elem, test, val) {
+    return map(applyto([elem, test, val]), getDependsActions(elem));
+  }
+
   /*************************************************************************** 
    * Local variables                                                         *
    ***************************************************************************/
@@ -297,35 +308,36 @@
           var dep = $("[name='"+elem.attr("depends-on")+"']"),
               tst = window[match[1].replace("-","_")];
 
-          function doTest() {
-            var f = elem.attr("depends-do") || "toggle",
-                v = getVal(dep);
-            f = TFD_UI.dependsAction[f];
-            return f(elem, (tst(unserialize(v), unserialize(val))), v);
+          function doChange() {
+            var v = getVal(dep);
+            return doDependsActions(
+              elem,
+              (tst(unserialize(v), unserialize(val))),
+              getVal(dep)
+            );
           }
 
-          dep.change(function() {
-            doTest();
-          });
-
-          doTest();
+          dep.change(doChange);
+          doChange();
         },
-
 
       "depends-on":
         function(elem, match, val) {
           var dep = $("[name='"+val+"']"),
-              f   = elem.attr("depends-do") || "toggle",
-              v   = getVal(dep);
+              f   = elem.attr("depends-do") || "toggle";
 
           f = TFD_UI.dependsAction[f];
 
           for (var i in elem.attrMap())
             if (i.match(/^depends-val-/))
               return;
-          console.log(dep);
 
-          dep.change(function() { return f(elem, true, v) });
+          function doChange() {
+            return doDependsActions(elem, true, getVal(dep));
+          }
+
+          dep.change(doChange);
+          doChange();
         },
 
       "val-(.*)": 
@@ -349,17 +361,24 @@
       "toggle": function(elem, test, val) {
         return elem[test ? "show2" : "hide2"]();
       },
-      "setval": function(elem, test, val) {
+
+      "set-val": function(elem, test, val) {
         if (test)
           elem.val(val);
         return elem;
       },
-      "setval": function(elem, test, val) {
+
+      "set-text": function(elem, test, val) {
         if (test)
-          elem.val(val);
+          elem.text(val);
         return elem;
       },
-      "setattr": function(elem, test, val) {
+
+      "set-attr": function(elem, test, val) {
+        var attr = elem.attr("set-attr");
+        if (test)
+          elem.attr(attr, val);
+        return elem;
       }
     },
 

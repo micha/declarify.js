@@ -7,6 +7,12 @@
     <script type="text/javascript" src="js/jquery-ui.js"></script>
     <script type="text/javascript" src="js/lambda.js"></script>
     <script type="text/javascript" src="js/tfd-ui.js"></script>
+
+    <style type="text/css">
+      .foo { color: red;        }
+      .bar { color: blue;       }
+      .baz { color: orangered;  }
+    </style>
   </head>
 
   <body>
@@ -32,6 +38,11 @@
           <p>This is option Baz.</p>
         </div>
       </div>
+
+      <p>
+        The value of "radio1" is 
+        <span id="test" depends-on="radio1" depends-do="set-attr,set-text" set-attr="class">dummy stuff</span>.
+      </p>
     </fieldset>
   </body>
 

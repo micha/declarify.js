@@ -141,8 +141,22 @@ function arityfn() {
 apply = arityfn(
   false,
   function(f, args) { return f.apply(window, args) },
-  function(obj, f, args) { return f.apply(obj, args) }
+  function(obj, f, args) { 
+    return $.isFunction(obj)
+      ? obj.apply(window, f)
+      : f.apply(obj, args);
+  }
 );
+
+function argrev(f) {
+  return function() {
+    return apply(f, reverse(vec(arguments)));
+  }
+}
+
+function applyto(args) {
+  return partial(apply, _, args);
+}
 
 function comp() {
   var f   = first(arguments),
