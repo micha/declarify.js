@@ -9,6 +9,10 @@
     <script type="text/javascript" src="js/tfd-ui.js"></script>
 
     <style type="text/css">
+      li[checked] {
+        text-decoration: underline;
+        color: orangered; }
+
       .foo { color: red;        }
       .bar { color: blue;       }
       .baz { color: orangered;  }
@@ -41,7 +45,7 @@
 
       <p>
         The value of "radio1" is 
-        <span id="test" depends-on="radio1" depends-do="set-attr,set-text" set-attr="class">dummy stuff</span>.
+        <span depends-on="radio1" depends-do="set-attr,set-text" set-attr="class">dummy stuff</span>.
       </p>
     </fieldset>
   </body>
