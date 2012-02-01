@@ -10,21 +10,29 @@
   </head>
 
   <body>
-    <ul>
-      <li acts-like="input" type="radio" name="radio1" value="foo" checked>Foo</li>
-      <li acts-like="input" type="radio" name="radio1" value="bar">Bar</li>
-      <li acts-like="input" type="radio" name="radio1" value="baz">Baz</li>
-    </ul>
-    <div>
-      <div depends-on="radio1" depends-val-eq="foo">
-        <p>This is option Foo.</p>
+    <fieldset>
+      <legend><code>&lt;li acts-like="input" type="radio"&gt;</code></legend>
+
+      <!-- tabs -->
+      <ul>
+        <li acts-like="input" type="radio" name="radio1" value="foo" checked>Foo</li>
+        <li acts-like="input" type="radio" name="radio1" value="bar">Bar</li>
+        <li acts-like="input" type="radio" name="radio1" value="baz">Baz</li>
+      </ul>
+
+      <!-- tab contents -->
+      <div>
+        <div depends-on="radio1" depends-val-eq="foo">
+          <p>This is option Foo.</p>
+        </div>
+        <div depends-on="radio1" depends-val-eq="bar">
+          <p>This is option Bar.</p>
+        </div>
+        <div depends-on="radio1" depends-val-eq="baz">
+          <p>This is option Baz.</p>
+        </div>
       </div>
-      <div depends-on="radio1" depends-val-eq="bar">
-        <p>This is option Bar.</p>
-      </div>
-      <div depends-on="radio1" depends-val-eq="baz">
-        <p>This is option Baz.</p>
-      </div>
+    </fieldset>
   </body>
 
 </html>
