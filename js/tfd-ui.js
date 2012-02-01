@@ -443,7 +443,7 @@
 
   $.fn.val = (function(orig) {
     return function() {
-      var args      = arraycp(arguments),
+      var args      = vec(arguments),
           actslike  = this.attr("acts-like");
       if (actslike)
         if (args.length) {
@@ -454,7 +454,7 @@
           return this;
         } else {
           return this.is("[value]") 
-            ? this.attr("value")
+            ? this.attrMap()["value"]
             : this.data("actslike_value");
         }
       else
@@ -468,7 +468,7 @@
       $.fn[this] = (function(orig) {
         return function() {
           var hidden = this.find(":hidden").add(this.filter(":hidden")),
-              args   = arraycp(arguments),
+              args   = vec(arguments),
               result = orig.apply(this, args);
           hidden.filter(":visible").each(function(){
               $(this).triggerHandler("show");
@@ -480,17 +480,17 @@
   );
 
   $.fn.show2 = function() {
-    var args = arraycp(arguments);
+    var args = vec(arguments);
     return this.is("[modal]") ? this.dialog("open") : $.fn.show.apply(this, args);
   };
 
   $.fn.hide2 = function() {
-    var args = arraycp(arguments);
+    var args = vec(arguments);
     return this.is("[modal]") ? this.dialog("close") : $.fn.hide.apply(this, args);
   };
 
   $.fn.toggle2 = function() {
-    var args = arraycp(arguments), viz = this.is(":visible");
+    var args = vec(arguments), viz = this.is(":visible");
     return $.fn[viz ? "hide2" : "show2"].apply(this, args);
   };
 
