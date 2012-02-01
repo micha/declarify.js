@@ -185,7 +185,7 @@
       case "radio":
         return elem
           .filter(elem.is("[acts-like]") ? "[checked]" : ":checked")
-          .attr("value");
+          .val();
       case "button":
       case "checkbox":
         return elem.checked() ? 1 : 0;

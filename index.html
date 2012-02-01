@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>TFD-UI | DEMO</title>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.js"></script>
+    <script type="text/javascript" src="js/lambda.js"></script>
+    <script type="text/javascript" src="js/tfd-ui.js"></script>
+  </head>
+
+  <body>
+    <ul>
+      <li acts-like="input" type="radio" name="radio1" value="foo" checked>Foo</li>
+      <li acts-like="input" type="radio" name="radio1" value="bar">Bar</li>
+      <li acts-like="input" type="radio" name="radio1" value="baz">Baz</li>
+    </ul>
+    <div>
+      <div depends-on="radio1" depends-val-eq="foo">
+        <p>This is option Foo.</p>
+      </div>
+      <div depends-on="radio1" depends-val-eq="bar">
+        <p>This is option Bar.</p>
+      </div>
+      <div depends-on="radio1" depends-val-eq="baz">
+        <p>This is option Baz.</p>
+      </div>
+  </body>
+
+</html>
