@@ -1,6 +1,7 @@
 *.swp
 *.swo
 *~
+.nfs*
 .htaccess
 .DS_Store
 /.htaccess

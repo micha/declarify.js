@@ -225,12 +225,9 @@
     attrHandler: {
       "type":
         function(elem, match, val) {
-          switch(val) {
-            case "date":
-              if (elem[0].nodeName == "INPUT")
-                mkDatePicker(elem);
-              break;
-          }
+          return TFD_UI.typeHandler[val]
+            ? TFD_UI.typeHandler[val](elem)
+            : elem;
         },
 
       "modal":
@@ -241,41 +238,9 @@
             title: elem.attr("title"),
           });
 
-          switch(val) {
-            case "plain":
-              elem.dialog("option", {
-                buttons: {},
-                close: function() {}
-              });
-              break;
-            case "form":
-              break;
-            case "confirm":
-              elem.dialog("option", {
-                buttons: {
-                  "Yes": function() {
-                    elem.val("1");
-                    elem.trigger("change");
-                    elem.dialog("close");
-                  },
-                  "No": function() { 
-                    elem.val("0");
-                    elem.trigger("change");
-                    elem.dialog("close");
-                  }
-                },
-                close: function() {}
-              });
-              break;
-            case "alert":
-              elem.dialog("option", {
-                buttons: {
-                  "Ok": function() { elem.dialog("close") }
-                },
-                close: function() {}
-              });
-              break;
-          }
+          return TFD_UI.modalHandler[val]
+            ? TFD_UI.modalHandler[val](elem)
+            : elem;
         },
 
       "depends-guard": 
@@ -301,6 +266,7 @@
             case "select":
               return actsLikeSelect(elem);
           }
+          return elem;
         },
 
       "depends-val-(.*)": 
@@ -319,29 +285,30 @@
 
           dep.change(doChange);
           doChange();
+          return elem;
         },
 
       "depends-on":
         function(elem, match, val) {
-          var dep = $("[name='"+val+"']"),
-              f   = elem.attr("depends-do") || "toggle";
-
-          f = TFD_UI.dependsAction[f];
+          var dep = $("[name='"+val+"']");
 
           for (var i in elem.attrMap())
             if (i.match(/^depends-val-/))
-              return;
+              return elem;
 
           function doChange() {
             return doDependsActions(elem, true, getVal(dep));
           }
 
+          console.log(dep);
           dep.change(doChange);
           doChange();
+          return elem;
         },
 
       "val-(.*)": 
         function(elem, match, val) {
+          return elem;
         },
 
       "template":
@@ -354,6 +321,8 @@
             p.data("actslike_bound_show", true).bind("show", function() {
               console.log("show "+val);
             });
+
+          return elem;
         },
     },
 
@@ -379,6 +348,49 @@
         if (test)
           elem.attr(attr, val);
         return elem;
+      }
+    },
+
+    typeHandler: {
+      "date": function(elem) {
+        switch(val) {
+          case "date":
+            if (elem[0].nodeName == "INPUT")
+              mkDatePicker(elem);
+            break;
+        }
+        return elem;
+      }
+    },
+
+    modalHandler: {
+      "plain": function(elem) {
+        elem.dialog("option", { buttons: {}, close: function() {} });
+      },
+
+      "confirm": function(elem) {
+        elem.dialog("option", {
+          buttons: {
+            "Yes": function() {
+              elem.val("1");
+              elem.trigger("change");
+              elem.dialog("close");
+            },
+            "No": function() { 
+              elem.val("0");
+              elem.trigger("change");
+              elem.dialog("close");
+            }
+          },
+          close: function() {}
+        });
+      },
+
+      "alert": function(elem) {
+        elem.dialog("option", {
+          buttons: { "Ok": function() { elem.dialog("close") } },
+          close: function() {}
+        });
       }
     },
 
@@ -599,5 +611,7 @@
   $.isBool = function(x) {
     return x===true || x===false;
   }
+
+  setTimeout(function() { $("input[type='button']").click(function() { $(this).trigger("change") }) }, 10);
 
 })(jQuery);

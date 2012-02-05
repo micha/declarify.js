@@ -8,6 +8,9 @@
     <script type="text/javascript" src="js/lambda.js"></script>
     <script type="text/javascript" src="js/tfd-ui.js"></script>
 
+    <link type="text/css" rel="stylesheet" href="css/smoothness/jquery-ui.css"
+          media="screen"/>
+
     <style type="text/css">
       li[checked] {
         text-decoration: underline;
@@ -47,6 +50,11 @@
         The value of "radio1" is 
         <span depends-on="radio1" depends-do="set-attr,set-text" set-attr="class">dummy stuff</span>.
       </p>
+
+      <input type="button" name="modal1" value="Modal Dialog"/>
+       
+      
+      <div modal="alert" depends-on="modal1"><p>Hi!</p></div>
     </fieldset>
   </body>
 
