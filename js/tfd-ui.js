@@ -92,7 +92,6 @@
     elem.each(function() {
       var jself = $(this);
       jself.click(function() {
-        d("click!", jself);
         var name = jself.attr("name");
         if (! jself.is("[disabled]")) {
           $("[name='"+name+"']").each(function() {
