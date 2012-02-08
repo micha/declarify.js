@@ -78,7 +78,7 @@
       var jself = $(this);
       jself.click(function() {
         if (! jself.is("[disabled]")) {
-          jself.checked(! jself.checked());
+          jself.toggleChecked();
           jself.trigger("change");
         }
       }).css("cursor", "pointer");
@@ -92,6 +92,7 @@
     elem.each(function() {
       var jself = $(this);
       jself.click(function() {
+        d("click!", jself);
         var name = jself.attr("name");
         if (! jself.is("[disabled]")) {
           $("[name='"+name+"']").each(function() {
@@ -199,20 +200,44 @@
     return !$(this).hidden();
   }
 
+  window.isVisible = isVisible;
+
   function getVisibleFormElems(form) {
     return form.find(inputs.join(",")).filter(isVisible).filter("[name]");
   }
 
-  function getVal(name) {
+  function getByNameAttr(attr, elem) {
+    return $("["+attr+"]").filter(function() {
+      return matchesName($(this).attr(attr), elem);
+    });
+  }
+
+  window.getByNameAttr = getByNameAttr;
+
+  function getByName(name, e) {
+    var segs = name.split("."),
+        e    = e ? e : $("body");
+
+    if (segs.length == 1) {
+      return $("[name='"+name+"']", e);
+    } else {
+      return getByName(rest(segs).join("."), getByName(first(segs), e));
+    }
+  }
+
+  window.getByName = getByName;
+
+  function matchesName(name, elem) {
+    return elem.is(getByName(name).get());
+  }
+
+  function getVal(name, e) {
     var elem = name.jquery
-      ? name : $(document).find("[name='"+name+"']").filter(isVisible);
+      ? name : getByName(name).filter(isVisible);
 
     switch(elem.attr("type")) {
       case "radio":
-        return elem
-          .filter(elem.is("[acts-like]") ? "[checked]" : ":checked")
-          .val();
-      case "button":
+        return elem.filter(function() { return $(this).checked() }).val();
       case "checkbox":
         return elem.checked() ? 1 : 0;
       default:
@@ -238,6 +263,16 @@
     return map(
       applyto([elem, test, val]),
       filter(identity, getDependsActions(elem)));
+  }
+
+  function registerChange(name, handler, doit) {
+    $("body").bind("actslike_change", function(event, target) {
+      if (matchesName(name, target))
+        handler();
+    });
+
+    if (doit)
+      handler();
   }
 
   window.getVal = getVal;
@@ -270,18 +305,24 @@
         },
 
       "depends-guard": 
-        function(elem, match, val) {
-          var dep = $("[name='"+val+"']");
-          dep.change(function() {
-            if ($(this).val() == 1)
+        function(elem, match, name) {
+
+          function doChange() {
+            if (getVal(name) == 1)
               elem.click();
-          });
-          elem.click(function(event) {
+          }
+
+          function doClick(event) {
+            var dep = getByName(name);
             if (! dep.is(":visible")) {
               dep.show2();
               event.stopImmediatePropagation();
             }
-          });
+          }
+
+          elem.click(doClick);
+
+          registerChange(name, doChange);
         },
 
       "acts-like": 
@@ -298,11 +339,10 @@
       "depends-val-(.*)": 
         function(elem, match, val) {
           var name  = elem.attr("depends-on"),
-              dep   = $("[name='"+name+"']"),
               tst   = window[match[1].replace("-","_")];
 
           function doChange() {
-            var v = getVal(dep);
+            var v = getVal(name);
             return doDependsActions(
               elem,
               (tst(unserialize(v), unserialize(val))),
@@ -310,25 +350,23 @@
             );
           }
 
-          dep.change(doChange);
-          doChange();
+          registerChange(name, doChange, true);
+
           return elem;
         },
 
       "depends-on":
-        function(elem, match, val) {
-          var dep = $("[name='"+val+"']");
-
+        function(elem, match, name) {
           for (var i in elem.attrMap())
             if (i.match(/^depends-val-/))
               return elem;
 
           function doChange() {
-            return doDependsActions(elem, true, getVal(val));
+            return doDependsActions(elem, true, getVal(name));
           }
 
-          dep.change(doChange);
-          doChange();
+          registerChange(name, doChange, true);
+
           return elem;
         },
 
@@ -356,6 +394,7 @@
 
           elem.change(doChange);
           doChange();
+
           return elem;
         },
 
@@ -462,6 +501,10 @@
             jself.parentsUntil("body", "form").trigger("form-update");
           });
         }
+
+        jself.change(function() {
+          $("body").trigger("actslike_change", [jself]);
+        });
       });
     }
 
@@ -533,9 +576,10 @@
   }
 
   $.fn.options = function() {
-    if ($(this).is("[acts-like='select']"))
-      return $("[options-for='"+$(this).attr("name")+"']").find("[acts-like='option']");
-    else
+    if ($(this).is("[acts-like='select']")) {
+      return getByNameAttr("options-for", $(this))
+        .find("[acts-like='option']");
+    } else
       return $(this).find("option");
   };
 
@@ -633,12 +677,12 @@
     return this.data("initial-val");
   };
 
-  var templatesEnabled  = false;
+  var templatesEnabled  = true;
   var templates         = {};
   var defaultTemplateFn = function(data) {
     var jself = $(this);
     map(function(x, i) {
-      jself.find("*").each(function() {
+      jself.find("*").add(jself).each(function() {
         var e = $(this);
         map(function(x2, i2) {
           var m = i2.match(/^data-fill(-(.*))?$/);
@@ -672,9 +716,10 @@
 
     map(function(x) {
       var t = $("[template='"+name+"']").not("[filled]").eq(0),
-          e = t.clone(true).attr("filled","filled");
+          e = t.clone().attr("filled","filled");
       f.call(e, x);
       t.before(e);
+      TFD_UI.processElem(e);
       e.show2();
     }, data);
 
