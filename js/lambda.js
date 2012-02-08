@@ -14,6 +14,12 @@ var _       = {},
  * OPERATORS                                                               *
  ***************************************************************************/
 
+function constant(val) {
+  return function() {
+    return val;
+  }
+}
+
 function identity(x) {
   return x;
 }

@@ -204,7 +204,8 @@
   }
 
   function getVal(name) {
-    var elem = $(document).find("[name='"+name+"']").filter(isVisible);
+    var elem = name.jquery
+      ? name : $(document).find("[name='"+name+"']").filter(isVisible);
 
     switch(elem.attr("type")) {
       case "radio":
@@ -220,12 +221,10 @@
   }
 
   function getDefaultAction(elem) {
-    switch (elem[0].nodeName) {
-      case "INPUT":
-        return "toggle";
-      case "FORM":
-        return "get-json";
-    }
+    if (elem.is("form"))
+      return "get-json";
+    else
+      return "toggle";
   }
 
   function getDependsActions(elem) {
@@ -240,6 +239,8 @@
       applyto([elem, test, val]),
       filter(identity, getDependsActions(elem)));
   }
+
+  window.getVal = getVal;
 
   /*************************************************************************** 
    * TFD-UI object                                                           *
@@ -301,7 +302,7 @@
               tst   = window[match[1].replace("-","_")];
 
           function doChange() {
-            var v = getVal(name);
+            var v = getVal(dep);
             return doDependsActions(
               elem,
               (tst(unserialize(v), unserialize(val))),
@@ -340,13 +341,21 @@
         function(elem, match, val) {
           if (! templatesEnabled)
             return;
-          var p = elem.parent();
           elem.hide2();
-          if (! p.data("actslike_bound_show"))
-            p.data("actslike_bound_show", true).bind("show", function() {
-              console.log("show "+val);
-            });
+          return elem;
+        },
 
+      "fill-template":
+        function(elem, match, val) {
+          if (! templatesEnabled)
+            return;
+
+          function doChange() {
+            $.fillTemplate(val, elem.val());
+          }
+
+          elem.change(doChange);
+          doChange();
           return elem;
         },
 
@@ -388,7 +397,7 @@
             data  = elem.paramsVisible();
         if (test)
           $.getJSON(url, data, function(data) {
-            elem.val(JSON.stringify(data));
+            elem.val(data);
             elem.trigger("change");
           });
         return elem;
@@ -435,14 +444,24 @@
     },
 
     processElem: function(elem) {
-      elem.find("*").each(function() {
+      elem.find("*").add(elem).each(function() {
+        if (this == document)
+          return;
+
         var jself = $(this), attrs;
+
         map(function(x, i) {
           map(function(x2, i2, m) {
             if (m = (new RegExp("^"+i2+"$")).exec(i))
               x2(jself, m, x);
           }, TFD_UI.attrHandler);
         }, jself.attrMap());
+
+        if (jself.is(inputs.join(","))) {
+          jself.change(function() {
+            jself.parentsUntil("body", "form").trigger("form-update");
+          });
+        }
       });
     }
 
@@ -459,10 +478,13 @@
    ***************************************************************************/
 
   $(function() {
+    TFD_UI.processElem($(document));
+
     $("form").submit(function(event) {
       event.preventDefault();
-    });
-    TFD_UI.processElem($(document));
+    }).bind("form-update", function() {
+      doDependsActions($(this), constant(true), "");
+    }).trigger("form-update");
 
     $("*").filter(":visible").trigger("show");
   });
@@ -482,11 +504,13 @@
   $.fn.paramsVisible = function() {
     var ret = {};
 
-    console.log(inputs);
     $.each(getVisibleFormElems(this), function() {
       var input = $(this);
-      ret[input.attr("name")] = input.val();
+      ret[input.attr("name")] = true;
     });
+
+    for (var i in ret)
+      ret[i] = getVal(i);
 
     return ret;
   };
@@ -521,15 +545,19 @@
           actslike  = this.attr("acts-like");
       if (actslike || this.is("form"))
         if (args.length) {
-          if (this.is("[value]"))
+          if (this.is("form"))
+            this.attr("value", JSON.stringify(arguments[0]));
+          else if (this.is("[value]"))
             this.attr("value", arguments[0]);
           else
             this.data("actslike_value", arguments[0]);
           return this;
         } else {
-          return this.is("[value]") 
-            ? this.attrMap()["value"]
-            : this.data("actslike_value");
+          return this.is("form")
+            ? JSON.parse(this.attr("value"))
+            : (this.is("[value]") 
+                ? this.attrMap()["value"]
+                : this.data("actslike_value"));
         }
       else
         return orig.apply(this, args);
