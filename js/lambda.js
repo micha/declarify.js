@@ -31,12 +31,14 @@ function eqq(x, y) {
 neqq = comp(not, eqq);
 
 lt = arityfn(
+  true,
   true, 
-  function(x, y) { return x < y },
-  function(x, y) { return apply(induce(lt), vec(arguments)) }
+  function(x, y) { return x > y },
+  function(x, y) { return lt(x, y) ? apply(lt, rest(arguments)) : false }
 );
 
 gt = arityfn(
+  true,
   true, 
   function(x, y) { return x > y },
   function(x, y) { return gt(x, y) ? apply(gt, rest(arguments)) : false }
@@ -66,6 +68,7 @@ function dot(obj, x) {
 };
 
 set = arityfn(
+  false,
   false,
   function(prop, val) { return set(window, prop, val) },
   function(thing, prop, val) { thing[prop] = val; return thing }
@@ -133,13 +136,14 @@ function arityfn() {
   args = arr_tmpl(args, args);
   return function() {
     var len2 = arguments.length,
-        rule = args[Math.min(len2, len1)-1];
+        rule = args[Math.min(len2, len1)];
     return $.isFunction(rule) ? rule.apply(window, vec(arguments)) : rule;
   }
 };
 
 apply = arityfn(
   false,
+  function(f) { return f() },
   function(f, args) { return f.apply(window, args) },
   function(obj, f, args) { 
     return $.isFunction(obj)
@@ -280,6 +284,17 @@ function partial() {
         args2 = vec(arguments);
     args1 = arr_tmpl(args1, args2);
     return f.apply(window, args1.concat(args2));
+  }
+};
+
+function partiar() {
+  var f    = first(arguments),
+      args = rest(arguments);
+
+  return function() {
+    var args1 = vec(args),
+        args2 = vec(arguments);
+    return f.apply(window, args2.concat(args1));
   }
 };
 

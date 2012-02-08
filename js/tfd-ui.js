@@ -2,6 +2,17 @@
 (function($) {
 
   /*************************************************************************** 
+   * Local variables                                                         *
+   ***************************************************************************/
+
+  var einputs       = ["input", "select", "textarea"],
+      inputs        = reduce(function(x, xs) {
+                        return xs.concat([x, "[acts-like='"+x+"']"]);
+                      }, [], einputs),
+      dateFormat    = "yy-mm-dd",
+      validateSetup = {};
+
+  /*************************************************************************** 
    * Local (private) functions                                               *
    ***************************************************************************/
 
@@ -44,6 +55,10 @@
   /*************************************************************************** 
    * TFD-UI constructorish functions                                         *
    ***************************************************************************/
+
+  function mkJsonForm(elem) {
+    return elem;
+  }
 
   function actsLikeInput(elem) {
     switch(elem.attr("type")) {
@@ -180,7 +195,17 @@
     });
   }
 
-  function getVal(elem) {
+  function isVisible() {
+    return !$(this).hidden();
+  }
+
+  function getVisibleFormElems(form) {
+    return form.find(inputs.join(",")).filter(isVisible).filter("[name]");
+  }
+
+  function getVal(name) {
+    var elem = $(document).find("[name='"+name+"']").filter(isVisible);
+
     switch(elem.attr("type")) {
       case "radio":
         return elem
@@ -194,27 +219,27 @@
     }
   }
 
+  function getDefaultAction(elem) {
+    switch (elem[0].nodeName) {
+      case "INPUT":
+        return "toggle";
+      case "FORM":
+        return "get-json";
+    }
+  }
+
   function getDependsActions(elem) {
     var fnames = elem.attr("depends-do")
       ? elem.attr("depends-do").split(",")
-      : [ "toggle" ];
+      : [ getDefaultAction(elem) ];
     return map(partial(dot, TFD_UI.dependsAction), fnames);
   }
 
   function doDependsActions(elem, test, val) {
-    return map(applyto([elem, test, val]), getDependsActions(elem));
+    return map(
+      applyto([elem, test, val]),
+      filter(identity, getDependsActions(elem)));
   }
-
-  /*************************************************************************** 
-   * Local variables                                                         *
-   ***************************************************************************/
-
-  var einputs       = ["input", "select", "textarea"],
-      inputs        = reduce(function(x, xs) {
-                        return xs.concat([x, "[acts-like='"+x+"']"]);
-                      }, [], einputs),
-      dateFormat    = "yy-mm-dd",
-      validateSetup = {};
 
   /*************************************************************************** 
    * TFD-UI object                                                           *
@@ -271,15 +296,16 @@
 
       "depends-val-(.*)": 
         function(elem, match, val) {
-          var dep = $("[name='"+elem.attr("depends-on")+"']"),
-              tst = window[match[1].replace("-","_")];
+          var name  = elem.attr("depends-on"),
+              dep   = $("[name='"+name+"']"),
+              tst   = window[match[1].replace("-","_")];
 
           function doChange() {
-            var v = getVal(dep);
+            var v = getVal(name);
             return doDependsActions(
               elem,
               (tst(unserialize(v), unserialize(val))),
-              getVal(dep)
+              v
             );
           }
 
@@ -297,10 +323,9 @@
               return elem;
 
           function doChange() {
-            return doDependsActions(elem, true, getVal(dep));
+            return doDependsActions(elem, true, getVal(val));
           }
 
-          console.log(dep);
           dep.change(doChange);
           doChange();
           return elem;
@@ -324,6 +349,12 @@
 
           return elem;
         },
+
+      "interval":
+        function(elem, match, val) {
+          $.setInterval(function() { elem.trigger("change") }, val);
+          return elem;
+        },
     },
 
     dependsAction: {
@@ -332,8 +363,10 @@
       },
 
       "set-val": function(elem, test, val) {
-        if (test)
+        if (test) {
           elem.val(val);
+          elem.trigger("change");
+        }
         return elem;
       },
 
@@ -348,17 +381,24 @@
         if (test)
           elem.attr(attr, val);
         return elem;
+      },
+
+      "get-json": function(elem, test, val) {
+        var url   = elem.attr("action"),
+            data  = elem.paramsVisible();
+        if (test)
+          $.getJSON(url, data, function(data) {
+            elem.val(JSON.stringify(data));
+            elem.trigger("change");
+          });
+        return elem;
       }
     },
 
     typeHandler: {
       "date": function(elem) {
-        switch(val) {
-          case "date":
-            if (elem[0].nodeName == "INPUT")
-              mkDatePicker(elem);
-            break;
-        }
+        if (elem[0].nodeName == "INPUT")
+          mkDatePicker(elem);
         return elem;
       }
     },
@@ -441,15 +481,18 @@
 
   $.fn.paramsVisible = function() {
     var ret = {};
-    $.each(this.find(inputs).filter(":visible").filter("[name]"), function() {
+
+    console.log(inputs);
+    $.each(getVisibleFormElems(this), function() {
       var input = $(this);
       ret[input.attr("name")] = input.val();
     });
+
     return ret;
   };
 
   $.fn.reset = function() {
-    this.find(inputs).val(null);
+    this.find(inputs.join(",")).val(null);
     return this;
   };
 
@@ -476,7 +519,7 @@
     return function() {
       var args      = vec(arguments),
           actslike  = this.attr("acts-like");
-      if (actslike)
+      if (actslike || this.is("form"))
         if (args.length) {
           if (this.is("[value]"))
             this.attr("value", arguments[0]);
@@ -510,13 +553,21 @@
     }
   );
 
+  $.fn.hidden = function() {
+    if (arguments.length)
+      this.data("actslike_hidden", arguments[0]);
+    return this.data("actslike_hidden");
+  }
+
   $.fn.show2 = function() {
     var args = vec(arguments);
+    this.hidden(false);
     return this.is("[modal]") ? this.dialog("open") : $.fn.show.apply(this, args);
   };
 
   $.fn.hide2 = function() {
     var args = vec(arguments);
+    this.hidden(true);
     return this.is("[modal]") ? this.dialog("close") : $.fn.hide.apply(this, args);
   };
 
@@ -586,9 +637,11 @@
     if (! templatesEnabled)
       return;
 
-    var f = templates[name] || defaultTemplateFn;
+    var f = templates[name] || defaultTemplateFn,
+        t = $(document).scrollTop();
 
     $("[template='"+name+"'][filled]").remove();
+
     map(function(x) {
       var t = $("[template='"+name+"']").not("[filled]").eq(0),
           e = t.clone(true).attr("filled","filled");
@@ -596,6 +649,8 @@
       t.before(e);
       e.show2();
     }, data);
+
+    $(document).scrollTop(t);
   };
 
   $.setInterval = function(f, t, start) {
@@ -611,7 +666,5 @@
   $.isBool = function(x) {
     return x===true || x===false;
   }
-
-  setTimeout(function() { $("input[type='button']").click(function() { $(this).trigger("change") }) }, 10);
 
 })(jQuery);
