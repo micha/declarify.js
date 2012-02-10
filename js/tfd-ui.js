@@ -588,19 +588,15 @@
           actslike  = this.attr("acts-like");
       if (actslike || this.is("form"))
         if (args.length) {
-          if (this.is("form"))
-            this.attr("value", JSON.stringify(arguments[0]));
-          else if (this.is("[value]"))
+          if (this.is("[value]"))
             this.attr("value", arguments[0]);
           else
             this.data("actslike_value", arguments[0]);
           return this;
         } else {
-          return this.is("form")
-            ? JSON.parse(this.attr("value"))
-            : (this.is("[value]") 
-                ? this.attrMap()["value"]
-                : this.data("actslike_value"));
+          return this.is("[value]")
+            ? this.attrMap()["value"]
+            : this.data("actslike_value");
         }
       else
         return orig.apply(this, args);
