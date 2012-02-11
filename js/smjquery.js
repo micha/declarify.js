@@ -520,5 +520,6 @@ if (!JSON) {
 
   window.console  = console;
   window.$        = $;
+  window.jQuery   = $;
 
 })();

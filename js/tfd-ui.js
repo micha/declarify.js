@@ -1,6 +1,8 @@
 
 (function($) {
 
+  Fundaments.import();
+
   /*************************************************************************** 
    * Local variables                                                         *
    ***************************************************************************/
@@ -10,7 +12,8 @@
                         return xs.concat([x, "[acts-like='"+x+"']"]);
                       }, [], einputs),
       dateFormat    = "yy-mm-dd",
-      validateSetup = {};
+      validateSetup = {},
+      registered    = [];
 
   /*************************************************************************** 
    * Local (private) functions                                               *
@@ -199,8 +202,6 @@
     return !$(this).hidden();
   }
 
-  window.isVisible = isVisible;
-
   function getVisibleFormElems(form) {
     return form.find(inputs.join(",")).filter(isVisible).filter("[name]");
   }
@@ -210,8 +211,6 @@
       return matchesName($(this).attr(attr), elem);
     });
   }
-
-  window.getByNameAttr = getByNameAttr;
 
   function getByName(name, e) {
     var segs = name.split("."),
@@ -223,8 +222,6 @@
       return getByName(rest(segs).join("."), getByName(first(segs), e));
     }
   }
-
-  window.getByName = getByName;
 
   function matchesName(name, elem) {
     return elem.is(getByName(name).get());
@@ -245,10 +242,11 @@
   }
 
   function getDefaultAction(elem) {
-    if (elem.is("form"))
-      return "get-json";
-    else
-      return "toggle";
+    return "toggle";
+  }
+
+  function getDefaultFormAction(elem) {
+    return "get-json";
   }
 
   function getDependsActions(elem) {
@@ -258,29 +256,73 @@
     return map(partial(dot, TFD_UI.dependsAction), fnames);
   }
 
+  function getFormActions(elem) {
+    var fnames = elem.attr("form-do")
+      ? elem.attr("form-do").split(",")
+      : [ getDefaultFormAction(elem) ];
+    return map(partial(dot, TFD_UI.formAction), fnames);
+  }
+
   function doDependsActions(elem, test, val) {
     return map(
       applyto([elem, test, val]),
       filter(identity, getDependsActions(elem)));
   }
 
-  function registerChange(name, handler, doit) {
-    $("body").bind("actslike_change", function(event, target) {
+  function doFormActions(elem, test, val) {
+    return map(
+      applyto([elem, test, val]),
+      filter(identity, getFormActions(elem)));
+  }
+
+  function registerChange(elem, name, handler, doit) {
+    var hlr = function(event, target) {
       if (matchesName(name, target))
         handler();
+    };
+
+    $("body").bind("actslike_change", hlr);
+
+    elem.each(function(i,v) {
+      registered = registered.concat([[this, hlr]]);
     });
 
     if (doit)
       handler();
   }
 
-  window.getVal = getVal;
+  function unregisterChange(elem) {
+    map(function(x) {
+      map(partial($("body").unbind, "actslike_change"),
+          map(partial(dot, _, "1"), filter(dotis(eqq, 0, x), registered)));
+    }, elem.get());
+    return elem;
+  }
 
   /*************************************************************************** 
    * TFD-UI object                                                           *
    ***************************************************************************/
 
   var TFD_UI = {
+
+    valTest: {
+      eq :
+        Fundaments.eq,
+      neq :
+        Fundaments.neq,
+      lt :
+        Fundaments.lt,
+      le :
+        Fundaments.le,
+      gt :
+        Fundaments.gt,
+      ge :
+        Fundaments.ge,
+      re :
+        Fundaments.re,
+      nre :
+        Fundaments.nre
+    },
 
     attrHandler: {
       "type":
@@ -321,7 +363,7 @@
 
           elem.click(doClick);
 
-          registerChange(name, doChange);
+          return elem.registerChange(name, doChange, false);
         },
 
       "acts-like": 
@@ -338,7 +380,7 @@
       "depends-val-(.*)": 
         function(elem, match, val) {
           var name  = elem.attr("depends-on"),
-              tst   = window[match[1].replace("-","_")];
+              tst   = TFD_UI.valTest[match[1].replace("-","_")];
 
           function doChange() {
             var v = getVal(name);
@@ -349,9 +391,7 @@
             );
           }
 
-          registerChange(name, doChange, true);
-
-          return elem;
+          return elem.registerChange(name, doChange, true);
         },
 
       "depends-on":
@@ -364,9 +404,7 @@
             return doDependsActions(elem, true, getVal(name));
           }
 
-          registerChange(name, doChange, true);
-
-          return elem;
+          return elem.registerChange(name, doChange, true);
         },
 
       "val-(.*)": 
@@ -428,8 +466,10 @@
         if (test)
           elem.attr(attr, val);
         return elem;
-      },
+      }
+    },
 
+    formAction: {
       "get-json": function(elem, test, val) {
         var url   = elem.attr("action"),
             data  = elem.paramsVisible();
@@ -515,6 +555,12 @@
 
   window.TFD_UI = TFD_UI;
 
+  window.registered     = registered;
+  window.getVal         = getVal;
+  window.isVisible      = isVisible;
+  window.getByName      = getByName;
+  window.getByNameAttr  = getByNameAttr;
+
   /*************************************************************************** 
    * jQuery domready event handler                                           *
    ***************************************************************************/
@@ -525,10 +571,13 @@
     $("form").submit(function(event) {
       event.preventDefault();
     }).bind("form-update", function() {
-      doDependsActions($(this), constant(true), "");
+      doFormActions($(this), constant(true), "");
     }).trigger("form-update");
 
     $("*").filter(":visible").trigger("show");
+
+    if (templatesEnabled)
+      $("[template]").hide2();
   });
 
   /*************************************************************************** 
@@ -562,16 +611,8 @@
     return this;
   };
 
-  $.fn.mkOptions = function(opts) {
-    var jself = this;
-    $.each(opts, function(i,v) {
-      jself.append($("<option/>").attr("value", v[0]).text(v[1]));
-    });
-    return this;  
-  };
-
   $.fn.nodeName = function(n) {
-    return (n = $(this).attr("acts-like")) ? n.toUpperCase() : this.nodeName;
+    return (n = $(this).attr("acts-like")) ? n.toUpperCase() : this[0].nodeName;
   }
 
   $.fn.options = function() {
@@ -692,6 +733,13 @@
     }, data);
   };
 
+  $.fn.registerChange = function(name, handler, doit) {
+    return registerChange(this, name, handler, doit);
+  }
+
+  $.fn.unregisterChange = function() {
+    return unregisterChange(this);
+  };
 
   $.template = function(name, f) {
     if ($.isBool(name))
@@ -707,7 +755,7 @@
     var f = templates[name] || defaultTemplateFn,
         t = $(document).scrollTop();
 
-    $("[template='"+name+"'][filled]").remove();
+    $("[template='"+name+"'][filled]").unregisterChange().remove();
 
     map(function(x) {
       var t = $("[template='"+name+"']").not("[filled]").eq(0),
@@ -735,4 +783,9 @@
     return x===true || x===false;
   }
 
+  $.registered = function() {
+    return registered;
+  };
+
 })(jQuery);
+
