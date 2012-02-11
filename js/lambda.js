@@ -110,12 +110,29 @@
         return F.reduce(function(x, y) { return !!x || !!y }, arguments);
       },
 
+    keys :
+      function(obj) {
+        return F.map(function(x, i) {
+          return i;
+        }, obj);
+      },
+
     dot :
       function(obj, x) {
         var thing = obj[x];
         return $.isFunction(thing) 
           ? F.collect(F.partial(F.apply, obj, thing))
           : thing;
+      },
+
+    dotre :
+      function(obj, regex) {
+        return map(partial(dot, obj), F.filter(partial(re, _, regex), keys(obj)));
+      },
+
+    dotis :
+      function(pred, key, val) {
+        return F.comp(F.partial(pred, val), F.partial(F.dot, F._, key));
       },
 
     set :
@@ -130,11 +147,6 @@
             x[y] = z;
             return x;
         }
-      },
-
-    dotis :
-      function(pred, key, val) {
-        return F.comp(F.partial(pred, val), F.partial(F.dot, F._, key));
       },
 
     /*************************************************************************

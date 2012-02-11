@@ -92,18 +92,26 @@
       performed when no <code>depends-do</code> attribute is specified.</dd>
 
       <p>
+      <dt>toggle-<i>effect</i></dt>
+      <dd>Toggles visibility of the dependant using a neat little 
+      animation of some kind. Supported <code><i>effect</i></code>s are
+      <code>slide</code> and <code>fade</code>.</dd>
+
+      <p>
       <dt>set-text</dt>
       <dd>Sets the text of the dependant to the value of the referant.</dd>
 
       <p>
       <dt>set-val</dt>
-      <dd>Sets the value of the dependant to the value of the referant.</dd>
+      <dd>Sets the value of the dependant to the value of the referant. Note
+      that this is not always the same thing as setting the <code>value</code>
+      attribute of the dependant, so this attribute should be used instead of
+      the <code>set-attr-value</code> attribute.</dd>
 
       <p>
-      <dt>set-attr</dt>
-      <dd>Sets the value of an attribute of the dependant to the value of the
-      referant. The attribute is specified by adding a 
-      <code>set-attr="<i>attr</i>"</code> attribute to the dependant.</dd>
+      <dt>set-attr-<i>attr</i></dt>
+      <dd>Sets the value of the attribute <code><i>attr</i></code> on the
+      dependant to the value of the referant.</dd>
 
       <h2>Conditional Attributes</h2>
 

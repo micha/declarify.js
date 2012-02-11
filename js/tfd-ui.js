@@ -253,7 +253,13 @@
     var fnames = elem.attr("depends-do")
       ? elem.attr("depends-do").split(",")
       : [ getDefaultAction(elem) ];
-    return map(partial(dot, TFD_UI.dependsAction), fnames);
+
+    return reduce(function(x, xs) {
+      return xs.concat(filter(identity, map(function(x2, i2, m) {
+        if (m = (new RegExp("^"+i2+"$")).exec(x))
+          return partial(x2, elem, m);
+      }, TFD_UI.dependsAction))); 
+    }, [], fnames);
   }
 
   function getFormActions(elem) {
@@ -264,9 +270,7 @@
   }
 
   function doDependsActions(elem, test, val) {
-    return map(
-      applyto([elem, test, val]),
-      filter(identity, getDependsActions(elem)));
+    return map(applyto([val, test]), getDependsActions(elem));
   }
 
   function doFormActions(elem, test, val) {
@@ -426,7 +430,7 @@
             return;
 
           function doChange() {
-            $.fillTemplate(val, elem.val());
+            map(partial($.fillTemplate, _, elem.val()), val.split(","));
           }
 
           elem.change(doChange);
@@ -443,30 +447,44 @@
     },
 
     dependsAction: {
-      "toggle": function(elem, test, val) {
-        return elem[test ? "show2" : "hide2"]();
-      },
+      "toggle":
+        function(elem, match, val, test) {
+          return elem[test ? "show2" : "hide2"]();
+        },
 
-      "set-val": function(elem, test, val) {
-        if (test) {
-          elem.val(val);
-          elem.trigger("change");
+      "toggle-(.*)":
+        function(elem, match, val, test) {
+          return elem[test ? "show2" : "hide2"](match[1]);
+        },
+
+      "scroll-top":
+        function(elem, match, val, test) {
+          $(document).scrollTop(0);
+          return elem;
+        },
+
+      "set-val":
+        function(elem, match, val, test) {
+          if (test) {
+            elem.val(val);
+            elem.trigger("change");
+          }
+          return elem;
+        },
+
+      "set-text":
+        function(elem, match, val, test) {
+          if (test)
+            elem.text(val);
+          return elem;
+        },
+
+      "set-attr-(.*)":
+        function(elem, match, val, test) {
+          if (test)
+            elem.attr(match[1], val);
+          return elem;
         }
-        return elem;
-      },
-
-      "set-text": function(elem, test, val) {
-        if (test)
-          elem.text(val);
-        return elem;
-      },
-
-      "set-attr": function(elem, test, val) {
-        var attr = elem.attr("set-attr");
-        if (test)
-          elem.attr(attr, val);
-        return elem;
-      }
     },
 
     formAction: {
@@ -521,31 +539,32 @@
       }
     },
 
-    processElem: function(elem) {
-      elem.find("*").add(elem).each(function() {
-        if (this == document)
-          return;
+    processElem :
+      function(elem) {
+        elem.find("*").add(elem).each(function() {
+          if (this == document)
+            return;
 
-        var jself = $(this), attrs;
+          var jself = $(this);
 
-        map(function(x, i) {
-          map(function(x2, i2, m) {
-            if (m = (new RegExp("^"+i2+"$")).exec(i))
-              x2(jself, m, x);
-          }, TFD_UI.attrHandler);
-        }, jself.attrMap());
+          map(function(x, i) {
+            map(function(x2, i2, m) {
+              if (m = (new RegExp("^"+i2+"$")).exec(i))
+                x2(jself, m, x);
+            }, TFD_UI.attrHandler);
+          }, jself.attrMap());
 
-        if (jself.is(inputs.join(","))) {
+          if (jself.is(inputs.join(","))) {
+            jself.change(function() {
+              jself.parentsUntil("body", "form").trigger("form-update");
+            });
+          }
+
           jself.change(function() {
-            jself.parentsUntil("body", "form").trigger("form-update");
+            $("body").trigger("actslike_change", [jself]);
           });
-        }
-
-        jself.change(function() {
-          $("body").trigger("actslike_change", [jself]);
         });
-      });
-    }
+      }
 
   };
 
@@ -667,16 +686,42 @@
     return this.data("actslike_hidden");
   }
 
-  $.fn.show2 = function() {
-    var args = vec(arguments);
+  $.fn.show2 = function(effect) {
+    var args = vec(arguments),
+        op;
+
+    switch (effect) {
+      case "slide":
+        op = "slideDown";
+        break;
+      case "fade":
+        op = "fadeIn";
+        break;
+      default:
+        op = "show";
+    }
+
     this.hidden(false);
-    return this.is("[modal]") ? this.dialog("open") : $.fn.show.apply(this, args);
+    return this.is("[modal]") ? this.dialog("open") : $.fn[op].apply(this, args);
   };
 
-  $.fn.hide2 = function() {
-    var args = vec(arguments);
+  $.fn.hide2 = function(effect) {
+    var args = vec(arguments),
+        op;
+
+    switch (effect) {
+      case "slide":
+        op = "slideUp";
+        break;
+      case "fade":
+        op = "fadeOut";
+        break;
+      default:
+        op = "hide";
+    }
+
     this.hidden(true);
-    return this.is("[modal]") ? this.dialog("close") : $.fn.hide.apply(this, args);
+    return this.is("[modal]") ? this.dialog("close") : $.fn[op].apply(this, args);
   };
 
   $.fn.toggle2 = function() {
