@@ -20,8 +20,26 @@
         font-size: 13px;
         color: #000; }
 
-      body,
-      input {
+      .clear { float: clear; }
+
+      .example > div {
+        padding: 5px;
+        margin-top: 20px; }
+
+      .example > div.example-contents {
+        border: 1px solid black; 
+        min-height: 100px;
+        margin-top: 0px; }
+
+      .example > div > span {
+        padding: 5px;
+        margin-right: 2px;
+        border: 1px solid black; }
+
+      .example > div > span[checked] {
+        border-bottom: 1px solid white; }
+
+      body, input {
         font-family: "HelveticaNeue", "Helvetica", Arial, sans-serif; }
 
       h1, h2, h3, h4, h5, h6 {
@@ -70,6 +88,42 @@
       <dd>This element will react when the value of the element with
       attribute <code>name="<i>name</i>"</code> changes.</dd>
 
+      <div class="example">
+        <div>
+          <span name="ex1" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex1" acts-like="input" type="radio" value="try">
+            Try It
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex1" depends-val-eq="src">
+Power:
+&lt;input name="ex1radio" type="radio" value="0" checked/&gt;
+&lt;label&gt;off&lt;/label&gt;
+&lt;input name="ex1radio" type="radio" value="1"/&gt;
+&lt;label&gt;on&lt;/label&gt;
+
+&lt;p&gt;The power is &hellip;
+  &lt;span <strong>depends-on="ex1radio"</strong> depends-val-eq="0"&gt;off&lt;/span&gt;
+  &lt;span <strong>depends-on="ex1radio"</strong> depends-val-eq="1"&gt;on&lt;/span&gt;
+&lt;/p&gt;
+          </pre>
+          <div depends-on="ex1" depends-val-eq="try">
+            Power:
+            <input name="ex1radio" type="radio" value="0" checked/>
+            <label>off</label>
+            <input name="ex1radio" type="radio" value="1"/>
+            <label>on</label>
+            <p>The power is &hellip;
+              <span depends-on="ex1radio" depends-val-eq="0">off</span>
+              <span depends-on="ex1radio" depends-val-eq="1">on</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <h2>Action Attributes</h2>
 
       <p>These attributes determine what sort of action is performed on the
@@ -80,6 +134,39 @@
       <dd>Comma separated list of actions to be performed when the referant's
       value is changed. See the list of supported actions below:</dd>
 
+      <div class="example">
+        <div>
+          <span name="ex2" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex2" acts-like="input" type="radio" value="try">
+            Try It
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex2" depends-val-eq="src">
+Power:
+&lt;input name="ex2radio" type="radio" value="off" checked/&gt;
+&lt;label&gt;off&lt;/label&gt;
+&lt;input name="ex2radio" type="radio" value="on"/&gt;
+&lt;label&gt;on&lt;/label&gt;
+
+&lt;p&gt;The power is &hellip;
+  &lt;span depends-on="ex2radio" <strong>depends-do="set-text"</strong>/&gt;
+&lt;/p&gt;
+          </pre>
+          <div depends-on="ex2" depends-val-eq="try">
+            Power:
+            <input name="ex2radio" type="radio" value="off" checked/>
+            <label>off</label>
+            <input name="ex2radio" type="radio" value="on"/>
+            <label>on</label>
+            <p>The power is &hellip;
+              <span depends-on="ex2radio" depends-do="set-text"/>
+            </p>
+          </div>
+        </div>
+      </div>
       <h3>Actions</h3>
 
       <p>These actions are specified as the value of the <code>depends-do</code>
