@@ -54,6 +54,9 @@
         margin: 5px;
         padding: 5px; }
 
+      .on { color: green; }
+      .off { color: red; }
+
       body, input {
         font-family: "HelveticaNeue", "Helvetica", Arial, sans-serif; }
 
@@ -191,7 +194,7 @@ Power:
 &lt;label&gt;on&lt;/label&gt;
 
 &lt;p&gt;The power is &hellip;
-  &lt;span depends-on="ex2radio" <strong>depends-do="set-text"</strong>/&gt;
+  &lt;span depends-on="ex2radio" <strong>depends-do="set-text,set-attr-class"</strong>/&gt;
 &lt;/p&gt;
           </pre>
           <div depends-on="ex2" depends-val-eq="try">
@@ -201,7 +204,7 @@ Power:
             <input name="ex2radio" type="radio" value="on"/>
             <label>on</label>
             <p>The power is &hellip;
-              <span depends-on="ex2radio" depends-do="set-text"/>
+              <span depends-on="ex2radio" depends-do="set-text,set-attr-class"/>
             </p>
           </div>
         </div>
