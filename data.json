@@ -1,4 +1,5 @@
-[ {"foo": "bar"},
-  {"foo": "baz"},
-  {"foo": "baf"}
+[ { "animal": "Insect",   "price": "2.50"        },
+  { "animal": "Hominid",  "price": "168.25"      },
+  { "animal": "Microbe",  "price": "0.05"        },
+  { "animal": "Unicorn",  "price": "1000000.00"  }
 ]

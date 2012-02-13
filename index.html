@@ -20,6 +20,18 @@
         font-size: 13px;
         color: #000; }
 
+      table {
+        border-collapse: collapse; }
+
+      tbody {
+        border: 1px solid black; }
+
+      tr:not(:first-child) td {
+        border-top: 1px dashed black; }
+
+      td:not(:last-child) {
+        border-right: 1px solid black; }
+
       .clear { float: clear; }
 
       .example > div {
@@ -112,7 +124,7 @@
             Code
           </span>
           <span name="ex1" acts-like="input" type="radio" value="try">
-            Try It
+            Demo
           </span>
         </div>
         <div class="example-contents">
@@ -182,7 +194,7 @@
             Code
           </span>
           <span name="ex2" acts-like="input" type="radio" value="try">
-            Try It
+            Demo
           </span>
         </div>
         <div class="example-contents">
@@ -265,7 +277,7 @@ Power:
             Code
           </span>
           <span name="ex3" acts-like="input" type="radio" value="try">
-            Try It
+            Demo
           </span>
         </div>
         <div class="example-contents">
@@ -358,7 +370,7 @@ Power:
             Code
           </span>
           <span name="ex4" acts-like="input" type="radio" value="try">
-            Try It
+            Demo
           </span>
         </div>
         <div class="example-contents">
@@ -442,7 +454,7 @@ Power:
             Code
           </span>
           <span name="ex5" acts-like="input" type="radio" value="try">
-            Try It
+            Demo
           </span>
         </div>
         <div class="example-contents">
@@ -559,6 +571,65 @@ Power:
       attribute to the value of the <code><i>prop</i></code> property of
       the JavaScript object.</dd>
 
+      <div class="example">
+        <div>
+          <span name="ex6" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex6" acts-like="input" type="radio" value="try">
+            Demo
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex6" depends-val-eq="src">
+&lt;form action="data.json" <strong>fill-template="ex6-template"</strong>&gt;
+&lt;/form&gt;
+
+&lt;table cellpadding="6px" cellspacing="0px"&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Item&lt;/th&gt;
+      &lt;th&gt;Price&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr <strong>template="ex6-template"</strong>&gt;
+      &lt;td <strong>data-fill="animal"</strong>&gt;Fish&lt;/td&gt;
+      &lt;td <strong>data-fill="price"</strong> align="right"&gt;1.00&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr <strong>template="ex6-template"</strong>&gt;
+      &lt;td <strong>data-fill="animal"</strong>&gt;Mammal&lt;/td&gt;
+      &lt;td <strong>data-fill="price"</strong> align="right"&gt;5.00&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+          </pre>
+          <div depends-on="ex6" depends-val-eq="try">
+            <form action="data.json" fill-template="ex6-template">
+            </form>
+
+            <table cellpadding="6px" cellspacing="0px">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr template="ex6-template">
+                  <td data-fill="animal">Fish</td>
+                  <td data-fill="price" align="right">$1.00</td>
+                </tr>
+                <tr template="ex6-template">
+                  <td data-fill="animal">Mammal</td>
+                  <td data-fill="price" align="right">$5.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <h2>Modal Dialogs</h2>
 
       <p>These attributes are used to transform any html element into a modal
@@ -590,6 +661,49 @@ Power:
       <p>
       <dt>alert</dt>
       <dd>This type of dialog has one button: "ok".</dd>
+
+      <div class="example">
+        <div>
+          <span name="ex7" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex7" acts-like="input" type="radio" value="try">
+            Demo
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex7" depends-val-eq="src">
+&lt;input type="button" name="ex7button1" value="Plain"/&gt;
+&lt;input type="button" name="ex7button2" value="Confirm"/&gt;
+&lt;input type="button" name="ex7button3" value="Alert"/&gt;
+
+&lt;p <strong>modal="plain"</strong> <strong>title="Plain Dialog"</strong> depends-on="ex7button1"&gt;
+  Hello, world!
+&lt;/p&gt;
+&lt;p <strong>modal="confirm"</strong> <strong>title="Confirmation Dialog"</strong> depends-on="ex7button2"&gt;
+  Hello, world!
+&lt;/p&gt;
+&lt;p <strong>modal="alert"</strong> <strong>title="Alert Dialog"</strong> depends-on="ex7button3"&gt;
+  Hello, world!
+&lt;/p&gt;
+          </pre>
+          <div depends-on="ex7" depends-val-eq="try">
+            <input type="button" name="ex7button1" value="Plain"/>
+            <input type="button" name="ex7button2" value="Confirm"/>
+            <input type="button" name="ex7button3" value="Alert"/>
+
+            <p modal="plain" title="Plain Dialog" depends-on="ex7button1">
+              Hello, world!
+            </p>
+            <p modal="confirm" title="Confirmation Dialog" depends-on="ex7button2">
+              Hello, world!
+            </p>
+            <p modal="alert" title="Alert Dialog" depends-on="ex7button3">
+              Hello, world!
+            </p>
+          </div>
+        </div>
+      </div>
 
       <hr>
     </div>
