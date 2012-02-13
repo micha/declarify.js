@@ -352,6 +352,49 @@ Power:
       of <code>acts-like="option"</code> elements representing the various
       choices the user can select.</dd>
 
+      <div class="example">
+        <div>
+          <span name="ex4" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex4" acts-like="input" type="radio" value="try">
+            Try It
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex4" depends-val-eq="src">
+&lt;label&gt;Power is:&lt;/label&gt;
+&lt;span <strong>acts-like="select"</strong> name="ex4select"&gt;
+  &lt;span <strong>acts-like="option"</strong> value="0" style="color:green"&gt;OFF&lt;/span&gt;
+  &lt;span <strong>acts-like="option"</strong> value="1" style="color:red"&gt;ON&lt;/span&gt;
+&lt;/span&gt;
+&lt;span <strong>options-for="ex4select"</strong>&gt;
+  &lt;span <strong>acts-like="option"</strong> value="0" selected&gt;Turn off&lt;/span&gt;
+  | &lt;span <strong>acts-like="option"</strong> value="1"&gt;Turn on&lt;/span&gt;
+&lt;/span&gt;
+
+&lt;p modal="alert" depends-on="ex4select" depends-val-eq="1"&gt;
+  Power is now on!
+&lt;/p&gt;
+          </pre>
+          <div depends-on="ex4" depends-val-eq="try">
+            <label>Power is:</label>
+            <span acts-like="select" name="ex4select">
+              <span acts-like="option" value="0" style="color:green">OFF</span>
+              <span acts-like="option" value="1" style="color:red">ON</span>
+            </span>
+            <span options-for="ex4select">
+              <span acts-like="option" value="0" selected>Turn off</span>
+              | <span acts-like="option" value="1">Turn on</span>
+            </span>
+
+            <p modal="alert" depends-on="ex4select" depends-val-eq="1">
+              Power is now on!
+            </p>
+          </div>
+        </div>
+      </div>
+
       <h2>Forms</h2>
 
       <p>Normally, forms are used to collect information from the user which is
@@ -392,6 +435,85 @@ Power:
       The value of the form element is set to the result of parsing JSON
       response. This is the default action, performed when no
       <code>form-do</code> attribute is specified.</dd>
+
+      <div class="example">
+        <div>
+          <span name="ex5" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex5" acts-like="input" type="radio" value="try">
+            Try It
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex5" depends-val-eq="src">
+&lt;fieldset&gt;
+  &lt;legend&gt;Fire on input change&lt;/legend&gt;
+
+  &lt;form name="ex5form1" <strong>action="data.json"</strong>&gt;
+    &lt;label&gt;Power:&lt;/label&gt;
+    &lt;select name="power"&gt;
+      &lt;option value="0" selected&gt;OFF&lt;/option&gt;
+      &lt;option value="1"&gt;ON&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/form&gt;
+&lt;/fieldset&gt;
+&lt;br&gt;
+
+&lt;fieldset&gt;
+  &lt;legend&gt;Fire on submit&lt;/legend&gt;
+
+  &lt;form name="ex5form2" <strong>action="data.json"</strong>&gt;
+    &lt;label&gt;Power:&lt;/label&gt;
+    &lt;select name="power"&gt;
+      &lt;option value="0" selected&gt;OFF&lt;/option&gt;
+      &lt;option value="1"&gt;ON&lt;/option&gt;
+    &lt;/select&gt;
+    &lt;input type="submit"/&gt;
+  &lt;/form&gt;
+&lt;/fieldset&gt;
+
+&lt;p modal="alert" depends-on="ex5form1"&gt;
+  First form update!
+&lt;/p&gt;
+
+&lt;p modal="alert" depends-on="ex5form2"&gt;
+  Second form update!
+&lt;/p&gt;
+          </pre>
+          <div depends-on="ex5" depends-val-eq="try">
+            <fieldset>
+              <legend>Fire on input change</legend>
+              <form name="ex5form1" action="data.json">
+                <label>Power:</label>
+                <select name="power">
+                  <option value="0" selected>OFF</option>
+                  <option value="1">ON</option>
+                </select>
+              </form>
+            </fieldset>
+            <br>
+            <fieldset>
+              <legend>Fire on submit</legend>
+              <form name="ex5form2" action="data.json">
+                <label>Power:</label>
+                <select name="power">
+                  <option value="0" selected>OFF</option>
+                  <option value="1">ON</option>
+                </select>
+                <input type="submit"/>
+              </form>
+            </fieldset>
+
+            <p modal="alert" depends-on="ex5form1">
+              First form update!
+            </p>
+            <p modal="alert" depends-on="ex5form2">
+              Second form update!
+            </p>
+          </div>
+        </div>
+      </div>
 
       <h2>Form Template Filling</h2>
 

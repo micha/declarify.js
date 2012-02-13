@@ -491,11 +491,16 @@
       "get-json": function(elem, test, val) {
         var url   = elem.attr("action"),
             data  = elem.paramsVisible();
-        if (test)
+
+        if (test && url)
           $.getJSON(url, data, function(data) {
+            console.log(elem);
             elem.val(data);
             elem.trigger("change");
           });
+        else
+          elem.trigger("change");
+
         return elem;
       }
     },
@@ -556,13 +561,32 @@
 
           if (jself.is(inputs.join(","))) {
             jself.change(function() {
-              jself.parentsUntil("body", "form").trigger("form-update");
+              var form = jself.parentsUntil("body", "form");
+              if (form.size() && ! form.find("[type='submit']").size())
+                jself.parentsUntil("body", "form").submit();
             });
           }
 
-          jself.change(function() {
+          if (jself.is("form"))
+            jself.submit(function(event) {
+              $(this).trigger("form-update");
+              event.preventDefault();
+            }).bind("form-update", function() {
+              doFormActions($(this), constant(true), "");
+            }).trigger("form-update");
+
+            
+          if (jself.is("input[type='button']"))
+            jself.click(function() { $(this).trigger("change") });
+
+          if (templatesEnabled && jself.is("[template]"))
+            jself.hide2();
+
+          jself.change(function(event) {
             $("body").trigger("actslike_change", [jself]);
+            event.stopPropagation();
           });
+
         });
       }
 
@@ -585,22 +609,10 @@
    ***************************************************************************/
 
   $(function() {
+    modalsEnabled = false;
     TFD_UI.processElem($(document));
-
-    $("form").submit(function(event) {
-      event.preventDefault();
-    }).bind("form-update", function() {
-      doFormActions($(this), constant(true), "");
-    }).trigger("form-update");
-
     $("*").filter(":visible").trigger("show");
-
-    if (templatesEnabled)
-      $("[template]").hide2();
-
-    modalsEnabled = true;
-
-    $("input[type='button']").click(function() { $(this).trigger("change") });
+    setTimeout(function() { modalsEnabled = true }, 100);
   });
 
   /*************************************************************************** 
