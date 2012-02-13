@@ -597,6 +597,10 @@
 
     if (templatesEnabled)
       $("[template]").hide2();
+
+    modalsEnabled = true;
+
+    $("input[type='button']").click(function() { $(this).trigger("change") });
   });
 
   /*************************************************************************** 
@@ -701,6 +705,9 @@
         op = "show";
     }
 
+    if (this.is("[modal]") && ! modalsEnabled)
+      return this;
+
     this.hidden(false);
     return this.is("[modal]") ? this.dialog("open") : $.fn[op].apply(this, args);
   };
@@ -719,6 +726,9 @@
       default:
         op = "hide";
     }
+
+    if (this.is("[modal]") && ! modalsEnabled)
+      return this;
 
     this.hidden(true);
     return this.is("[modal]") ? this.dialog("close") : $.fn[op].apply(this, args);
@@ -759,6 +769,7 @@
   };
 
   var templatesEnabled  = true;
+  var modalsEnabled     = false;
   var templates         = {};
   var defaultTemplateFn = function(data) {
     var jself = $(this);
