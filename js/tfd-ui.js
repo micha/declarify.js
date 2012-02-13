@@ -544,6 +544,29 @@
       }
     },
 
+    preprocess :
+      function() {
+        if (templatesEnabled)
+          $(document).find("[template]").each(function() {
+            defaultTemplateCleanFn($(this));
+          });
+      },
+
+    postprocess :
+      function() { $("*").filter(":visible").trigger("show") },
+
+    process :
+      function() { TFD_UI.processElem($(document)) },
+
+    init :
+      function() {
+        modalsEnabled = false;
+        TFD_UI.preprocess();
+        TFD_UI.process();
+        TFD_UI.postprocess();
+        setTimeout(function() { modalsEnabled = true }, 100);
+      },
+
     processElem :
       function(elem) {
         elem.find("*").add(elem).each(function() {
@@ -608,16 +631,7 @@
    * jQuery domready event handler                                           *
    ***************************************************************************/
 
-  $(function() {
-    modalsEnabled = false;
-    if (templatesEnabled)
-      $(document).find("[template]").each(function() {
-        defaultTemplateCleanFn($(this));
-      });
-    TFD_UI.processElem($(document));
-    $("*").filter(":visible").trigger("show");
-    setTimeout(function() { modalsEnabled = true }, 100);
-  });
+  $(function() { TFD_UI.init() });
 
   /*************************************************************************** 
    * jQuery plugins                                                          *
