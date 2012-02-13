@@ -610,6 +610,10 @@
 
   $(function() {
     modalsEnabled = false;
+    if (templatesEnabled)
+      $(document).find("[template]").each(function() {
+        defaultTemplateCleanFn($(this));
+      });
     TFD_UI.processElem($(document));
     $("*").filter(":visible").trigger("show");
     setTimeout(function() { modalsEnabled = true }, 100);
@@ -799,6 +803,13 @@
         }, e.attrMap());
       });
     }, data);
+  };
+
+  var defaultTemplateCleanFn = function(elem) {
+    elem.find("*").add(elem).each(function() {
+      if ($(this).is("[data-fill]"))
+        $(this).text("");
+    });
   };
 
   $.fn.registerChange = function(name, handler, doit) {
