@@ -109,9 +109,9 @@
       <form form-do="parse-page" action="outline" fill-template="toc"></form>
 
       <div class="toc" acts-like="input" type="checkbox" name="toc2">
-        <strong acts-like="input" type="radio" name="toc1" value="0">
-          Table of contents
-        </strong>
+        <div acts-like="input" type="radio" name="toc1" value="0">
+          <input type="button" value="Table of Contents"/>
+        </div>
         <div depends-on="toc2" depends-val-eq="1">
           <ol acts-like="input" type="radio" name="toc1" value="1"
             depends-on="toc1" depends-val-eq="0" checked>
