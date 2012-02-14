@@ -20,16 +20,16 @@
         font-size: 13px;
         color: #000; }
 
-      table {
+      .example table {
         border-collapse: collapse; }
 
-      tbody {
+      .example tbody {
         border: 1px solid black; }
 
-      tr:not(:first-child) td {
+      .example tr:not(:first-child) td {
         border-top: 1px dashed black; }
 
-      td:not(:last-child) {
+      .example td:not(:last-child) {
         border-right: 1px solid black; }
 
       .clear { float: clear; }
@@ -705,7 +705,32 @@ Power:
         </div>
       </div>
 
-      <hr>
+      <h2>Date Pickers</h2>
+
+      <p>Any text input element with <code>type="date"</code> will be set up to
+      use a jQuery-ui date picker.
+
+      <div class="example">
+        <div>
+          <span name="ex8" acts-like="input" type="radio" value="src" checked>
+            Code
+          </span>
+          <span name="ex8" acts-like="input" type="radio" value="try">
+            Demo
+          </span>
+        </div>
+        <div class="example-contents">
+          <pre depends-on="ex8" depends-val-eq="src">
+&lt;label&gt;Date:&lt;/label&gt;
+&lt;input <strong>type="date"</strong>/&gt;
+          </pre>
+          <div depends-on="ex8" depends-val-eq="try">
+            <label>Date:</label>
+            <input type="date"/>
+          </div>
+        </div>
+      </div>
+
     </div>
   </body>
 
