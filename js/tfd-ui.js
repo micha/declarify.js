@@ -494,7 +494,6 @@
 
         if (test && url)
           $.getJSON(url, data, function(data) {
-            console.log(elem);
             elem.val(data);
             elem.trigger("change");
           });
@@ -565,6 +564,12 @@
         TFD_UI.process();
         TFD_UI.postprocess();
         setTimeout(function() { modalsEnabled = true }, 100);
+
+        $.fillTemplate("toc", map(function(x, i) {
+          if (! $(x).attr("id"))
+            $(x).attr("id", "actslike_anchor-"+i);
+          return { heading: $(x).text(), link: "#"+$(x).attr("id") };
+        }, $("h1,h2,h3,h4,h5,h6").get()));
       },
 
     processElem :
