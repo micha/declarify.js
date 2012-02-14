@@ -475,6 +475,21 @@ Power:
       response. This is the default action, performed when no
       <code>form-do</code> attribute is specified.</dd>
 
+      <p>
+      <dt>parse-page</dt>
+      <dd>This action parses the DOM and processes it using some submodule
+      (specified with the <code>action</code> attribute), which sets the form's
+      value. See the list of supported submodules below:</dd>
+
+      <h3>Page Parsing Submodules</h3>
+
+      <p>
+      <dt>outline</dt>
+      <dd>This submodule produces an array of JavaScript objects representing
+      the document outline (i.e. a list of headings and url fragments suitable
+      for use with anchor tags). The table of contents of this page uses this
+      submodule.</dd>
+
       <div class="example">
         <div>
           <span name="ex5" acts-like="input" type="radio" value="src" checked>
