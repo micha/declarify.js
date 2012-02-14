@@ -13,7 +13,6 @@
 
     <style type="text/css">
       body {
-        padding-top: 20px;
         padding-bottom: 50px;
         width: 500px;
         margin: 0px auto;
@@ -37,6 +36,16 @@
 
       code {
         font-weight: bold; }
+
+      .toc {
+        position: fixed;
+        padding: 20px;
+        top: 0;
+        left: 0; }
+
+      .toc ol {
+        list-style-type: none;
+        padding: 0px; }
 
       .example table {
         border-collapse: collapse; }
@@ -90,20 +99,28 @@
   <body>
     <div id="main">
       <h1 name="top">TFD-UI Documentation</h1>
+
       <hr>
 
       <p>TFD-UI is a declarative way to specify dynamic behaviors in html
       pages. Using special attributes a system of dependencies and callbacks
       is created which determines how the page responds to user interaction.
 
-      <h2>Table Of Contents</h2>
+      <form form-do="parse-page" action="outline" fill-template="toc,toc1"></form>
 
-      <form form-do="parse-page" action="outline" fill-template="toc"></form>
-
-      <ol class="toc">
-        <li template="toc"><a data-fill-href="link" data-fill="heading">asdf</a></li>
-        <li template="toc"><a data-fill-href="link" data-fill="heading">qwer</a></li>
-      </ol>
+      <div class="toc" acts-like="input" type="checkbox" name="toc2">
+        <strong acts-like="input" type="radio" name="toc1" value="0">
+          Table of contents
+        </strong>
+        <div depends-on="toc2" depends-val-eq="1">
+          <ol acts-like="input" type="radio" name="toc1" value="1"
+            depends-on="toc1" depends-val-eq="0" checked>
+            <li template="toc">
+              <a data-fill-href="link" data-fill="heading">&nbsp;</a>
+            </li>
+          </ol>
+        </div>
+      </div>
         
       <h2>Terminology</h2>
 

@@ -135,7 +135,7 @@
 
       return (selected.size())
         ? selected
-        : options.first().selected(true);
+        : options.eq(0).selected(true);
     }
 
     function doSelect(eselect, edropdown, options, selecteds, selected) {
@@ -819,7 +819,8 @@
   var modalsEnabled     = false;
   var templates         = {};
   var defaultTemplateFn = function(data) {
-    var jself = $(this);
+    var jself = $(this), count = 0;
+
     map(function(x, i) {
       jself.find("*").add(jself).each(function() {
         var e = $(this);
@@ -867,9 +868,10 @@
 
     $("[template='"+name+"'][filled]").unregisterChange().remove();
 
-    map(function(x) {
+    map(function(x, i) {
       var t = $("[template='"+name+"']").not("[filled]").eq(0),
           e = t.clone().attr("filled","filled");
+      x.i = i;
       f.call(e, x);
       t.before(e);
       TFD_UI.processElem(e);
