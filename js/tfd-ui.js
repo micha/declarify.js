@@ -501,6 +501,16 @@
           elem.trigger("change");
 
         return elem;
+      },
+
+      "parse-page": function(elem, test, val) {
+        var parser  = elem.attr("action"),
+            data    = elem.paramsVisible();
+
+        if (test && parser && TFD_UI.formAction["parse-page"][parser])
+          TFD_UI.formAction["parse-page"][parser](elem, data);
+
+        return elem;
       }
     },
 
@@ -564,12 +574,6 @@
         TFD_UI.process();
         TFD_UI.postprocess();
         setTimeout(function() { modalsEnabled = true }, 100);
-
-        $.fillTemplate("toc", map(function(x, i) {
-          if (! $(x).attr("id"))
-            $(x).attr("id", "actslike_anchor-"+i);
-          return { heading: $(x).text(), link: "#"+$(x).attr("id") };
-        }, $("h1,h2,h3,h4,h5,h6").get()));
       },
 
     processElem :
@@ -618,6 +622,14 @@
         });
       }
 
+  };
+
+  TFD_UI.formAction["parse-page"]["outline"] = function(elem, data) {
+    elem.val(map(function(x, i) {
+      if (! $(x).attr("id"))
+        $(x).attr("id", "actslike_anchor-"+i);
+      return { heading: $(x).text(), link: "#"+$(x).attr("id") };
+    }, $("h1,h2,h3,h4,h5,h6").get())).trigger("change");
   };
 
   /*************************************************************************** 
