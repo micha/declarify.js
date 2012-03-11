@@ -38,7 +38,7 @@
       },
 
     neq : 
-      function() { return ! F.apply(F.eq, arguments) },
+      function() { return ! F.apply(F.eq, F.vec(arguments)) },
 
     eqq :
       function(x, y) {
@@ -54,7 +54,7 @@
       },
 
     neqq :
-      function() { return ! F.apply(F.eqq, arguments) },
+      function() { return ! F.apply(F.eqq, F.vec(arguments)) },
 
     lt : 
       function(x, y) {
@@ -83,18 +83,18 @@
       },
 
     le :
-      function() { return ! F.apply(F.gt, arguments) },
+      function() { return ! F.apply(F.gt, F.vec(arguments)) },
 
 
     ge :
-      function() { return ! F.apply(F.lt, arguments) },
+      function() { return ! F.apply(F.lt, F.vec(arguments)) },
 
 
     re :
       function (x, y) { return !!(new RegExp(y)).test(x) },
 
     nre :
-      function() { return ! F.apply(F.re, arguments) },
+      function() { return ! F.apply(F.re, F.vec(arguments)) },
 
 
     not :
@@ -102,51 +102,17 @@
 
     and :
       function() {
-        return F.reduce(function(x, y) { return !!x && !!y }, arguments);
+        return !!F.reduce(function(x, y) { return !!x && !!y }, F.vec(arguments));
       },
 
     or :
       function() {
-        return F.reduce(function(x, y) { return !!x || !!y }, arguments);
+        return !!F.reduce(function(x, y) { return !!x || !!y }, F.vec(arguments));
       },
 
-    keys :
-      function(obj) {
-        return F.map(function(x, i) {
-          return i;
-        }, obj);
-      },
-
-    dot :
-      function(obj, x) {
-        var thing = obj[x];
-        return $.isFunction(thing) 
-          ? F.collect(F.partial(F.apply, obj, thing))
-          : thing;
-      },
-
-    dotre :
-      function(obj, regex) {
-        return map(partial(dot, obj), F.filter(partial(re, _, regex), keys(obj)));
-      },
-
-    dotis :
-      function(pred, key, val) {
-        return F.comp(F.partial(pred, val), F.partial(F.dot, F._, key));
-      },
-
-    set :
-      function(x, y, z) {
-        switch(arguments.length) {
-          case 0:
-          case 1:
-            return false;
-          case 2:
-            return window[x] = y;
-          default:
-            x[y] = z;
-            return x;
-        }
+    inc :
+      function(x) {
+        return x + 1;
       },
 
     /*************************************************************************
@@ -188,6 +154,11 @@
         return F.strcmp(x.substr(0, len), y.substr(0, len));
       },
 
+    split :
+      function(x, y) {
+        return x ? x.split(y) : [];
+      },
+
     /*************************************************************************
      * ARRAY FUNCTIONS                                                       *
      *************************************************************************/
@@ -195,11 +166,61 @@
     vec :
       function(arr) { return Array.prototype.slice.call(arr) },
 
+    count :
+      function(arr) { return arr.length },
+
+    outof :
+      function(obj) {
+        var ret=[], i;
+        for (i in obj)
+          ret.push([i, obj[i]]);
+        return ret;
+      },
+
     first :
-      function(arr) { return arr[0] },
+      function(arr) { return arr ? arr[0] : undefined },
 
     rest :
       function(arr) { return Array.prototype.slice.call(arr, 1) },
+
+    nth :
+      function(arr, i) { return arr[i] },
+
+    appendl :
+      function(arr, x) { return rest(arguments).concat(arr) },
+
+    appendr :
+      function(arr, x) { return arr.concat(rest(arguments)) },
+
+    trans :
+      function(arr) {
+        return arr && arr.length && arr[0].length
+          ? [ map(first, arr) ].concat(trans(map(rest, arr)))
+          : [];
+      },
+
+    pick :
+      function(arr, i, v) {
+        return filter(comp(partial(eq, v), partial(nth, _, i)), arr);
+      },
+
+    concat :
+      function() {
+        return arguments.length == 1
+          ? arguments[0]
+          : (arguments.length == 2
+              ? arguments[0].concat(arguments[1])
+              : concat(arguments[0], apply(concat, rest(arguments))));
+      },
+
+    takewhile :
+      function(f, arr) {
+        var i, a=vec(arr);
+        for (i=0; i<a.length; i++)
+          if (! f(a[i]))
+            a.length = i;
+        return a;
+      },
 
     range :
       function(start, end, step) {
@@ -222,6 +243,45 @@
           return F.apply(F.partial(F.set, xs), x);
         }, obj, arr);
       },
+
+    keys :
+      function(obj) { return F.map(F.first, F.outof(obj)) },
+
+    values :
+      function(obj) { return F.map(F.partial(F.nth, F._, 1), F.outof(obj)) },
+
+    dot :
+      function(obj, x) {
+        var thing = obj[x];
+        return $.isFunction(thing) 
+          ? F.collect(F.partial(F.applyon, obj, thing))
+          : thing;
+      },
+
+    dotre :
+      function(obj, regex) {
+        return map(partial(dot, obj), F.filter(partial(re, _, regex), keys(obj)));
+      },
+
+    dotis :
+      function(pred, key, val) {
+        return F.comp(F.partial(pred, val), F.partial(F.dot, F._, key));
+      },
+
+    set :
+      function(x, y, z) {
+        switch(arguments.length) {
+          case 0:
+          case 1:
+            return false;
+          case 2:
+            return window[x] = y;
+          default:
+            x[y] = z;
+            return x;
+        }
+      },
+
 
     /*************************************************************************
      * FUNDAMENTS                                                            *
@@ -246,19 +306,22 @@
       },
 
     apply :
-      function(x, y, z) {
+      function(x, y) {
+        y = $.isArray(y) ? y : [];
         switch(arguments.length) {
           case 0:
             return false;
           case 1:
             return x();
-          case 2:
-            return x.apply(window, y);
           default:
-            return $.isFunction(x)
-              ? x.apply(window, y)
-              : y.apply(x, z);
+            return x.apply(window, y);
         }
+      },
+
+    applyon :
+      function(x, y, z) {
+        z = z || [];
+        return y.apply(x, z);
       },
 
     argrev :
@@ -307,6 +370,26 @@
         return ret;
       },
 
+    mapn :
+      function() {
+        var f     = F.first(arguments),
+            arrs  = F.map(F.vec, F.rest(arguments)),
+            maxl  = F.reduce(function(x, xs) {
+                      return Math.max(x.length, xs);
+                    }, 0, arrs),
+            ret   = [], i;
+
+        for (i=0; i<maxl; i++)
+          ret.push(f.apply(window, F.map(F.partial(F.nth, F._, i), arrs)));
+
+        return ret;
+      },
+
+    mapargs :
+      function(f, g) {
+        return function() { return F.apply(f, F.map(g, F.vec(arguments))) };
+      },
+
     filter :
       function(pred, arr) {
         return F.map(function(x) {
@@ -352,7 +435,7 @@
       function(num, arr) { return arr.slice(num) },
 
     collect :
-      function(f) { return function() { return f(arguments) } },
+      function(f) { return function() { return f(F.vec(arguments)) } },
 
     arr_tmpl :
       function(tmpl, arr) {
@@ -410,6 +493,14 @@
       },
 
   };
+
+  var mathfns = ["cos", "pow", "log", "tan", "sqrt", "ceil", "asin", "abs",
+                 "max", "exp", "atan2", "random", "round", "floor", "acos",
+                 "atan", "min", "sin"];
+
+  F.map(function(x) {
+    F[x] = function() { return Math[x].apply(window, F.vec(arguments)) };
+  }, mathfns);
 
   window.Fundaments = F;
 

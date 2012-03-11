@@ -1,0 +1,46 @@
+---
+---
+{% include css/base.css %}
+{% include css/pygments.css %}
+
+p {
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  hyphens: auto;
+  text-align: justify;
+  font-size: 14px;
+  line-height: 1.5; }
+
+p + p { margin-top: 1em; }
+
+.wrapper { text-align: center; }
+
+.span { text-align: left; }
+
+.toc {
+  position: fixed;
+  width: 240px; }
+
+.toc > .span-inner { padding-left: 80px; }
+
+.toc h5.checked,
+.toc h5.checked:hover { color: red; }
+
+.toc h5:hover { color: blue; }
+
+.main {
+  margin-left: 240px;
+  width: 640px; }
+
+.main > .span-inner { padding-right: 80px; }
+
+html { overflow-y: scroll; }
+
+div.highlight { background-color: #f8f8f8; }
+
+div.highlight,
+div.demo {
+  padding: 12px;
+  border: 1px solid #ccc; }
+
+div.demo { border-top: none; }

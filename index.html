@@ -1,783 +1,93 @@
-<!DOCTYPE html>
-<html>
+---
+layout: base
+title:  TFD-UI Documentation
+---
 
-  <head>
-    <title>TFD-UI | Documentation</title>
-    <script type="text/javascript" src="js/jquery.js"></script>
-    <script type="text/javascript" src="js/jquery-ui.js"></script>
-    <script type="text/javascript" src="js/lambda.js"></script>
-    <script type="text/javascript" src="js/tfd-ui.js"></script>
+<div depends-on="section" depends-val-eq="overview">
 
-    <link type="text/css" rel="stylesheet" href="css/smoothness/jquery-ui.css"
-          media="screen"/>
+<h1>Overview</h1>
 
-    <style type="text/css">
-      body {
-        padding-bottom: 50px;
-        width: 500px;
-        margin: 0px auto;
-        font-size: 13px;
-        color: #000; }
+<hr>
 
-      body, input {
-        font-family: "HelveticaNeue", "Helvetica", Arial, sans-serif; }
+<p> The TFD-UI library makes it possible to define complex, dynamic behaviors
+in HTML webpages without writing any JavaScript code. Attributes on the
+HTML elements are used to define these behaviors. The library includes a
+number of useful modules to handle such things as forms, form validation,
+inline templates (and filling of templates from AJAX JSON requests),
+deep-linking, etc.
 
-      h1, h2, h3, h4, h5, h6 {
-        font-family: "HelveticaNeue-Light", "Helvetica", Arial, sans-serif;
-        font-weight: 100px; }
+<p> Additionally, an inline widget factory type of thing is also included,
+to make abstraction and composition of HTML markup and behaviors possible.
 
-      a {
-        text-decoration: none;
-        font-family: monospace; }
+<h3>Example:</h3>
 
-      dt {
-        font-weight: bold;
-        font-family: monospace; }
+{% highlight html %}
+<select name="ex1">
+  <option value="" selected>Please select</option>
+  <option value="1">Option 1</option>
+  <option value="2">Option 2</option>
+</select>
 
-      code {
-        font-weight: bold; }
+<hr>
 
-      .toc {
-        position: fixed;
-        padding: 20px;
-        top: 0;
-        left: 0; }
+<div depends-on="ex1" depends-val-eq="">
+  <p>You haven't selected anything.</p>
+</div>
+<div depends-on="ex1" depends-val-eq="1">
+  <p>You selected option 1.</p>
+</div>
+<div depends-on="ex1" depends-val-eq="2">
+  <p>You selected option 2.</p>
+</div>
+{% endhighlight %}
 
-      .toc ol {
-        list-style-type: none;
-        padding: 0px; }
+<div class="demo">
+  <select name="ex1">
+    <option value="" selected>Please select</option>
+    <option value="1">Option 1</option>
+    <option value="2">Option 2</option>
+  </select>
 
-      .example table {
-        border-collapse: collapse; }
+  <hr>
 
-      .example tbody {
-        border: 1px solid black; }
+  <div depends-on="ex1" depends-val-eq="">
+    <p>You haven't selected anything.</p>
+  </div>
+  <div depends-on="ex1" depends-val-eq="1">
+    <p>You selected option 1.</p>
+  </div>
+  <div depends-on="ex1" depends-val-eq="2">
+    <p>You selected option 2.</p>
+  </div>
+</div>
 
-      .example tr:not(:first-child) td {
-        border-top: 1px dashed black; }
+</div>
 
-      .example td:not(:last-child) {
-        border-right: 1px solid black; }
+<div depends-on="section" depends-val-eq="dependencies">
 
-      .example > div {
-        padding: 5px;
-        margin-top: 20px; }
+<h1>Dependencies</h1>
 
-      .example > div.example-contents {
-        border: 1px solid black; 
-        padding: 0px;
-        margin-top: 0px; }
+<hr>
 
-      .example > div > span {
-        padding: 5px;
-        margin-right: 2px;
-        border: 1px solid black; }
+<p> Things are made to happen in the page by 
 
-      .example > div > span[checked] {
-        border-bottom: 1px solid white; }
+</div>
 
-      .example-contents > pre {
-        background-color: black;
-        margin: 5px;
-        color: #00FF00;
-        overflow-x: scroll;
-        padding: 1em;
-        padding-top: 1.5em; }
+<div depends-on="section" depends-val-eq="actions">
 
-      .example-contents > pre > strong {
-        color: orange; }
+<h1>Depends Actions</h1>
 
-      .example-contents > div {
-        margin: 5px;
-        padding: 5px; }
+<hr>
 
-      .example .on { color: green; }
-      .example .off { color: red; }
-    </style>
-  </head>
+<p>Depends actions go here.</p>
 
-  <body>
-    <div id="main">
-      <h1 name="top">TFD-UI Documentation</h1>
+</div>
 
-      <hr>
+<div depends-on="section" depends-val-eq="form-handling">
 
-      <p>TFD-UI is a declarative way to specify dynamic behaviors in html
-      pages. Using special attributes a system of dependencies and callbacks
-      is created which determines how the page responds to user interaction.
+<h1>Form Handling</h1>
 
-      <form form-do="parse-page" action="outline" fill-template="toc"></form>
+<hr>
 
-      <div class="toc" acts-like="input" type="checkbox" name="toc2">
-        <div acts-like="input" type="radio" name="toc1" value="0">
-          <input type="button" value="Table of Contents"/>
-        </div>
-        <div depends-on="toc2" depends-val-eq="1">
-          <ol acts-like="input" type="radio" name="toc1" value="1"
-            depends-on="toc1" depends-val-eq="0" checked>
-            <li template="toc">
-              <a data-fill-href="link" data-fill="heading">&nbsp;</a>
-            </li>
-          </ol>
-        </div>
-      </div>
-        
-      <h2>Terminology</h2>
-
-      <p>For the purposes of this document we will establish some jargon to
-      help with things:
-
-      <p>
-      <dt>dependant</dt>
-      <dd>An html element that depends on another html element.</dd>
-
-      <p>
-      <dt>referant</dt>
-      <dd>The html element on which the dependent element depends.</dd>
-
-      <h2>Dependency Attributes</h2>
-
-      <p>These attributes establish the dependant/referant relationship between
-      html elements.
-
-      <p>
-      <dt>depends-on="<i>name</i>"</dt>
-      <dd>This element will react when the value of the element with
-      attribute <code>name="<i>name</i>"</code> changes.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex1" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex1" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex1" depends-val-eq="src">
-&lt;input name="ex1button" type="button" value="Click Me"/&gt;
-
-&lt;p modal="alert" <strong>depends-on="ex1button"</strong>&gt;Click!&lt;/p&gt;
-          </pre>
-          <div depends-on="ex1" depends-val-eq="try">
-            <input name="ex1button" type="button" value="Click Me"/>
-
-            <p modal="alert" depends-on="ex1button">Click!</p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Action Attributes</h2>
-
-      <p>These attributes determine what sort of action is performed on the
-      dependant when the referant's value changes.
-
-      <p>
-      <dt>depends-do="<i>action,action,...</i>"</dt>
-      <dd>Comma separated list of actions to be performed when the referant's
-      value is changed. See the list of supported actions below:</dd>
-
-      <h3>Actions</h3>
-
-      <p>These actions are specified as the value of the <code>depends-do</code>
-      attribute of the dependant, and determine which action is to be
-      performed.
-
-      <p>
-      <dt>toggle</dt>
-      <dd>Toggles visibility of the dependant. This is the default action,
-      performed when no <code>depends-do</code> attribute is specified.</dd>
-
-      <p>
-      <dt>toggle-<i>effect</i></dt>
-      <dd>Toggles visibility of the dependant using a neat little 
-      animation of some kind. Supported <code><i>effect</i></code>s are
-      <code>slide</code> and <code>fade</code>.</dd>
-
-      <p>
-      <dt>set-text</dt>
-      <dd>Sets the text of the dependant to the value of the referant.</dd>
-
-      <p>
-      <dt>set-val</dt>
-      <dd>Sets the value of the dependant to the value of the referant. Note
-      that this is not always the same thing as setting the <code>value</code>
-      attribute of the dependant, so this attribute should be used instead of
-      the <code>set-attr-value</code> attribute.</dd>
-
-      <p>
-      <dt>set-attr-<i>attr</i></dt>
-      <dd>Sets the value of the attribute <code><i>attr</i></code> on the
-      dependant to the value of the referant.</dd>
-
-      <p>
-      <dt>scroll-top</dt>
-      <dd>Scrolls to the top of the page.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex2" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex2" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex2" depends-val-eq="src">
-Power:
-&lt;input name="ex2radio" type="radio" value="off" checked/&gt;
-&lt;label&gt;off&lt;/label&gt;
-&lt;input name="ex2radio" type="radio" value="on"/&gt;
-&lt;label&gt;on&lt;/label&gt;
-
-&lt;p&gt;The power is &hellip;
-  &lt;span depends-on="ex2radio" <strong>depends-do="set-text,set-attr-class"</strong>/&gt;
-&lt;/p&gt;
-          </pre>
-          <div depends-on="ex2" depends-val-eq="try">
-            Power:
-            <input name="ex2radio" type="radio" value="off" checked/>
-            <label>off</label>
-            <input name="ex2radio" type="radio" value="on"/>
-            <label>on</label>
-            <p>The power is &hellip;
-              <span depends-on="ex2radio" depends-do="set-text,set-attr-class"/>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Conditional Attributes</h2>
-
-      <p>These attributes determine when the dependant element will react to
-      changes of the value of the referant. This is used to show/hide parts
-      of the page in response to user interaction and things like that.
-
-      <p>If no <code>depends-val-*</code> attribute is given, then the
-      dependant element will always react to any change of the referant.
-
-      <p>
-      <dt>depends-val-eq="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is equal to <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-neq="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is not equal to <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-lt="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is less than <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-le="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is less than or equal to <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-gt="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is greater than <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-ge="<i>value</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value is greater than or equal to <code><i>value</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-re="<i>regex</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value matches the regular expression <code><i>regex</i></code>.</dd>
-
-      <p>
-      <dt>depends-val-nre="<i>regex</i>"</dt>
-      <dd>This element will react when the value of the referant changes and
-      its value does not match the regular expression <code><i>regex</i></code>.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex3" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex3" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex3" depends-val-eq="src">
-Power:
-&lt;input name="ex3radio" type="radio" value="0" checked/&gt;
-&lt;label&gt;off&lt;/label&gt;
-&lt;input name="ex3radio" type="radio" value="1"/&gt;
-&lt;label&gt;on&lt;/label&gt;
-
-&lt;p&gt;The power is &hellip;
-  &lt;span depends-on="ex3radio" <strong>depends-val-eq="0"</strong>&gt;off&lt;/span&gt;
-  &lt;span depends-on="ex3radio" <strong>depends-val-eq="1"</strong>&gt;on&lt;/span&gt;
-&lt;/p&gt;
-          </pre>
-          <div depends-on="ex3" depends-val-eq="try">
-            Power:
-            <input name="ex3radio" type="radio" value="0" checked/>
-            <label>off</label>
-            <input name="ex3radio" type="radio" value="1"/>
-            <label>on</label>
-            <p>The power is &hellip;
-              <span depends-on="ex3radio" depends-val-eq="0">off</span>
-              <span depends-on="ex3radio" depends-val-eq="1">on</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Non-Form Element Values</h2>
-
-      <p>Normally, only form elements have a value. This value can be obtained
-      using jQuery's <code>.val()</code> method. TFD-UI makes it possible to
-      interact with any element in the same way as a form element, and that
-      element will then have a value.
-
-      <p>To make a generic html element act like a given type of form element
-      the <code>acts-like="<i>nodeName</i>"</code> attribute is specified on
-      the element.
-
-      <p>
-      <dt>acts-like="input" type="checkbox"</dt>
-      <dd>This acts like a checkbox: its value toggles between 0 and 1 when the
-      user clicks on it.</dd>
-
-      <p>
-      <dt>acts-like="input" type="radio"</dt>
-      <dd>This acts like a radio button: only one of these elements (identified
-      by name attribute) can be active at any time. The checked element is set
-      when the user clicks on the element. The value of the set of radio buttons
-      is the value of the checked element.</dd>
-
-      <p>
-      <dt>acts-like="input" type="button"</dt>
-      <dd>This acts like a button: its value is constant, but its onchange
-      handler is triggered whenever the user clicks on the element.</dd>
-
-      <p>
-      <dt>acts-like="input" type="hidden"</dt>
-      <dd>This acts like a hidden form element: its value is constant and it
-      does not respond to user interaction, at all.</dd>
-
-      <p>
-      <dt>acts-like="select"</dt>
-      <dd>This acts like a select element. It allows the user to select an
-      option from a list of mutually exclusive choices. When the user clicks
-      on the element the choices are displayed. If the user clicks on a
-      specific option, the select element takes the value of that option. This
-      element should contain a number of <code>acts-like="option"</code>
-      elements representing the various choices the user can select. The
-      selected element will be shown, and the rest hidden.</dd>
-
-      <p>
-      <dt>acts-like="option"</dt>
-      <dd>This acts like an option element, representing one of the choices of
-      a select element. The <code>selected</code> attribute, if present,
-      indicates that a particular option is currently selected.</dd>
-
-      <p>
-      <dt>options-for="<i>select</i>"</dt>
-      <dd>This specifies that this element should be displayed as the dropdown
-      when the user clicks on the select element identified by
-      <code>name="<i>select</i>"</code>. This element should contain a number
-      of <code>acts-like="option"</code> elements representing the various
-      choices the user can select.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex4" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex4" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex4" depends-val-eq="src">
-&lt;label&gt;Power is:&lt;/label&gt;
-&lt;span <strong>acts-like="select"</strong> name="ex4select"&gt;
-  &lt;span <strong>acts-like="option"</strong> value="0" style="color:green"&gt;OFF&lt;/span&gt;
-  &lt;span <strong>acts-like="option"</strong> value="1" style="color:red"&gt;ON&lt;/span&gt;
-&lt;/span&gt;
-&lt;span <strong>options-for="ex4select"</strong>&gt;
-  &lt;span <strong>acts-like="option"</strong> value="0" selected&gt;Turn off&lt;/span&gt;
-  | &lt;span <strong>acts-like="option"</strong> value="1"&gt;Turn on&lt;/span&gt;
-&lt;/span&gt;
-
-&lt;p modal="alert" depends-on="ex4select" depends-val-eq="1"&gt;
-  Power is now on!
-&lt;/p&gt;
-          </pre>
-          <div depends-on="ex4" depends-val-eq="try">
-            <label>Power is:</label>
-            <span acts-like="select" name="ex4select">
-              <span acts-like="option" value="0" style="color:green">OFF</span>
-              <span acts-like="option" value="1" style="color:red">ON</span>
-            </span>
-            <span options-for="ex4select">
-              <span acts-like="option" value="0" selected>Turn off</span>
-              | <span acts-like="option" value="1">Turn on</span>
-            </span>
-
-            <p modal="alert" depends-on="ex4select" depends-val-eq="1">
-              Power is now on!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Forms</h2>
-
-      <p>Normally, forms are used to collect information from the user which is
-      then submitted via GET or POST request to the server. TFD-UI disables the
-      standard form behavior and wires up the form elements to use AJAX,
-      instead.
-
-      <p>Form elements in TFD-UI pages are the linkage between the data and the
-      user interface. Forms can be configured to make AJAX requests that can
-      automatically fill in inline templates on the page (see the
-      <code>TEMPLATES</code> section, below).
-
-      <h2>Form Action Attributes</h2>
-
-      <p>These attributes determine how the <code>action</code> attribute of
-      the form is to be interpreted and how the result is to be processed. The
-      action will be initiated any time an input element contained in the form
-      changes its value. The result of the action must be JavaScript data
-      structures, and the form's value is set to this JavaScript data when the
-      action is successfully completed.
-
-      <p>
-      <dt>form-do="<i>action,action,...</i>"</dt>
-      <dd>Comma separate list of actions to be performed when any of the form's
-      input element's values are changed. See the list of supported actions
-      below:</dd>
-
-      <h3>Form Actions</h3>
-
-      <p>These actions are specified as the value of the <code>form-do</code>
-      attribute of the form, and determine which type of action is performed
-      when one of the form's input elements changes.
-
-      <p>
-      <dt>get-json</dt>
-      <dd>Makes a GET request to the url specified in the form's
-      <code>action</code> attribute, and processes the response as JSON data.
-      The value of the form element is set to the result of parsing JSON
-      response. This is the default action, performed when no
-      <code>form-do</code> attribute is specified.</dd>
-
-      <p>
-      <dt>parse-page</dt>
-      <dd>This action parses the DOM and processes it using some submodule
-      (specified with the <code>action</code> attribute), which sets the form's
-      value. See the list of supported submodules below:</dd>
-
-      <h3>Page Parsing Submodules</h3>
-
-      <p>These submodules are used in conjunction with the
-      <code>parse-page</code> form action. They process the page's DOM and set
-      the form's value.
-      
-      <p>
-      <dt>outline</dt>
-      <dd>This submodule produces an array of JavaScript objects representing
-      the document outline (i.e. a list of headings and url fragments suitable
-      for use with anchor tags). The table of contents of this page uses this
-      submodule.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex5" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex5" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex5" depends-val-eq="src">
-&lt;fieldset&gt;
-  &lt;legend&gt;Fire on input change&lt;/legend&gt;
-
-  &lt;form name="ex5form1" <strong>action="data.json"</strong>&gt;
-    &lt;label&gt;Power:&lt;/label&gt;
-    &lt;select name="power"&gt;
-      &lt;option value="0" selected&gt;OFF&lt;/option&gt;
-      &lt;option value="1"&gt;ON&lt;/option&gt;
-    &lt;/select&gt;
-  &lt;/form&gt;
-&lt;/fieldset&gt;
-&lt;br&gt;
-
-&lt;fieldset&gt;
-  &lt;legend&gt;Fire on submit&lt;/legend&gt;
-
-  &lt;form name="ex5form2" <strong>action="data.json"</strong>&gt;
-    &lt;label&gt;Power:&lt;/label&gt;
-    &lt;select name="power"&gt;
-      &lt;option value="0" selected&gt;OFF&lt;/option&gt;
-      &lt;option value="1"&gt;ON&lt;/option&gt;
-    &lt;/select&gt;
-    &lt;input type="submit"/&gt;
-  &lt;/form&gt;
-&lt;/fieldset&gt;
-
-&lt;p modal="alert" depends-on="ex5form1"&gt;
-  First form update!
-&lt;/p&gt;
-
-&lt;p modal="alert" depends-on="ex5form2"&gt;
-  Second form update!
-&lt;/p&gt;
-          </pre>
-          <div depends-on="ex5" depends-val-eq="try">
-            <fieldset>
-              <legend>Fire on input change</legend>
-              <form name="ex5form1" action="data.json">
-                <label>Power:</label>
-                <select name="power">
-                  <option value="0" selected>OFF</option>
-                  <option value="1">ON</option>
-                </select>
-              </form>
-            </fieldset>
-            <br>
-            <fieldset>
-              <legend>Fire on submit</legend>
-              <form name="ex5form2" action="data.json">
-                <label>Power:</label>
-                <select name="power">
-                  <option value="0" selected>OFF</option>
-                  <option value="1">ON</option>
-                </select>
-                <input type="submit"/>
-              </form>
-            </fieldset>
-
-            <p modal="alert" depends-on="ex5form1">
-              First form update!
-            </p>
-            <p modal="alert" depends-on="ex5form2">
-              Second form update!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Form Template Filling</h2>
-
-      <p>Forms can be used to fetch data from the server and use that data to
-      fill inline templates in the page. (See the <code>TEMPLATES</code>
-      section below.) The templates are filled when the value of the form
-      itself changes (usually as a result of the <code>action</code> being
-      performed).
-
-      <p>
-      <dt>fill-template="<i>template,template,...</i>"</dt>
-      <dd>Fills in the inline templates in the comma separated list of template
-      names. The inline templates are identified by the attribute
-      <code>template="<i>template</i>"</code>.</dd>
-
-      <h2>Templates</h2>
-
-      <p>TFD-UI supports inline templates. Inline templates are html elements
-      that are in the page, but contain dummy content. The content is intended
-      to be filled in later with data obtained from some source, usually as a
-      result of an AJAX request to the server.
-
-      <p>Templates are filled in based on the <code>data-fill</code> and
-      <code>data-fill-*</code> attributes on the template element and its
-      children. The data must be an array of JavaScript objects (POJOs). This
-      array is iterated through, and for each object a clone of the template
-      is made and filled in as specified using the attributes below:
-
-      <p>
-      <dt>template="<i>template</i>"</dt>
-      <dd>Identifies this element as an inline template, filled with dummy
-      content. The value of this attribute is what is references when the
-      template is filled, as a result of a form action, for example.</dd>
-
-      <p>
-      <dt>data-fill="<i>prop</i>"</dt>
-      <dd>Sets the text of this element to the value of the
-      <code><i>prop</i></code> property of the JavaScript object.</dd>
-
-      <p>
-      <dt>data-fill-<i>attr</i>="<i>prop</i>"</dt>
-      <dd>Sets the value of this element's <code><i>attr</i></code>
-      attribute to the value of the <code><i>prop</i></code> property of
-      the JavaScript object.</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex6" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex6" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex6" depends-val-eq="src">
-&lt;form action="data.json" <strong>fill-template="ex6-template"</strong>&gt;
-&lt;/form&gt;
-
-&lt;table cellpadding="6px" cellspacing="0px"&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;Item&lt;/th&gt;
-      &lt;th&gt;Price&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr <strong>template="ex6-template"</strong>&gt;
-      &lt;td <strong>data-fill="animal"</strong>&gt;Fish&lt;/td&gt;
-      &lt;td <strong>data-fill="price"</strong> align="right"&gt;1.00&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr <strong>template="ex6-template"</strong>&gt;
-      &lt;td <strong>data-fill="animal"</strong>&gt;Mammal&lt;/td&gt;
-      &lt;td <strong>data-fill="price"</strong> align="right"&gt;5.00&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-          </pre>
-          <div depends-on="ex6" depends-val-eq="try">
-            <form action="data.json" fill-template="ex6-template">
-            </form>
-
-            <table cellpadding="6px" cellspacing="0px">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr template="ex6-template">
-                  <td data-fill="animal">Fish</td>
-                  <td data-fill="price" align="right">$1.00</td>
-                </tr>
-                <tr template="ex6-template">
-                  <td data-fill="animal">Mammal</td>
-                  <td data-fill="price" align="right">$5.00</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <h2>Modal Dialogs</h2>
-
-      <p>These attributes are used to transform any html element into a modal
-      dialog that will be hidden when the page loads, and displayed in response
-      to some interaction with a referant.
-
-      <p>
-      <dt>modal="<i>type</i>"</dt>
-      <dd>This element will be converted into a modal dialog of type
-      <code><i>type</i></code>. The title of the dialog is specified by adding
-      a <code>title</code> attribute to the element. See the list of modal
-      dialog types below:</dd>
-
-      <h3>Modal Dialog Types</h3>
-
-      <p>The different modal dialog types contain various configurations of
-      buttons and things.
-
-      <p>
-      <dt>plain</dt>
-      <dd>This type of dialog has no buttons, at all.</dd>
-
-      <p>
-      <dt>confirm</dt>
-      <dd>This type of dialog has two buttons: "yes" and "no". Additionally,
-      the element has a value, which is set to 0 if the user clicks "no", or
-      1 if they click "yes".</dd>
-
-      <p>
-      <dt>alert</dt>
-      <dd>This type of dialog has one button: "ok".</dd>
-
-      <div class="example">
-        <div>
-          <span name="ex7" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex7" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex7" depends-val-eq="src">
-&lt;input type="button" name="ex7button1" value="Plain"/&gt;
-&lt;input type="button" name="ex7button2" value="Confirm"/&gt;
-&lt;input type="button" name="ex7button3" value="Alert"/&gt;
-
-&lt;p <strong>modal="plain"</strong> <strong>title="Plain Dialog"</strong> depends-on="ex7button1"&gt;
-  Hello, world!
-&lt;/p&gt;
-&lt;p <strong>modal="confirm"</strong> <strong>title="Confirmation Dialog"</strong> depends-on="ex7button2"&gt;
-  Hello, world!
-&lt;/p&gt;
-&lt;p <strong>modal="alert"</strong> <strong>title="Alert Dialog"</strong> depends-on="ex7button3"&gt;
-  Hello, world!
-&lt;/p&gt;
-          </pre>
-          <div depends-on="ex7" depends-val-eq="try">
-            <input type="button" name="ex7button1" value="Plain"/>
-            <input type="button" name="ex7button2" value="Confirm"/>
-            <input type="button" name="ex7button3" value="Alert"/>
-
-            <p modal="plain" title="Plain Dialog" depends-on="ex7button1">
-              Hello, world!
-            </p>
-            <p modal="confirm" title="Confirmation Dialog" depends-on="ex7button2">
-              Hello, world!
-            </p>
-            <p modal="alert" title="Alert Dialog" depends-on="ex7button3">
-              Hello, world!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h2>Date Pickers</h2>
-
-      <p>Any text input element with <code>type="date"</code> will be set up to
-      use a jQuery-ui date picker.
-
-      <div class="example">
-        <div>
-          <span name="ex8" acts-like="input" type="radio" value="src" checked>
-            Code
-          </span>
-          <span name="ex8" acts-like="input" type="radio" value="try">
-            Demo
-          </span>
-        </div>
-        <div class="example-contents">
-          <pre depends-on="ex8" depends-val-eq="src">
-&lt;label&gt;Date:&lt;/label&gt;
-&lt;input <strong>type="date"</strong>/&gt;
-          </pre>
-          <div depends-on="ex8" depends-val-eq="try">
-            <label>Date:</label>
-            <input type="date"/>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </body>
-
-</html>
+<p>This is a test.</p>
+</div>
