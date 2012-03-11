@@ -1,0 +1,38 @@
+<div widget-def="alert" class="alert" depends-on="*alert"
+     depends-val-eq="1">
+
+  <script type="text/widget">
+    function(elem) {
+      var i, match, attrs = elem.attrMap();
+      for (i in elem.attrMap())
+        if (i == "depends-on" || i.match(/^depends-val-(.+)$/))
+          $(".close").attr(i, attrs[i]);
+      $(".alert-description").text(elem.attr("message"));
+      $(".alert")
+        .attr("class", $(".alert").attr("class")+" "+elem.attr("class"));
+    }
+  </script>
+
+  <div class="alert-inner">
+    <div class="alert-description">
+      That doesn't say 'hello'.
+    </div>
+    <span class="close" acts-like="input" type="checkbox" name="*alert"
+          depends-on="hello" do-set-check >
+      &times;
+    </span>
+  </div>
+</div>
+
+<input type="text" placeholder="Type 'hello' here." name="hello2"/>
+
+<hr>
+
+<div widget="alert" class="success" depends-on="hello2"
+  depends-val-eq="hello" message="Thanks for typing 'hello'."></div>
+
+<div widget="alert" class="warning" depends-on="hello2"
+  depends-val-eq="" message="Now it's empty :("></div>
+
+<div widget="alert" class="error" depends-on="hello2"
+  depends-val-nre="^(hello)?$" message="You didn't type 'hello'."></div>

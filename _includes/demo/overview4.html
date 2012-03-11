@@ -1,0 +1,34 @@
+<form get-json="data/data.json" fill-template-tpl1 >
+  <fieldset>
+    <legend>Data</legend>
+    <label>
+      <input type="radio" name="data-type" value="foo" checked />
+      foo
+    </label>
+    <label>
+      <input type="radio" name="data-type" value="bar"/>
+      bar
+    </label>
+  </fieldset>
+  <fieldset>
+    <input type="submit" value="Set foo or bar, then click me!"/>
+  </fieldset>
+</form>
+
+<hr>
+
+<ul>
+  <div template="tpl1">
+    <li acts-like="input" type="radio" name="menu2"
+        data-fill-value="animal" depends-on="menu2"
+        data-fill-depends-val-neq="animal" >
+      <span data-fill="animal">Foo</span>
+    </li>
+    <li depends-on="menu2" data-fill-depends-val-eq="animal" do-slide >
+      <div>
+        <h4 data-fill="animal">Foo</h4>
+        <p>Price: $<span data-fill="price">0.01</span>.</p>
+      </div>
+    </li>
+  </div>
+</ul>

@@ -1,0 +1,29 @@
+<ul>
+  <li acts-like="input" type="radio" name="menu" value="foo">
+    <span>Foo</span>
+  </li>
+  <li depends-on="menu" depends-val-eq="foo" do-slide >
+    <div>
+      <h4>Foo</h4>
+      <p>This is the content of foo.</p>
+    </div>
+  </li>
+  <li acts-like="input" type="radio" name="menu" value="bar">
+    <span>Bar</span>
+  </li>
+  <li depends-on="menu" depends-val-eq="bar" do-slide >
+    <div>
+      <h4>Bar</h4>
+      <p>This is the content of bar.</p>
+    </div>
+  </li>
+  <li acts-like="input" type="radio" name="menu" value="baz">
+    <span>Baz</span>
+  </li>
+  <li depends-on="menu" depends-val-eq="baz" do-slide >
+    <div>
+      <h4>Baz</h4>
+      <p>This is the content of baz.</p>
+    </div>
+  </li>
+</ul>

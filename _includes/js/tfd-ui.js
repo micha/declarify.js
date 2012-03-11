@@ -6,9 +6,6 @@ Fundaments.import();
  */
 (function($) {
 
-  // True when initial processing of DOM is complete
-  var initComplete = false;
-
   // Event queue
   var eventQ  = [];
 
@@ -38,7 +35,7 @@ Fundaments.import();
   var E_CLK   = ["BUTTON", "RADIO", "CHECKBOX"];
 
   $.gensym = function() {
-    return "TFD_"+(++syms);
+    return "gensym-"+(++syms);
   };
 
   // True if `needle` is in `haystack` array
@@ -322,7 +319,7 @@ Fundaments.import();
           event.stopPropagation();
 
           jself.doEvent(event);
-        }).qEvent()
+        }).each(function() { if ($(this).type() != "SUBMIT") $(this).qEvent() })
       : this;
   };
 
@@ -388,9 +385,13 @@ Fundaments.import();
   }
 
   function prepare(elem) {
-    elem = $(elem).find("*").each($.invoke("initVal"))
-                            .each($.invoke("initEvent"));
-    map(partial(apply, _, [elem]), prepare.fns);
+    $(elem)
+      .find("*")
+      .each($.invoke("initVal"))
+      .each($.invoke("initEvent"))
+      .each(function() {
+        map(partial(apply, _, [$(this)]), prepare.fns);
+      });
   }
 
   function accept(elem) {
@@ -405,7 +406,7 @@ Fundaments.import();
     var name = (elem = $(elem)).attr("name"),
         deps = getByAttr(A_DEP, name),
         accp = true;
-    if (initComplete && (accp = elem.startTransaction()))
+    if ($UI.initComplete && (accp = elem.startTransaction()))
         elem.endTransaction(accp = accept(elem));
     if (accp && name && deps.size())
       map(partial(doDepends, _, getVal(name)), deps.get());
@@ -419,6 +420,7 @@ Fundaments.import();
   function processUpdates() {
     var tmpQ, doneQ=[], t=$(window).scrollTop();
 
+    console.log("processUpdates");
     while (eventQ.length) {
       tmpQ = vec(eventQ);
       eventQ.length = 0;
@@ -429,7 +431,7 @@ Fundaments.import();
 
     finalize(doneQ);
     $(window).scrollTop(t);
-    return (initComplete = true);
+    return ($UI.initComplete = true);
   }
 
   function init() {
@@ -442,6 +444,7 @@ Fundaments.import();
 
   window.$UI  = {
     q:            eventQ,
+    initComplete: false,
     init:         init.fns        = [],
     prepare:      prepare.fns     = [],
     predicate:    predicate.fns   = [],
@@ -539,9 +542,14 @@ Fundaments.import();
   var doers = {
     "do-set-val" :
       function(match, val, elem, test, refval) {
-        console.log("refval", vec(arguments));
-        if (test)
+        if (test && !loading)
           elem.val(refval).qEvent();
+      },
+
+    "do-set-check" :
+      function(match, val, elem, test, refval) {
+        if (!loading)
+          elem.checked(!test).qEvent();
       },
 
     "do-toggle" :
@@ -687,7 +695,22 @@ Fundaments.import();
 
     "widget" :
       function(match, val, elem) {
-        var e = (new w[val](elem))._dom;
+        var e = (new w[val](elem))._dom,
+            g = {};
+        console.log("got here", elem, e);
+        e.find("*").andSelf().each(function() {
+          var jself = $(this),
+              match;
+          map(function(x) {
+            if (x[0] == "name" && x[1] && (match = x[1].match(/^\*(.+)$/)))
+              g[match[1]] = $.gensym();
+          }, outof(jself.attrMap()));
+
+          map(function(x) {
+            if (x[1] && (match = x[1].match(/^\*(.+)$/)) && match[1] in g)
+              jself.attr(x[0], g[match[1]]);
+          }, outof(jself.attrMap()));
+        });
         elem.replaceWith(e);
         e.prepare();
       }
@@ -865,6 +888,10 @@ Fundaments.import();
  */
 (function($) {
   
+  var submitQ = [],
+      loading = true,
+      tpls    = {};
+
   function doSubmit(elem) {
     $(elem).trigger("submit");
   }
@@ -885,15 +912,19 @@ Fundaments.import();
   var formUpdate = {
     "fill-template(-(.+))" :
       function(match, val, elem, data) {
-        var tpl   = $("body").find("[template='"+match[2]+"']").get(),
+        var tname = match[2],
+            tpl   = $("body").find("[template='"+tname+"']").get(),
+            t     = tpls[tname],
             minl  = min(tpl.length, data.length),
             tmp, i;
+
+        $UI.initComplete = false;
 
         if (tpl.length == 0 || data.length == 0)
           return;
         
         for (i=0; i<minl; i++)
-          $(tpl).eq(i).fillTemplate(data[i]).prepare();
+          $(tpl).eq(i).replaceWith(t.clone().fillTemplate(data[i]).prepare());
 
         if (tpl.length > data.length) {
           $(tpl).each(function(i) {
@@ -903,8 +934,9 @@ Fundaments.import();
         }
 
         if (data.length > tpl.length) {
+          tpl = $("body").find("[template='"+tname+"']").get();
           for (i=minl; i<data.length; i++) {
-            tmp = $(tpl).last().clone().fillTemplate(data[i]).prepare();
+            tmp = t.clone().fillTemplate(data[i]).prepare();
             tpl = $(tpl).last().after(tmp).end().add(tmp).get();
           }
         }
@@ -933,6 +965,8 @@ Fundaments.import();
             return;
           if (! m[2])
             e.text(x);
+          else if (m[2] == "val")
+            e.val(x);
           else
             e.attr(m[2], x);
         }, e.attrMap());
@@ -943,16 +977,20 @@ Fundaments.import();
   };
 
   $UI.init.unshift(function() {
-    $("form").submit(constant(false));
+    $("form").submit(false);
+    $("[template]").each(function() {
+      tpls[$(this).attr("template")] = $(this).clone()
+      $(this).hide();
+    });
   });
 
   $UI.prepare.push(function(elem) {
-    if (elem.is("form")) {
-      elem.submit(function(event) {
-        $UI.dispatch(formAction, elem);
-        return false;
-      });
-    }
+    if ($(elem).is("form"))
+      $(elem)
+        .bind("submit", function(event) {
+          $UI.dispatch(formAction, $(this));
+          return false;
+        }).qEvent();
   });
 
   $UI.process.push(function(elem, test) {
@@ -963,10 +1001,12 @@ Fundaments.import();
     map(doSubmit, $.unique(filter(identity, map(function(x) {
       var form  = (x = $(x)).parents("form"),
           isSub = x.type() == "SUBMIT",
-          subs  = form.find("[type='submit']").size();
-      return x.is("form") || (form.size() && (!subs || isSub))
-        ? form[0]
-        : null;
+          subs  = (x.is("form") ? x : form).find("[type='submit']").size();
+      return x.is("form") && !subs
+        ? x[0]
+        : (form.size() && (!subs || isSub)
+            ? form[0]
+            : false);
     }, q))));
   });
 

@@ -1,0 +1,15 @@
+<input type="text" placeholder="Type 'hello' here." name="hello"/>
+
+<hr>
+
+<div class="alert error" depends-on="*alert" depends-val-eq="1">
+  <div class="alert-inner">
+    <div class="alert-description">
+      That doesn't say 'hello'.
+    </div>
+    <span class="close" acts-like="input" type="checkbox" name="*alert"
+      depends-on="hello" depends-val-nre="^(hello)?$" do-set-check >
+      &times;
+    </span>
+  </div>
+</div>
