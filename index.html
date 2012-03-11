@@ -69,7 +69,78 @@ to make abstraction and composition of HTML markup and behaviors possible.
 
 <hr>
 
-<p> Things are made to happen in the page by 
+<p> Setting up dependencies between elements is how you tell TFD-UI that one
+element depends on another and that something should happen to the dependent
+element when the one it depends on changes in some way.</p>
+
+<h3>Example:</h3>
+
+{% highlight html %}
+<input type="text" name="d1" placeholder="Type 'hello' here."/>
+
+<hr>
+
+<div class="alert success" depends-on="d1" depends-val-eq="hello">
+  <div class="alert-inner">
+    <div class="alert-description">
+      It says 'hello' now :)
+    </div>
+    <span class="close">&times;</span>
+  </div>
+</div>
+
+<div class="alert warning" depends-on="d1" depends-val-eq="">
+  <div class="alert-inner">
+    <div class="alert-description">
+      The input box is empty :(
+    </div>
+    <span class="close">&times;</span>
+  </div>
+</div>
+
+<div class="alert error" depends-on="d1" depends-val-nre="^(hello)?$">
+  <div class="alert-inner">
+    <div class="alert-description">
+      That doesn't say 'hello'.
+    </div>
+    <span class="close">&times;</span>
+  </div>
+</div>
+{% endhighlight %}
+
+<div class="demo">
+  <input type="text" name="d1" placeholder="Type 'hello' here."/>
+
+  <hr>
+
+  <div class="alert success" depends-on="d1" depends-val-eq="hello">
+    <div class="alert-inner">
+      <div class="alert-description">
+        It says 'hello' now :)
+      </div>
+      <span class="close">&times;</span>
+    </div>
+  </div>
+
+  <div class="alert warning" depends-on="d1" depends-val-eq="">
+    <div class="alert-inner">
+      <div class="alert-description">
+        The input box is empty :(
+      </div>
+      <span class="close">&times;</span>
+    </div>
+  </div>
+
+  <div class="alert error" depends-on="d1" depends-val-nre="^(hello)?$">
+    <div class="alert-inner">
+      <div class="alert-description">
+        That doesn't say 'hello'.
+      </div>
+      <span class="close">&times;</span>
+    </div>
+  </div>
+</div>
+
 
 </div>
 

@@ -44,3 +44,5 @@ div.demo {
   border: 1px solid #ccc; }
 
 div.demo { border-top: none; }
+
+input[type='text'] { border: 1px solid #888; padding: .5em; }
