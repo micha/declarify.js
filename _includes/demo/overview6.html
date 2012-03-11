@@ -5,7 +5,7 @@
     function(elem) {
       var i, match, attrs = elem.attrMap();
       for (i in elem.attrMap())
-        if (i == "depends-on" || i.match(/^depends-val-(.+)$/))
+        if (i.match(/^depends-(.+)$/))
           $(".close").attr(i, attrs[i]);
       $(".alert-description").text(elem.attr("message"));
       $(".alert")
