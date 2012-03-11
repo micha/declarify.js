@@ -855,7 +855,7 @@ Fundaments.import();
         $.address.value(b);
     }, $.unique(addrQ));
     addrQ   = [];
-    setTimeout(function() { loading=false }, 10000);
+    setTimeout(function() { loading=false }, 100);
   });
 
 })(jQuery);
