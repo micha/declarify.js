@@ -21,10 +21,11 @@
   <div template="tpl1">
     <li acts-like="input" type="radio" name="menu2"
         data-fill-value="animal" depends-on="menu2"
-        data-fill-depends-val-neq="animal" >
+        data-fill-depends-val-neq="animal" do-chain-slide="slide2">
       <span data-fill="animal">Foo</span>
     </li>
-    <li depends-on="menu2" data-fill-depends-val-eq="animal" do-slide >
+    <li style="display:none" depends-on="menu2"
+        data-fill-depends-val-eq="animal" do-chain-slide="slide2" >
       <div>
         <h4 data-fill="animal">Foo</h4>
         <p>Price: $<span data-fill="price">0.01</span>.</p>

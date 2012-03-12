@@ -79,7 +79,6 @@ div.demo.overview4 div {
   background-color: #f8f8f8;
 }
 
-div.demo.overview3 li[checked] {
-  background-color: white;
-}
+div.demo.overview3 ul li[depends-on='menu'] {
+  background-color: white; }
   

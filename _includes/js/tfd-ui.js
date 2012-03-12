@@ -420,7 +420,6 @@ Fundaments.import();
   function processUpdates() {
     var tmpQ, doneQ=[], t=$(window).scrollTop();
 
-    console.log("processUpdates");
     while (eventQ.length) {
       tmpQ = vec(eventQ);
       eventQ.length = 0;
@@ -522,13 +521,14 @@ Fundaments.import();
 
   function toggle(elem, test, show, hide) {
     var args = arguments.length > 4 ? vec(arguments).slice(4) : [];
-    if (loading) {
+    if (! $UI.initComplete) {
       show = "show";
       hide = "hide";
       args = [];
     }
     elem.hidden2(test);
-    elem[test ? "hide" : "show"].apply(elem);
+    if (! $UI.initComplete)
+      elem[test ? "hide" : "show"].apply(elem);
     elem[test ? show : hide].apply(elem, args);
   }
 
@@ -697,7 +697,6 @@ Fundaments.import();
       function(match, val, elem) {
         var e = (new w[val](elem))._dom,
             g = {};
-        console.log("got here", elem, e);
         e.find("*").andSelf().each(function() {
           var jself = $(this),
               match;
@@ -918,8 +917,6 @@ Fundaments.import();
             minl  = min(tpl.length, data.length),
             tmp, i;
 
-        $UI.initComplete = false;
-
         if (tpl.length == 0 || data.length == 0)
           return;
         
@@ -941,6 +938,7 @@ Fundaments.import();
           }
         }
 
+        $UI.initComplete = false;
         $UI.run();
       }
   };
