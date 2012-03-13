@@ -1,29 +1,30 @@
 ---
+# vim: filetype=mkd
+
 layout: base
 title:  TFD-UI Documentation
+
 ---
 
-<div depends-on="section" depends-val-eq="overview">
+# Overview
 
-<h1>Overview</h1>
+***
 
-<hr>
-
-<p> The TFD-UI library makes it possible to define complex, dynamic behaviors
+The TFD-UI library makes it possible to define complex, dynamic behaviors
 in HTML webpages without writing any JavaScript code. Attributes on the
 HTML elements are used to define these behaviors. The library includes a
 number of useful modules to handle such things as forms, form validation,
 inline templates (and filling of templates from AJAX JSON requests),
 deep-linking, etc.
 
-<p> Additionally, an inline widget factory type of thing is also included,
+Additionally, an inline widget factory type of thing is also included,
 to make abstraction and composition of HTML markup and behaviors possible.
 
-<h2>Motivation</h2>
+## Motivation
 
-<p> Consider the following snippet of HTML, where we have a somewhat complex
-form containing elements which are only relevant sometimes. We want to be able
-to hide parts of the form that don't apply.
+Consider the following snippet of HTML, where we have a somewhat complex
+form containing elements which are only relevant sometimes. We want to be
+able to hide parts of the form that don't apply.
 
 {% highlight html %}
 {% include demo/overview1.html %}
@@ -33,7 +34,7 @@ to hide parts of the form that don't apply.
   {% include demo/overview1.html %}
 </div>
 
-<p> The "pregnant" checkbox clearly only applies to females, so we don't want
+The "pregnant" checkbox clearly only applies to females, so we don't want
 to show it unless the user selects "female". With TFD-UI it's possible to
 set attributes of the HTML elements that will specify these relationships.
 
@@ -45,21 +46,19 @@ set attributes of the HTML elements that will specify these relationships.
   {% include demo/overview2.html %}
 </div>
 
-<p> What's happening here is inutitively straightforward: setting the
-<code>depends-on</code> attribute sets up an event handler on the input
-element with the specified name. When that input element's value changes,
-all the elements that depend on it will be updated. How they react to the
-event is determined by the <em>depends action</em> specified (in this case
-it's the default one&mdash;toggle visibility). Predicates, like the
-<code>depends-val-eq</code> one here, can be used to modify the depends
-action; in this case when the predicate is true the element is shown, and 
-when it's false the element is hidden.
+What's happening here is inutitively straightforward: setting the `depends-on`
+attribute sets up an event handler on the input element with the specified
+name. When that input element's value changes, all the elements that depend
+on it will be updated. How they react to the event is determined by the
+*depends action* specified (in this case it's the default one---toggle
+visibility). Predicates, like the `depends-val-eq` one here, can be used
+to modify the depends action; in this case when the predicate is true the
+element is shown, and when it's false the element is hidden.
 
-<p> Interestingly, this concept can be extended to encompass most of the
-behaviors that a web page needs. By allowing any HTML element to <em>act
-like</em> an input element and by setting up dependencies between them, it's
-possible to build complex, dynamic pages without requiring any JavaScript
-coding.
+Interestingly, this concept can be extended to encompass most of the behaviors
+that a web page needs. By allowing any HTML element to *act like* an input
+element and by setting up dependencies between them, it's possible to build
+complex, dynamic pages without requiring any JavaScript coding.
 
 {% highlight html %}
 {% include demo/overview3.html %}
@@ -69,19 +68,19 @@ coding.
   {% include demo/overview3.html %}
 </div>
 
-<p> Using a declarative style of coding expresses the coder's intent as
-data rather than as code, so separate modules can inspect the document and
+Using a declarative style of coding expresses the coder's intent as data
+rather than as code, so separate modules can inspect the document and
 determine the relationships between elements in a way that would be very
 difficult otherwise. This facilitates a more structured organization of the
 user interface (UI) code.
 
-<p> The power of the declarative style is demonstrated with the inline
-template and form handling modules, showing the simplicity of this technique
-compared to the usual JavaScript imperative style.
+The power of the declarative style is demonstrated with the inline template
+and form handling modules, showing the simplicity of this technique compared
+to the usual JavaScript imperative style.
 
-<p> Consider the case where you want to fetch some JSON data from the server
-and format it into some attractive and functional HTML in the page, like the
-following example:
+Consider the case where you want to fetch some JSON data from the server
+and format it into some attractive and functional HTML in the page, like
+the following example:
 
 {% highlight html %}
 {% include demo/overview4.html %}
@@ -91,17 +90,17 @@ following example:
   {% include demo/overview4.html %}
 </div>
 
-<p> From the console or firebug you can see the XHR requests, the JSON data,
+From the console or firebug you can see the XHR requests, the JSON data,
 and the request parameters. In a real-world situation this request would be
 submitting parameters that would affect the data that is returned, of course,
 but for this demo a static JSON file is used.
 
-<h2>Widgets</h2>
+## Widgets
 
-<p> So here we have a powerful set of tools for declaratively building dynamic
-web pages; the "atoms" of the language. Still lacking is a means of abstraction
-and composition&mdash;there is no way to encapsulate specific complicated
-patterns of markup and attributes and behaviors in a flexible and reusable way.
+So here we have a powerful set of tools for declaratively building dynamic web
+pages; the "atoms" of the language. Still lacking is a means of abstraction and
+composition---there is no way to encapsulate specific complicated patterns
+of markup and attributes and behaviors in a flexible and reusable way.
 Consider the following fairly complex HTML structure: an alert box with a
 "close" button that the user can click on to hide the alert.
 
@@ -113,11 +112,11 @@ Consider the following fairly complex HTML structure: an alert box with a
   {% include demo/overview5.html %}
 </div>
 
-<p> You see the error alert pop up if you type something other than "hello" in
+You see the error alert pop up if you type something other than "hello" in
 the input box. The widget factory makes it possible to package this complex
-structure and provide a simple placeholder for it in your markup. In the next
-example a widget is defined and a placeholder is used to instantiate it in the
-page.
+structure and provide a simple placeholder for it in your markup. In the
+next example a widget is defined and a placeholder is used to instantiate
+it in the page.
 
 {% highlight html %}
 {% include demo/overview6.html %}
@@ -127,139 +126,40 @@ page.
   {% include demo/overview6.html %}
 </div>
 
-<p> The widget definition only appears once in the page, and can be maintained
+The widget definition only appears once in the page, and can be maintained
 separately, as a UI kit resource.
 
-<p> Although it's not obvious from the example, there is a facility for
-creating "gensyms", or local name attributes in the widget definition. The
-<code>*alert</code> name in this example is a gensym.  Look at the generated
-source in firebug and you'll see that it has been replaced with a name like
-<code>gensym-3</code> etc.
+Although it's not obvious from the example, there is a facility for creating
+"gensyms", or local name attributes in the widget definition. The `*alert`
+name in this example is a gensym.  Look at the generated source in firebug
+and you'll see that it has been replaced with a name like `gensym-3` etc.
 
-<p> Similarly, the JavaScript widget constructor is executed in a special
-environment. The jQuery <code>$</code> object is restricted and can only
-select elements that belong to the widget instance proper. The widget instance
-<code>$</code> can not access elements in its parent or in any nested widgets
-it may contain. This cleanly encapsulates the JavaScript constructor and
-makes it possible to write clean, concise code without risk of affecting
-other elements in the page unexpectedly.
+Similarly, the JavaScript widget constructor is executed in a special
+environment. The jQuery `$` object is restricted and can only select elements
+that belong to the widget instance proper. The widget instance `$` can not
+access elements in its parent or in any nested widgets it may contain. This
+cleanly encapsulates the JavaScript constructor and makes it possible to
+write clean, concise code without risk of affecting other elements in the
+page unexpectedly.
 
-</div>
+# Dependencies
 
-<div depends-on="section" depends-val-eq="dependencies">
+***
 
-<h1>Dependencies</h1>
-
-<hr>
-
-<p> Setting up dependencies between elements is how you tell TFD-UI that one
+Setting up dependencies between elements is how you tell TFD-UI that one
 element depends on another and that something should happen to the dependent
-element when the one it depends on changes in some way.</p>
-
-<h3>Example:</h3>
-
-{% highlight html %}
-<input type="text" name="d1" placeholder="Type 'hello' here."/>
-
-<hr>
-
-<div class="alert warning" depends-on="alert1" depends-val-eq="1">
-  <div class="alert-inner">
-    <div class="alert-description">
-      The input box can't be empty.
-    </div>
-    <span class="close" acts-like="input" type="checkbox" name="alert1"
-      depends-on="d1" depends-val-eq="" do-set-check >
-      &times;
-    </span>
-  </div>
-</div>
-
-<div class="alert success" depends-on="alert2" depends-val-eq="1">
-  <div class="alert-inner">
-    <div class="alert-description">
-      It says 'hello', all right.
-    </div>
-    <span class="close" acts-like="input" type="checkbox" name="alert2"
-      depends-on="d1" depends-val-eq="hello" do-set-check >
-      &times;
-    </span>
-  </div>
-</div>
-
-<div class="alert error" depends-on="alert3" depends-val-eq="1">
-  <div class="alert-inner">
-    <div class="alert-description">
-      That doesn't say 'hello'.
-    </div>
-    <span class="close" acts-like="input" type="checkbox" name="alert3"
-      depends-on="d1" depends-val-nre="^(hello)?$" do-set-check >
-      &times;
-    </span>
-  </div>
-</div>
-{% endhighlight %}
-
-<div class="demo">
-  <input type="text" name="d1" placeholder="Type 'hello' here."/>
-
-  <hr>
-
-  <div class="alert warning" depends-on="alert1" depends-val-eq="1">
-    <div class="alert-inner">
-      <div class="alert-description">
-        The input box can't be empty.
-      </div>
-      <span class="close" acts-like="input" type="checkbox" name="alert1"
-        depends-on="d1" depends-val-eq="" do-set-check >
-        &times;
-      </span>
-    </div>
-  </div>
-
-  <div class="alert success" depends-on="alert2" depends-val-eq="1">
-    <div class="alert-inner">
-      <div class="alert-description">
-        It says 'hello', all right.
-      </div>
-      <span class="close" acts-like="input" type="checkbox" name="alert2"
-        depends-on="d1" depends-val-eq="hello" do-set-check >
-        &times;
-      </span>
-    </div>
-  </div>
-
-  <div class="alert error" depends-on="alert3" depends-val-eq="1">
-    <div class="alert-inner">
-      <div class="alert-description">
-        That doesn't say 'hello'.
-      </div>
-      <span class="close" acts-like="input" type="checkbox" name="alert3"
-        depends-on="d1" depends-val-nre="^(hello)?$" do-set-check >
-        &times;
-      </span>
-    </div>
-  </div>
-</div>
+element when the one it depends on changes in some way. The following
+attributes are used to specify element dependence relationahips:
 
 
-</div>
+# Depends Actions
 
-<div depends-on="section" depends-val-eq="actions">
+***
 
-<h1>Depends Actions</h1>
+Depends actions go here.
 
-<hr>
+# Form Handling
 
-<p>Depends actions go here.</p>
+***
 
-</div>
-
-<div depends-on="section" depends-val-eq="form-handling">
-
-<h1>Form Handling</h1>
-
-<hr>
-
-<p>This is a test.</p>
-</div>
+This is a test.

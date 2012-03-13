@@ -902,10 +902,26 @@ Fundaments.import();
           $UI.dispatch(formUpdate, elem, data);
         });
       },
+
     "get-wigwam" :
       function(match, val, elem) {
         //console.log("get-wigwam:",[match,val,elem[0]]);
       },
+
+    "get-sections" :
+      function(match, val, elem) {
+        $UI.dispatch(
+          formUpdate,
+          elem,
+          $("[name='"+val+"']")
+            .find("[depends-on='section']")
+            .map(function() {
+              var id    = $(this).attr("depends-val-eq"),
+                  title = $(this).find("h1").text();
+              return { id: id, title: title };
+            })
+        );
+      }
   };
 
   var formUpdate = {
@@ -951,6 +967,12 @@ Fundaments.import();
       }
   };
 
+  function interp(s, name, val) {
+    r = new RegExp("([^\\\\]|^)\\$\\{"+name+"\\}", "g");
+    return s.match(r) ? s.replace(r, "$1"+val) : false;
+  }
+
+  window.interp = interp;
   $.fn.fillTemplate = function(data) {
     var jself = $(this);
 
@@ -958,15 +980,27 @@ Fundaments.import();
       jself.find("*").add(jself).each(function() {
         var e = $(this);
         map(function(x2, i2) {
-          var m = i2.match(/^data-fill(-(.*))?$/);
-          if (!m || x2 != i)
-            return;
-          if (! m[2])
-            e.text(x);
-          else if (m[2] == "val")
-            e.val(x);
-          else
-            e.attr(m[2], x);
+          var m, tmp;
+          if (m = i2.match(/^data-fill(-(.+))?$/)) {
+            if (!m || x2 != i)
+              return;
+            if (! m[2])
+              e.text(x);
+            else if (m[2] == "val")
+              e.val(x);
+            else
+              e.attr(m[2], x);
+          } else if (m = i2.match(/^data-interp(-(.+))?$/)) {
+            tmp = interp(x2, i, x);
+            if (!m || tmp === false)
+              return;
+            if (! m[2])
+              e.text(tmp);
+            else if (m[2] == "val")
+              e.val(tmp);
+            else
+              e.attr(m[2], tmp);
+          }
         }, e.attrMap());
       });
     }, data);
@@ -1009,3 +1043,52 @@ Fundaments.import();
   });
 
 })(jQuery);
+
+/**
+ * Table of contents module
+ */
+(function($) {
+
+  $.fn.siblingsUntil = function(selector) {
+    var flag = true;
+    return this.siblings().filter(function() {
+      return $(this).is(selector) ? (flag = false) : flag;
+    });
+  };
+
+  var toc = {
+    "make-sections" :
+      function(match, val, elem) {
+        elem.find("h1").each(function() {
+          var id    = $(this).text().toLowerCase().replace(/[^a-z]/g, '-'),
+              wrap  = $("<div></div>")
+                        .attr("depends-on", "section")
+                        .attr("depends-val-eq", id);
+          $(this).add(
+            $(this).siblingsUntil("h1").not("div[depends-on='section']")
+          ).wrapAll(wrap);
+        });
+      }
+  };
+
+  var prepare = {
+    "make-sections" :
+      function(match, val, elem) {
+        $("form[name='"+val+"']")
+          .find("[name='section']")
+          .val($("[depends-on='section']").eq(0).attr("depends-val-eq"));
+      }
+  };
+
+  $UI.init.unshift(function() {
+    $("body").find("[make-sections]").each(function() {
+      $UI.dispatch(toc, $(this));
+    });
+  });
+
+  $UI.prepare.push(function(elem) {
+    $UI.dispatch(prepare, elem);
+  });
+
+})(jQuery);
+

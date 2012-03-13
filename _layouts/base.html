@@ -2,22 +2,27 @@
 <html lang="en">
   <head>
     <title>TFD-UI Documentation</title>
-    {% include tfd-ui.head.html %}
-    <link rel="stylesheet" href="css/tfd-ui.css" type="text/css" />
-    <script type="text/javascript" src="js/hyphenator.js"></script>
-    <script type="text/javascript">Hyphenator.run();</script>
+    <script type="text/javascript" src="js/tfd-ui.js"></script>
+    <link rel="stylesheet" href="css/tfd-ui.css" type="text/css">
   </head>
   <body>
     <div class="wrapper">
       <div class="group">
         <div class="toc span">
           <div class="span-inner">
-            {% include toc.html %}
+            <h5 template="toc">
+              <a data-fill="title" data-interp-href="#/?section=${id}"></a>
+            </h5>
           </div>
         </div>
         <div class="main span">
-          <div class="span-inner hyphenate">
-            {{ content }}
+          <form name="/" get-sections="section-content" fill-template-toc
+                bind-url >
+            <input type="hidden" name="section" />
+          </form>
+          <div class="span-inner hyphenate" name="section-content"
+               make-sections="/" >
+            {{ content | markdownify }}
           </div>
         </div>
       </div>

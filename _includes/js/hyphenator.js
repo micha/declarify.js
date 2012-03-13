@@ -1,4 +1,4 @@
-﻿/** @license Hyphenator 4.0.0 - client side hyphenation for webbrowsers
+/** @license Hyphenator 4.0.0 - client side hyphenation for webbrowsers
  *  Copyright (C) 2011  Mathias Nater, Zürich (mathias at mnn dot ch)
  *  Project and Source hosted on http://code.google.com/p/hyphenator/
  * 

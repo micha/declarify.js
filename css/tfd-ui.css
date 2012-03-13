@@ -44,6 +44,8 @@ div.highlight code { font-weight: inherit; }
 
 p + div.highlight { margin-top: 2em; }
 
+blockquote { margin: 0 0 0 2em; }
+
 div.demo + p { margin-top: 2em; }
 
 fieldset + fieldset { margin-top: 5px; }
