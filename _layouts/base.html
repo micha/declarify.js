@@ -1,32 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>TFD-UI Documentation</title>
+    <title>{{ page.title }}</title>
     <script type="text/javascript" src="js/tfd-ui.js"></script>
     <link rel="stylesheet" href="css/tfd-ui.css" type="text/css">
   </head>
   <body>
-    <div class="wrapper">
-      <div class="group">
-        <div class="toc span">
-          <div class="span-inner">
-            <h5 template="toc">
-              <a data-fill="title" data-interp-href="#/?section=${id}"></a>
-            </h5>
-          </div>
-        </div>
-        <div class="main span">
-          <form name="/" get-sections="section-content" fill-template-toc
-                bind-url >
-            <input type="hidden" name="section" />
-          </form>
-          <div class="span-inner hyphenate" name="section-content"
-               make-sections="/" >
-            {{ content | markdownify }}
-          </div>
-        </div>
-      </div>
-    </div>
+    {{ content }}
   </body>
 </html
 

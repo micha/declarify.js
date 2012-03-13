@@ -1,6 +1,7 @@
 ---
 layout: tfd-ui.js
 ---
-{% include js/hyphenator.js %}
+{% include docs/js/tfd-ui.toc.js %}
+{% include docs/js/hyphenator.js %}
 
 Hyphenator.run();
