@@ -49,10 +49,42 @@ Fundaments.import();
     }, !!str ? str.replace(/\+/gi," ").split("&") : []));
   };
 
+  $.encodeURIFragment = function(str) {
+    return encodeURIComponent(str)
+             .replace(/%20/g, ' ')
+             .replace(/%2B/g, '+')
+             .replace(/%2F/g, '/')
+             .replace(/%24/g, '$')
+             .replace(/%25/g, '+')
+             .replace(/%3B/g, ';')
+             .replace(/%3A/g, ':')
+             .replace(/%40/g, '@')
+             .replace(/%2F/g, '/')
+             .replace(/%3F/g, '?');
+  };
+
+  $.param2 = function(obj) {
+    return map(function(x) {
+      return map($.encodeURIFragment, x).join("=");
+    }, outof(obj)).join("&");
+  };
+
   $.invoke = function(meth) {
     var args = rest(arguments);
     return function() {
       return $(this)[meth].apply($(this), args);
+    }
+  };
+
+  $.serialize = function(val) {
+    switch ($.type(val)) {
+      case "boolean":
+        return val ? "1" : "0";
+      case "undefined":
+      case "null":
+        return "";
+      default:
+        return val+"";
     }
   };
 
@@ -139,10 +171,21 @@ Fundaments.import();
     return ! this.hidden2();
   };
 
+  $.fn.hidden2Parents = function() {
+    if (this.is("body"))
+      return false;
+    else
+      return !!this.hidden2() || !!this.parent().hidden2Parents();
+  };
+
   $.fn.hidden2 = function() {
     if (arguments.length)
       return this.data(D_HID, !! arguments[0]);
     return this.data(D_HID);
+  };
+
+  $.fn.byName = function(name) {
+    return getByName(name, this);
   };
 
   $.fn.listen = function() {
@@ -369,10 +412,10 @@ Fundaments.import();
   function getVal(name) {
     var e = getByName(name);
     return e.type() == "RADIO"
-      ? e.filter(function() { return $(this).checked() }).val()
+      ? $.serialize(e.filter(function() { return $(this).checked() }).val())
       : (e.type() == "CHECKBOX" 
           ? (e.checked() ? "1" : "0")
-          : e.val());
+          : $.serialize(e.val()));
   }
 
   function predicate(elem, val) {
@@ -387,6 +430,7 @@ Fundaments.import();
   function prepare(elem) {
     $(elem)
       .find("*")
+      .andSelf()
       .each($.invoke("initVal"))
       .each($.invoke("initEvent"))
       .each(function() {
@@ -429,7 +473,7 @@ Fundaments.import();
     }
 
     finalize(doneQ);
-    $(window).scrollTop(t);
+    //$(window).scrollTop(t);
     return ($UI.initComplete = true);
   }
 
@@ -500,7 +544,7 @@ Fundaments.import();
   var matcher = {
     "depends-val(-(.*))" :
       function(match, val1, elem, val2) {
-        return test[match[2]](val1, val2);
+        return test[match[2]]($.serialize(val1), $.serialize(val2));
       }
   };
 
@@ -526,7 +570,7 @@ Fundaments.import();
       hide = "hide";
       args = [];
     }
-    elem.hidden2(test);
+    elem.hidden2(!test);
     if (! $UI.initComplete)
       elem[test ? "hide" : "show"].apply(elem);
     elem[test ? show : hide].apply(elem, args);
@@ -542,8 +586,15 @@ Fundaments.import();
   var doers = {
     "do-set-val" :
       function(match, val, elem, test, refval) {
-        if (test && !loading)
+        if (test && !loading && elem.val() != refval) {
           elem.val(refval).qEvent();
+        }
+      },
+
+    "do-set-text" :
+      function(match, val, elem, test, refval) {
+        if (test)
+          elem.text(refval);
       },
 
     "do-set-check" :
@@ -825,6 +876,7 @@ Fundaments.import();
       loading = true,
       saved   = window.location.hash.replace(/^#/,"");
 
+  var count = 0;
   var address = {
     "bind-url" :
       function(match, val, elem) {
@@ -836,8 +888,9 @@ Fundaments.import();
               i, v;
           if (n == elem.attr("name")) {
             for (i in q) {
+              q[i] = decodeURIComponent(q[i]);
               if (q[i] != r[i]) {
-                v = elem.find("[name='"+i+"']");
+                v = elem.byName(i);
                 if (v.type() != "RADIO" && v.type() != "CHECKBOX")
                   v.val(q[i]);
                 if (v.type() == "RADIO")
@@ -854,8 +907,8 @@ Fundaments.import();
 
         elem.submit(function() {
           var a = $.address.value(),
-              b = elem.attr("name")+"?"+$.param(elem.paramsVisible());
-          if (a != b && !loading)
+              b = elem.attr("name")+"?"+$.param2(elem.paramsVisible());
+          if (a != b)
             setTimeout(function() { $.address.value(b) }, 0);
         });
       }
@@ -872,7 +925,7 @@ Fundaments.import();
   $UI.finalize.push(function(q) {
     map(function(x) {
       var a = $.address.value(),
-          b = $(x).attr("name")+"?"+$.param($(x).paramsVisible());
+          b = $(x).attr("name")+"?"+$.param2($(x).paramsVisible());
       if (a != b && !loading)
         $.address.value(b);
     }, $.unique(addrQ));
@@ -898,8 +951,15 @@ Fundaments.import();
   var formAction = {
     "get-json" :
       function(match, val, elem) {
-        $.getJSON(val, elem.paramsVisible(), function(data) {
-          $UI.dispatch(formUpdate, elem, data);
+        $.ajax({
+          url: val,
+          dataType: "json",
+          data: elem.paramsVisible(),
+          async: true,
+          success: function(data) {
+            $UI.dispatch(formUpdate, elem, data);
+          },
+          error: function() { console.log("error getting json") }
         });
       },
 
@@ -931,6 +991,7 @@ Fundaments.import();
             tpl   = $("body").find("[template='"+tname+"']").get(),
             t     = tpls[tname],
             minl  = min(tpl.length, data.length),
+            scrl  = $(window).scrollTop(),
             tmp, i;
 
         if (tpl.length == 0 || data.length == 0)
@@ -954,6 +1015,7 @@ Fundaments.import();
           }
         }
 
+        $(window).scrollTop(scrl);
         $UI.initComplete = false;
         $UI.run();
       }
@@ -972,9 +1034,17 @@ Fundaments.import();
     return s.match(r) ? s.replace(r, "$1"+val) : false;
   }
 
-  window.interp = interp;
+  $.fn.prepTemplate = function() {
+    this.find("*").add(this).each(function() {
+      if ($(this).is("[data-fill]"))
+        $(this).text("");
+    });
+  };
+
   $.fn.fillTemplate = function(data) {
     var jself = $(this);
+
+    this.prepTemplate();
 
     map(function(x, i) {
       jself.find("*").add(jself).each(function() {
