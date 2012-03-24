@@ -916,6 +916,17 @@ Fundaments.import();
 
   $UI.init.push(function() {
     $.address.wrap(true);
+    
+    function setInitialHash(hash) {
+      if (!hash)
+        return;
+      if ($UI.initComplete && !loading)
+        $.address.value(hash);
+      else
+        setTimeout(partial(setInitialHash, hash), 0);
+    }
+
+    setTimeout(partial(setInitialHash, saved), 0);
   });
 
   $UI.prepare.push(function(elem) {
