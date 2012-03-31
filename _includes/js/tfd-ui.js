@@ -1,5 +1,5 @@
 
-Fundaments.import();
+Fundaments.load();
 
 /**
  * Core module
@@ -16,8 +16,9 @@ Fundaments.import();
   var D_CHK   = "actslike_checked",
       D_VAL   = "actslike_value",
       D_HID   = "actslike_hidden",
-      D_SAV   = "actslike_savedval";
-      D_SAVC  = "actslike_savedchecked";
+      D_SAV   = "actslike_savedval",
+      D_SAVC  = "actslike_savedchecked",
+      D_AHLR  = "actslike_attronchange";
 
   // Special attributes
   var A_ACT   = "acts-like",
@@ -88,6 +89,52 @@ Fundaments.import();
     }
   };
 
+  $.fn.isInDOM = function() {
+    return this.parents("body").size() > 0;
+  };
+
+  $.fn.linkFocus = function(e) {
+    var jself = this;
+    e.focusin(function() { jself.attr("focused", true) })
+      .focusout(function() { jself.removeAttr("focused") });
+  };
+
+  $.fn.bindAttr = function(attr) {
+    var h = this.data(D_AHLR) || {};
+    h[attr] = h[attr] || [];
+
+    if (arguments.length > 1) {
+      h[attr].push(arguments[1]);
+      return this.data(D_AHLR, h);
+    } else {
+      return h[attr];
+    }
+  };
+
+  map(function(x) {
+    $.fn[x] = (function(orig) {
+      return function() {
+        if (arguments.length == 1)
+          return orig.apply(this, vec(arguments));
+
+        var argv = vec(arguments);
+
+        this.each(function() {
+          var name = argv[0],
+              hlrs = $(this).bindAttr(name),
+              ini  = this.getAttribute(name),
+              ret  = orig.apply($(this), argv),
+              fin  = this.getAttribute(name);
+          if (ini != fin)
+            $(this).trigger("tfd-attr", [name, ini, fin]);
+          if (ini != fin && hlrs.length)
+            map(applyto([ini, fin]), hlrs);
+        });
+        return this;
+      };
+    })($.fn[x]);
+  }, ["attr", "removeAttr"]);
+
   $.fn.val = (function(orig) {
     return function() {
       var a = this.actsLike();
@@ -144,7 +191,10 @@ Fundaments.import();
   // Gets or sets the checked state of this element (real)
   $.fn.checked = function() {
     if (arguments.length) {
-      this.attr("checked", !! arguments[0]);
+      if (!! arguments[0])
+        this.attr("checked", true);
+      else
+        this.removeAttr("checked");
       if (this.type() == "CHECKBOX")
         this.val(arguments[0] ? "1" : "0");
       return this;
@@ -169,6 +219,10 @@ Fundaments.import();
 
   $.fn.isVisible = function() {
     return ! this.hidden2();
+  };
+
+  $.fn.isVisibleParents = function() {
+    return ! this.hidden2Parents();
   };
 
   $.fn.hidden2Parents = function() {
@@ -354,7 +408,7 @@ Fundaments.import();
           if (event.type.substr(0,4) == "tfd-")
             return;
           else if (event.target == this)
-            setTimeout(function() { jself.trigger("tfd-"+event.type) });
+            setTimeout(function() { jself.trigger("tfd-"+event.type) }, 0);
 
           if (event.type != e)
             return;
@@ -364,6 +418,10 @@ Fundaments.import();
           jself.doEvent(event);
         }).each(function() { if ($(this).type() != "SUBMIT") $(this).qEvent() })
       : this;
+  };
+
+  $.fn.doDepends = function() {
+    return apply(doDepends, [this].concat(vec(arguments)));
   };
 
   // Given an object `obj` with property names that are regular expressions
@@ -539,6 +597,8 @@ Fundaments.import();
     "num-le":   mapargs(le,  Number),
     "num-gt":   mapargs(gt,  Number),
     "num-ge":   mapargs(ge,  Number),
+    "any":      constant(true),
+    "none":     constant(false)
   };
 
   var matcher = {
@@ -601,6 +661,14 @@ Fundaments.import();
       function(match, val, elem, test, refval) {
         if (!loading)
           elem.checked(!test).qEvent();
+      },
+
+    "do-set-attr" :
+      function(match, val, elem, test, refval) {
+        if (test && refval)
+          elem.attr(val, refval);
+        else
+          elem.removeAttr(val);
       },
 
     "do-toggle" :
@@ -731,7 +799,20 @@ Fundaments.import();
  */
 (function($) {
 
-  var w = {};
+  var w = {}, syms;
+
+  var gensyms = {
+    "gensym(-(.*))" :
+      function(match, val, elem) { syms[match[2]] = $.gensym() }
+  };
+
+  var setsyms = {
+    "sym(-(.*))" :
+      function(match, val, elem) {
+        if (syms[val])
+          elem.attr(match[2], syms[val]);
+      }
+  };
 
   var widgets = {
     "widget-def" :
@@ -746,27 +827,13 @@ Fundaments.import();
 
     "widget" :
       function(match, val, elem) {
-        var e = (new w[val](elem))._dom,
-            g = {};
-        e.find("*").andSelf().each(function() {
-          var jself = $(this),
-              match;
-          map(function(x) {
-            if (x[0] == "name" && x[1] && (match = x[1].match(/^\*(.+)$/)))
-              g[match[1]] = $.gensym();
-          }, outof(jself.attrMap()));
-
-          map(function(x) {
-            if (x[1] && (match = x[1].match(/^\*(.+)$/)) && match[1] in g)
-              jself.attr(x[0], g[match[1]]);
-          }, outof(jself.attrMap()));
-        });
+        var e = (new w[val](elem))._dom;
         elem.replaceWith(e);
         e.prepare();
       }
   };
       
-  function doApply(_js, jQuery, $, _obj, _args, _ref) {
+  function doApply(_js, jQuery, $, _obj, _args, _ref, sym) {
     var _f, _i;
     for (_i in _ref)
       eval("var "+_i+" = _ref."+_i);
@@ -781,6 +848,7 @@ Fundaments.import();
     var result = function() {
       var argv  = vec(arguments),
           obj   = this,
+          attrs = {},
           ref   = {};
 
       $fake = function(selector, context) {
@@ -824,7 +892,34 @@ Fundaments.import();
           if (r)
             ref[r] = $(this);
         });
-        doApply(cmp.js, $fake, $fake, obj, argv, ref);
+        
+        syms = {};
+
+        obj._dom.find("*").add(obj._dom).each(function() {
+          $UI.dispatch(gensyms, $(this));
+        });
+        obj._dom.find("*").add(obj._dom).each(function() {
+          $UI.dispatch(setsyms, $(this));
+        });
+
+        // Prevent endless loops
+        argv[0].removeAttr("widget");
+
+        // Parse the placeholder to create template data
+        attrs = argv[0].attrMap();
+        attrs[':content'] = argv[0].children();
+
+        // Copy attributes from placeholder to widget instance
+        map(function(x) {
+          if (! x[0].match(/^:/) && ! obj._dom.is("["+x[0]+"]"))
+            obj._dom.attr(x[0], x[1]);
+        }, outof(argv[0].attrMap()));
+
+        // Fill the widget as an inline template
+        obj._dom.fillTemplate(attrs);
+
+        // Run the widget constructor
+        doApply(cmp.js, $fake, $fake, obj, argv, ref, into({}, outof(syms)));
       } else {
         throw "can't find widget: "+name;
       }
@@ -1049,6 +1144,8 @@ Fundaments.import();
     this.find("*").add(this).each(function() {
       if ($(this).is("[data-fill]"))
         $(this).text("");
+      else if ($(this).is("[data-append]"))
+        $(this).empty();
     });
   };
 
@@ -1062,7 +1159,9 @@ Fundaments.import();
         var e = $(this);
         map(function(x2, i2) {
           var m, tmp;
-          if (m = i2.match(/^data-fill(-(.+))?$/)) {
+          if (i2 == "data-append" && x2 == i) {
+            e.append($(x));
+          } else if (m = i2.match(/^data-fill(-(.+))?$/)) {
             if (!m || x2 != i)
               return;
             if (! m[2])
@@ -1121,6 +1220,50 @@ Fundaments.import();
             ? form[0]
             : false);
     }, q))));
+  });
+
+})(jQuery);
+
+(function($) {
+
+  var attrQ   = [],
+      focusQ  = [];
+
+  var depAttr = {
+    "depends-attr(-(.*))" :
+      function(match, val, elem) {
+        $("body").bind("tfd-attr", function(event, attr, ini, fin) {
+          if (attr != match[2] || $(event.target).attr("name") != val)
+            return;
+          elem.doDepends(fin);
+        });
+        attrQ.push([elem, match[2], val]);
+      },
+
+    "depends-focus" :
+      function(match, val, elem) {
+        $("body").bind("focusin focusout", function(event) {
+          if ($(event.target).attr("name") != val)
+            return;
+          elem.doDepends(event.type == "focusin" ? "1" : "0");
+        });
+        focusQ.push([elem, val]);
+      }
+  };
+
+  $UI.prepare.push(function(elem) {
+    if (elem.nodeName() == "INPUT" &&
+        $.isInArray(elem.type(), ["CHECKBOX","RADIO"]))
+      elem.bind("tfd-click", function() { $(this).focus() });
+    $UI.dispatch(depAttr, elem);
+  });
+
+  $UI.finalize.push(function(q) {
+    map(function(x) {
+      x[0].doDepends($("[name='"+x[2]+"']").attr(x[1]));
+    }, attrQ);
+    map(function(x) { x[0].doDepends("0") }, focusQ);
+    attrQ.length = focusQ.length = 0;
   });
 
 })(jQuery);

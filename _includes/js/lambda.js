@@ -3,7 +3,7 @@
 
   var F = {
 
-    import :
+    load :
       function() {
         for (var i in F)
           window[i] = F[i];
