@@ -164,7 +164,7 @@
      *************************************************************************/
 
     vec :
-      function(arr) { return Array.prototype.slice.call(arr) },
+      function(arr) { return arr ? Array.prototype.slice.call(arr) : [] },
 
     count :
       function(arr) { return arr.length },
@@ -172,11 +172,17 @@
     first :
       function(arr) { return arr ? arr[0] : undefined },
 
+    last :
+      function(arr) { return arr ? arr.slice(-1) : undefined },
+
     rest :
       function(arr) { return Array.prototype.slice.call(arr, 1) },
 
     nth :
       function(arr, i) { return arr[i] },
+
+    inarray :
+      function(arr, v) { return $.inArray(v, arr) != -1 },
 
     appendl :
       function(arr, x) { return rest(arguments).concat(arr) },
@@ -242,6 +248,37 @@
         return F.reduce(function(x, xs) {
           return F.apply(F.partial(F.set, xs), x);
         }, obj, arr);
+      },
+
+    deepinto :
+      function(obj, arr) {
+        return reduce(function(x, xs) {
+          var v = x.pop(),
+              k = x.pop(),
+              t = xs, w;
+
+          while ( (w = x.shift()) )
+            t = t[w] = t[w] || {};
+
+          t[k] = v;
+
+          return xs;
+        }, obj, arr);
+      },
+
+    assoc :
+      function() {
+        var obj = first(arguments) || {},
+            kvs = rest(arguments),
+            k, v, t;
+        while (kvs.length >= 2) {
+          k = kvs.shift();
+          v = kvs.shift();
+          t = $.type(k);
+          if (t != "null" && t != "undefined")
+            obj[k] = v;
+        }
+        return obj;
       },
 
     keys :
@@ -395,6 +432,11 @@
         return F.map(function(x) {
           return pred(x) ? x : F._;
         }, arr);
+      },
+
+    keep :
+      function() {
+        return F.apply(filter, [F.identity].concat(vec(arguments)));
       },
 
     induce :

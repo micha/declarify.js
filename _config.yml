@@ -1,4 +1,2 @@
-auto:     true
-exclude:  .git
-pygments: true
-markdown: rdiscount
+auto: true
+exclude: .git

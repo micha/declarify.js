@@ -1,165 +1,188 @@
----
-# vim: filetype=mkd
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8">
+    <title>Example</title>
 
-layout: docs-base
-title:  TFD-UI Documentation
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/lambda.js"></script>
+    <script type="text/javascript" src="/js/ui.js"></script>
 
----
+    <style type="text/css">
+      div.hover {
+        background-color: yellowgreen;
+        border: 1px solid red;
+      }
+      div.active {
+        background-color: yellow;
+        border: 1px solid orange;
+      }
+      div {
+        border: 1px solid black;
+        margin: 2px;
+        padding: 5px;
+      }
+      span.disabled {
+        color: #666;
+      }
+      div.fueltank {
+        border-color: black;
+        border-style: solid;
+        margin: 0px;
+        padding: 0px;
+        display: inline;
+        background-color: red;
+      }
+      div.fueltank + div.fueltank {
+        border-style: solid solid solid none;
+      }
+      div.fueltank.transparent {
+        background-color: inherit;
+      }
+      code {
+        color: darkblue;
+      }
+      li.checked {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
 
-# Overview
+    <form>
+      <fieldset>
+        <ul>
+          <li
+            data-type   = "checkbox"
+            data-name   = "cbr1"
+            data-value  = "foo"
+            data-checked>
+            Foo
+          </li>
+        </ul>
+        <div
+          data-a::dep       = "cbr1"
+          data-a::attr.hide = "$$.checked">
+          Not checked.
+        </div>
+        <div
+          data-a::dep = "cbr1"
+          data-a::attr.hide = "!$$.checked">
+          Checked.
+        </div>
+      </fieldset>
 
-***
+      <fieldset>
+        <legend>Controls</legend>
 
-The TFD-UI library makes it possible to define complex, dynamic behaviors
-in HTML webpages without writing any JavaScript code. Attributes on the
-HTML elements are used to define these behaviors. The library includes a
-number of useful modules to handle such things as forms, form validation,
-inline templates (and filling of templates from AJAX JSON requests),
-deep-linking, etc.
+        <label>Text
+          <input type="text" name="t1" value="asdf"/>
+        </label>
 
-Additionally, an inline widget factory type of thing is also included,
-to make abstraction and composition of HTML markup and behaviors possible.
+        <span
+          data-a::dep = "t1"
+          data-a::attr.hide = "! $$.focused">
+          [focused]
+        </span>
 
-## Motivation
+        <br>
 
-Consider the following snippet of HTML, where we have a somewhat complex
-form containing elements which are only relevant sometimes. We want to be
-able to hide parts of the form that don't apply.
+        <label>Fuel
+          <select name="s1">
+            <option value="0">E</option>
+            <option value="1" selected>&frac14;</option>
+            <option value="2">&frac12;</option>
+            <option value="3">&frac34;</option>
+            <option value="4">F</option>
+          </select>
+        </label>
 
-{% highlight html %}
-{% include docs/demo/overview1.html %}
-{% endhighlight %}
+        <div class="fueltank"
+          data-a::dep = "s1"
+          data-a::class.transparent = "$$.value < 1" >
+          &nbsp;
+        </div>
+        <div class="fueltank"
+          data-a::dep = "s1"
+          data-a::class.transparent = "$$.value < 2" >
+          &nbsp;
+        </div>
+        <div class="fueltank"
+          data-a::dep = "s1"
+          data-a::class.transparent = "$$.value < 3" >
+          &nbsp;
+        </div>
+        <div class="fueltank"
+          data-a::dep = "s1"
+          data-a::class.transparent = "$$.value < 4" >
+          &nbsp;
+        </div>
 
-<div class="demo">
-  {% include docs/demo/overview1.html %}
-</div>
+        <br>
 
-The "pregnant" checkbox clearly only applies to females, so we don't want
-to show it unless the user selects "female". With TFD-UI it's possible to
-set attributes of the HTML elements that will specify these relationships.
+        <p>The input box says:
+          <code
+            data-a::dep   = "t1"
+            data-a::text  = "$$.value" >
+          </code>
+        </p>
 
-{% highlight html %}
-{% include docs/demo/overview2.html %}
-{% endhighlight %}
+        <select
+          name            = "s2"
+          data-a::dep     = "s2"
+          data-a::log.foo = "[$$.toMap(), $this]">
+          <option
+            data-a::dep           = "tpl.tpl1"
+            data-a::attr.value    = "$$.value"
+            data-a::attr.selected = "$$.i == 1"
+            data-a::text          = "$$.text">
+          </option>
+        </select>
 
-<div class="demo">
-  {% include docs/demo/overview2.html %}
-</div>
+        <p>The select combo box says:
+          <code
+            data-a::dep   = "s2"
+            data-a::text  = "$$.value">
+          </code>
+        </p>
 
-What's happening here is inutitively straightforward: setting the `depends-on`
-attribute sets up an event handler on the input element with the specified
-name. When that input element's value changes, all the elements that depend
-on it will be updated. How they react to the event is determined by the
-*depends action* specified (in this case it's the default one---toggle
-visibility). Predicates, like the `depends-val-eq` one here, can be used
-to modify the depends action; in this case when the predicate is true the
-element is shown, and when it's false the element is hidden.
+        <label> <input type="checkbox" name="c5" data-checked/> Linked: </label>
+        <label> <input type="checkbox" name="c3" data-checked/> Master </label>
+        <label>
+          <input type="checkbox" name="c4"
+            data-a::dep             = "c3 c5"
+            data-a::attr.disabled   = "$$('c5').checked"
+            data-a::attr.checked    = "$this.disabled ? $$('c3').checked : $same" />
+          <span
+            data-a::dep             = "c4"
+            data-a::class.disabled  = "$$.disabled" >
+            Slave
+          </span>
+        </label>
 
-Interestingly, this concept can be extended to encompass most of the behaviors
-that a web page needs. By allowing any HTML element to *act like* an input
-element and by setting up dependencies between them, it's possible to build
-complex, dynamic pages without requiring any JavaScript coding.
+        <hr>
 
-{% highlight html %}
-{% include docs/demo/overview3.html %}
-{% endhighlight %}
+        <input type="submit" value="click me"/>
+      </fieldset>
+    </form>
 
-<div class="demo overview3">
-  {% include docs/demo/overview3.html %}
-</div>
+    <div name="thename">
+      <h2>Hello</h2>
 
-Using a declarative style of coding expresses the coder's intent as data
-rather than as code, so separate modules can inspect the document and
-determine the relationships between elements in a way that would be very
-difficult otherwise. This facilitates a more structured organization of the
-user interface (UI) code.
+      <p>Move the mouse here and see the help text appear below!</p>
 
-The power of the declarative style is demonstrated with the inline template
-and form handling modules, showing the simplicity of this technique compared
-to the usual JavaScript imperative style.
+      <label> <input type="checkbox" name="c1" data-checked/> Show help text </label>
+      <label> <input type="checkbox" name="c2" data-checked/> Slide animation </label>
 
-Consider the case where you want to fetch some JSON data from the server
-and format it into some attractive and functional HTML in the page, like
-the following example:
+    </div>
 
-{% highlight html %}
-{% include docs/demo/overview4.html %}
-{% endhighlight %}
+    <div
+      id                      = "test1"
+      data-a::dep             = "thename"
+      data-a::attr.hide       = "! $$('c1').checked || ! $$.hover"
+      data-a::attr.hide.style = "$$('c2').checked ? 'slide' : false" >
+      <p>This is the help text!</p>
+    </div>
 
-<div class="demo overview4">
-  {% include docs/demo/overview4.html %}
-</div>
-
-From the console or firebug you can see the XHR requests, the JSON data,
-and the request parameters. In a real-world situation this request would be
-submitting parameters that would affect the data that is returned, of course,
-but for this demo a static JSON file is used.
-
-## Widgets
-
-So here we have a powerful set of tools for declaratively building dynamic web
-pages; the "atoms" of the language. Still lacking is a means of abstraction and
-composition---there is no way to encapsulate specific complicated patterns
-of markup and attributes and behaviors in a flexible and reusable way.
-Consider the following fairly complex HTML structure: an alert box with a
-"close" button that the user can click on to hide the alert.
-
-{% highlight html %}
-{% include docs/demo/overview5.html %}
-{% endhighlight %}
-
-<div class="demo overview5">
-  {% include docs/demo/overview5.html %}
-</div>
-
-You see the error alert pop up if you type something other than "hello" in
-the input box. The widget factory makes it possible to package this complex
-structure and provide a simple placeholder for it in your markup. In the
-next example a widget is defined and a placeholder is used to instantiate
-it in the page.
-
-{% highlight html %}
-{% include docs/demo/overview6.html %}
-{% endhighlight %}
-
-<div class="demo overview6">
-  {% include docs/demo/overview6.html %}
-</div>
-
-The widget definition only appears once in the page, and can be maintained
-separately, as a UI kit resource.
-
-Although it's not obvious from the example, there is a facility for creating
-"gensyms", or local name attributes in the widget definition. The `*alert`
-name in this example is a gensym.  Look at the generated source in firebug
-and you'll see that it has been replaced with a name like `gensym-3` etc.
-
-Similarly, the JavaScript widget constructor is executed in a special
-environment. The jQuery `$` object is restricted and can only select elements
-that belong to the widget instance proper. The widget instance `$` can not
-access elements in its parent or in any nested widgets it may contain. This
-cleanly encapsulates the JavaScript constructor and makes it possible to
-write clean, concise code without risk of affecting other elements in the
-page unexpectedly.
-
-# Dependencies
-
-***
-
-Setting up dependencies between elements is how you tell TFD-UI that one
-element depends on another and that something should happen to the dependent
-element when the one it depends on changes in some way. The following
-attributes are used to specify element dependence relationahips:
-
-
-# Depends Actions
-
-***
-
-Depends actions go here.
-
-# Form Handling
-
-***
-
-This is a test.
+  </body>
+</html>
