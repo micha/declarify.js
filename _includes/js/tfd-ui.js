@@ -6,50 +6,47 @@ Fundaments.load();
  */
 (function($) {
 
-  // Event queue
+  /** Event queue */
   var eventQ  = [];
 
-  // Gensym names last assigned index
-  var syms    = 0;
-
-  // Data stored on elements
-  var D_CHK   = "actslike_checked",
-      D_VAL   = "actslike_value",
-      D_HID   = "actslike_hidden",
-      D_SAV   = "actslike_savedval",
-      D_SAVC  = "actslike_savedchecked",
-      D_AHLR  = "actslike_attronchange";
-
-  // Special attributes
-  var A_ACT   = "acts-like",
-      A_DEP   = "depends-on",
-      A_TYP   = "type",
-      A_PHA   = "phase";
-
-  // Input types that are "checked" or "unchecked"
+  /** Input types that are "checked" or "unchecked" */
   var C_TYP   = ["CHECKBOX", "RADIO"];
 
-  // Elements that have values
+  /** Elements that have values */
   var E_VAL   = ["INPUT", "SELECT", "TEXTAREA", "BUTTON"];
 
-  // Input types that normally change on click event
+  /** Input types that normally change on click event */
   var E_CLK   = ["BUTTON", "RADIO", "CHECKBOX"];
 
+  /**
+   * Generate a globally unique symbol.
+   */
   $.gensym = function() {
     return "gensym-"+(++syms);
   };
 
-  // True if `needle` is in `haystack` array
+  /**
+   * Returns `true` if `needle` is in `haystack` array.
+   */
   $.isInArray = function(needle, haystack) {
     return $.inArray(needle, haystack) >= 0;
   };
 
+  /**
+   * Create an object containing the key-value pairs in a query string. This
+   * is the inverse of the jQuery.param() function.
+   */
   $.unparam = function(str) {
     return into({}, map(function(x) {
       return map(decodeURIComponent, x.split("=").concat([""]));
     }, !!str ? str.replace(/\+/gi," ").split("&") : []));
   };
 
+  /**
+   * Encode string for use as a URI fragment: different rules than a URI
+   * component. Decoding is the same though, because URI fragments are less
+   * restrictive than URI components are.
+   */
   $.encodeURIFragment = function(str) {
     return encodeURIComponent(str)
              .replace(/%20/g, ' ')
@@ -64,12 +61,30 @@ Fundaments.load();
              .replace(/%3F/g, '?');
   };
 
+  /**
+   * Decode a URI fragment. Since fragments are less restrictive than URI
+   * components, we can use the regular decodeURIComponent for this.
+   */
+  $.decodeURIFragment = function(str) {
+    return decodeURIComponent(str);
+  };
+
+  /**
+   * Encode an object into a string that can be used as a URI fragment.
+   */
   $.param2 = function(obj) {
     return map(function(x) {
       return map($.encodeURIFragment, x).join("=");
     }, outof(obj)).join("&");
   };
 
+  /**
+   * Returns a function that, when called with no arguments, invokes the given
+   * method on the `this` object, with the given (optional) arguments. This is
+   * useful for mapping over the jQuery object:
+   *
+   *   $(foo).map($.invoke("show"));
+   */
   $.invoke = function(meth) {
     var args = rest(arguments);
     return function() {
@@ -77,6 +92,9 @@ Fundaments.load();
     }
   };
 
+  /**
+   * Serialize an element's value, producing a string.
+   */
   $.serialize = function(val) {
     switch ($.type(val)) {
       case "boolean":
@@ -89,28 +107,58 @@ Fundaments.load();
     }
   };
 
+  /**
+   * Returns `true` if this element is in the DOM, and `false` if it's been
+   * removed or hasn't been appended yet.
+   */
   $.fn.isInDOM = function() {
     return this.parents("body").size() > 0;
   };
 
-  $.fn.linkFocus = function(e) {
-    var jself = this;
-    e.focusin(function() { jself.attr("focused", true) })
-      .focusout(function() { jself.removeAttr("focused") });
-  };
+  /**
+   * Convenience function to encapsulate access to the `D_AHLR` element data.
+   */
+  function attrHandler(op, elem, attr, f) {
+    var D_AHLR  = "tfd-attr-handlers",
+        h       = elem.data(D_AHLR) || {};
 
-  $.fn.bindAttr = function(attr) {
-    var h = this.data(D_AHLR) || {};
     h[attr] = h[attr] || [];
 
-    if (arguments.length > 1) {
-      h[attr].push(arguments[1]);
-      return this.data(D_AHLR, h);
-    } else {
+    if (op == "get")
       return h[attr];
-    }
+
+    h = (op == "set")
+      ? h.concat([f])
+      : (f ? filter(partial(comp(not, eqq), f), h) : []);
+
+    return elem.data(D_AHLR, h);
+  }
+
+  /**
+   * Add a callback `f` to be executed when the `attr` attribute of this
+   * element is changed via the jQuery.attr() method.
+   *
+   * If `f` is not given then return the list of handlers for the `attr`
+   * attribute.
+   */
+  $.fn.bindAttr = function(attr, f) {
+    return attrHandler((f ? "set" : "get"), this, attr, f);
   };
 
+  /**
+   * Remove a single callback `f` from the list of attribute change handlers
+   * for the `attr` attribute of this element.
+   *
+   * If `f` is not given then remove all handlers for the `attr` attribute.
+   */
+  $.fn.unbindAttr = function(attr, f) {
+    return attrHandler("remove", this, attr, f);
+  };
+
+  /**
+   * Monkey-patch the jQuery attribute manipulation methods to install the
+   * callback hooks.
+   */
   map(function(x) {
     $.fn[x] = (function(orig) {
       return function() {
@@ -125,106 +173,78 @@ Fundaments.load();
               ini  = this.getAttribute(name),
               ret  = orig.apply($(this), argv),
               fin  = this.getAttribute(name);
+
           if (ini != fin)
             $(this).trigger("tfd-attr", [name, ini, fin]);
+
           if (ini != fin && hlrs.length)
             map(applyto([ini, fin]), hlrs);
+
+          if (name.indexOf(":") == -1)
+            $(this)[$(this).hasAttr(name) ? "addClass" : "removeClass"](name);
         });
         return this;
       };
     })($.fn[x]);
   }, ["attr", "removeAttr"]);
 
-  $.fn.val = (function(orig) {
-    return function() {
-      var a = this.actsLike();
-      return a
-        ? ((arguments.length)
-            ? this.data(D_VAL, arguments[0])
-            : this.data(D_VAL))
-        : orig.apply(this, vec(arguments));
-    };
-  })($.fn.val);
-
-  // Get a map of the attributes and values
+  /**
+   * Get a map of this element's attributes and their associated values.
+   */
   $.fn.attrMap = function() {
     var ret = {};
     $.each(this.get(0).attributes, function(i,attr) {
-      ret[attr.nodeName] = attr.nodeValue;
+      ret[attr.nodeName.toLowerCase()] = attr.nodeValue;
     });
     return ret;
   };
 
-  // Get the html of the element, not just the contents.
+  /**
+   * Get the html of the element, not just the contents.
+   */
   $.fn.outerHtml = function() {
     return this.eq(0).clone().wrap("<div/>").parent().html();
   };
 
-  // What this element acts like (if anything)
-  $.fn.actsLike = function() {
-    var a;
-    return (a = this.attr(A_ACT)) ? a.toUpperCase() : "";
-  };
+  /**
+   * True if this element has the `attr` attribute.
+   */
+  $.fn.hasAttr = function(attr) { return attr in this.attrMap() };
 
-  // True if this element has the `attr` attribute
-  $.fn.hasAttr = function(attr) {
-    return this.is("["+attr+"]");
-  };
-
-  // The tag name of this element
+  /**
+   * The tag name of this element.
+   */
   $.fn.nodeName = function() {
-    return this[0].nodeName.toUpperCase();
+    return this[0].nodeName.toLowerCase();
   };
 
-  // The tag name of this element or the tag it acts like
-  $.fn.nodeName2 = function() {
-    var n;
-    return (n = this.actsLike()) ? n : this.nodeName();
-  };
-
-  // The type attribute of this element
+  /**
+   * The type attribute of this element.
+   */
   $.fn.type = function() {
     var n;
-    return (n = this.attr(A_TYP)) ? n.toUpperCase() : "";
+    return (n = this.attr("type")) ? n.toLowerCase() : "";
   };
 
-  // Gets or sets the checked state of this element (real)
-  $.fn.checked = function() {
-    if (arguments.length) {
-      if (!! arguments[0])
-        this.attr("checked", true);
-      else
-        this.removeAttr("checked");
-      if (this.type() == "CHECKBOX")
-        this.val(arguments[0] ? "1" : "0");
-      return this;
-    }
-    if (this.is("[checked]"))
-      this.addClass("checked")
-    else
-      this.removeClass("checked");
-    return this.is("[checked]");
-  };
-
-  $.fn.checked2 = function() {
-    return isChecked = this.actsLike() 
-      ? this.checked()
-      : this.is(":checked");
-  };
-
-  // Toggles the checked state of this element (real)
-  $.fn.toggleChecked = function() {
-    return this.checked(! this.checked());
-  };
-
+  /**
+   * True if this element has not been hidden by tfd-ui state.
+   */
   $.fn.isVisible = function() {
     return ! this.hidden2();
   };
 
+  /**
+   * True if this element and all of its parents have not been hidden by the
+   * tfd-ui state.
+   */
   $.fn.isVisibleParents = function() {
     return ! this.hidden2Parents();
   };
 
+  /**
+   * True if this element or any of its parents have been hidden by the tfd-ui
+   * state.
+   */
   $.fn.hidden2Parents = function() {
     if (this.is("body"))
       return false;
@@ -232,82 +252,31 @@ Fundaments.load();
       return !!this.hidden2() || !!this.parent().hidden2Parents();
   };
 
+  /**
+   * True if this element has been hidden by the tfd-ui state.
+   */
   $.fn.hidden2 = function() {
     if (arguments.length)
       return this.data(D_HID, !! arguments[0]);
     return this.data(D_HID);
   };
 
+  /**
+   * Return the element with name attribute set to `name`, from among the
+   * elements that are not hidden by the tfd-ui state.
+   *
+   * If an element `e` is provided, then only children of `e` are searched.
+   */
+  function getByName(name, e) {
+    return $("[name='"+name+"']", e ? e : $("body")).filter(isVisible);
+  }
+
+  /**
+   * Get the child element of this element with name attribute set to `name`,
+   * and not hidden by the tfd-ui state.
+   */
   $.fn.byName = function(name) {
     return getByName(name, this);
-  };
-
-  $.fn.listen = function() {
-    var n = this.nodeName2(),
-        a = this.actsLike(),
-        t = this.type();
-    return ((a == "INPUT" && $.isInArray(t, E_CLK)) ||
-            (n == "INPUT" && t == "BUTTON") || n === "BUTTON")
-      ? "click"
-      : ($.isInArray(n, E_VAL) ? "change" : "");
-  };
-
-  $.fn.getValFn = function() {
-    var n = this.nodeName2(),
-        t = this.type();
-    return $.isInArray(t, C_TYP)
-      ? "checked" : ($.isInArray(n, E_VAL) ? "val" : "");
-  };
-
-  $.fn.getVal = function() {
-    var op = this.getValFn();
-    return op ? $(this)[op]() : "";
-  };
-
-  $.fn.setVal = function(val) {
-    var op = this.getValFn();
-    return op ? this[op](val) : this;
-  };
-
-  $.fn.getSavedVal = function() {
-    return this.data(D_SAV);
-  };
-
-  $.fn.setSavedVal = function(val) {
-    return this.data(D_SAV, val);
-  };
-
-  $.fn.getSavedCheck = function() {
-    return this.data(D_SAVC);
-  };
-
-  $.fn.setSavedCheck = function(val) {
-    return this.data(D_SAVC, !! val);
-  };
-
-  $.fn.paramsVisible = function() {
-    var ret = {},
-        obj = first(arguments);
-    this.find("[name]").filter(isVisible).each(function() {
-      var jself = $(this),
-          type  = jself.type(),
-          name  = jself.attr("name"),
-          saved = [jself.checked(), jself.val()];
-      if (! obj) {
-        if ((type == "RADIO" && jself.checked()) || type != "RADIO")
-          ret[name] = jself.val();
-      } else if (name in obj) {
-        if (type == "RADIO")
-          jself.checked(obj[name] == jself.val() && !jself.checked());
-        else if (type == "CHECKBOX")
-          jself.checked(!! Number(obj[name]));
-        else
-          jself.val(obj[name]);
-        if (jself.checked() != saved[0] || jself.val() != saved[1])
-          jself.qEvent();
-      }
-    });
-    return obj ? this : ret;
   };
 
   $.fn.prepare = function() {
@@ -453,10 +422,6 @@ Fundaments.load();
     return map(function(x) {
       return map(partial(apply, _, args), dispatchAttr(obj, $(x)));
     }, vec(elems));
-  }
-
-  function getByName(name, e) {
-    return $("[name='"+name+"']", e ? e : $("body")).filter(isVisible);
   }
 
   function getByAttr(attr, val) {

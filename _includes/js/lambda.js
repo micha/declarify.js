@@ -169,14 +169,6 @@
     count :
       function(arr) { return arr.length },
 
-    outof :
-      function(obj) {
-        var ret=[], i;
-        for (i in obj)
-          ret.push([i, obj[i]]);
-        return ret;
-      },
-
     first :
       function(arr) { return arr ? arr[0] : undefined },
 
@@ -236,6 +228,14 @@
     /*************************************************************************
      * OBJECT FUNCTIONS                                                      *
      *************************************************************************/
+
+    outof :
+      function(obj) {
+        var ret=[], i;
+        for (i in obj)
+          ret.push([i, obj[i]]);
+        return ret;
+      },
 
     into :
       function(obj, arr) {
