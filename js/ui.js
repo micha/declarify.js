@@ -131,6 +131,15 @@ Fundaments.load();
   };
 
   /**
+   * Get the (extended) name of the element, if possible.
+   */
+  $.fn.name = function(name) {
+    return arguments.length
+      ? this.attr({"data-name":name, "name":name})
+      : this.attr("data-name") || this.attr("name");
+  };
+
+  /**
    * Get the html of the element, not just the contents.
    */
   $.fn.outerHtml = function() {
@@ -451,7 +460,7 @@ Fundaments.load();
     // Make sure that the `data-value` attribute is initialized correctly for
     // all form elements.
 
-    if (elem.is("input,select") && !elem.is("data-value"))
+    if (elem.is("input,select") && !elem.is("[data-value]"))
       elem.attr("data-value", $.serialize(elem.val()));
 
     // For native form elements, set native attribute according to the
@@ -975,7 +984,9 @@ function tfdDoEval($expr, $this, $$, $same) {
 })(jQuery);
 
 /******************************************************************************
- ** Defines the `dep.class` module to toggle an element's css class.         **
+ ** Defines the `class` module to toggle an element's css class, the `text`  **
+ ** module to set an element's text node, and the `append` module to append  **
+ ** children to a node.                                                      **
  ******************************************************************************/
 
 (function($) {
@@ -984,16 +995,12 @@ function tfdDoEval($expr, $this, $$, $same) {
     this.toggleClass(cls, (!! this.tfdEval(val, name, this.hasClass(cls))));
   });
 
-})(jQuery);
-
-/******************************************************************************
- ** Defines the `dep.text` module to set an element's text node              **
- ******************************************************************************/
-
-(function($) {
-
   $UI.dep("text", {}, function(name, attr, val) {
     this.text(this.tfdEval(val, name, this.text()));
+  });
+
+  $UI.dep("append", {}, function(name, attr, val) {
+    this.append(this.tfdEval(val, name, this.text()));
   });
 
 })(jQuery);
@@ -1006,48 +1013,73 @@ function tfdDoEval($expr, $this, $$, $same) {
 
   var tpl = {};
 
+  window.tpl = tpl;
+  function tplClone(elem, name, data) {
+    return elem.clone().tfdFillTpl(name, data).prepare();
+  }
+
+  // Set initial state---no change event will be fired from the referent when
+  // the template is filled, so must synthetically do this to ensure that the
+  // initial state is consistent.
+  function tplInit(elem) {
+    map(function(x) {
+      elem.tfdProcessDep(x);
+    }, elem.attr("data-dep.depends").split(" "));
+  }
+
   $.fn.tfdFillTpl = function(name, data) {
-    data.name = "tpl."+name;
+    data.name = name;
     this.find("*").andSelf().each($.invoke("tfdProcessDep", data));
     return this;
   };
 
   $.tfdFillTpl = function(name, data) {
-    var deps  = $("[data-dep\\.depends~='tpl\\."+name+"']").get(),
+    data = data || [];
+
+    var deps  = $("[data-tpl~='"+name+"']").get(),
         t     = tpl[name],
         minl  = min(deps.length, data.length),
         tmp, i;
 
     map(partial(assoc, _, "i", _), data);
 
-    for (i=0; i<minl; i++)
-      $(deps).eq(i).replaceWith(t.clone().tfdFillTpl(name, data[i]).prepare());
+    for (i=0; i<minl; i++) {
+      tmp = tplClone(t, name, data[i]);
+      $(deps).eq(i).replaceWith(tmp);
+      tplInit(tmp);
+    }
     
     if (deps.length > data.length) {
       $(deps).each(function(i) {
-        if (i >= minl)
+        if (i >= max(minl,1))
           $(this).remove();
+        else if (! i && ! data.length)
+          $(this).replaceWith(tplClone(t, name, {}).hide());
       });
     }
 
     if (data.length > deps.length) {
-      deps  = $("[data-dep\\.depends~='tpl\\."+name+"']").get();
+      deps  = $("[data-tpl~='"+name+"']").get();
       for (i=minl; i<data.length; i++) {
-        tmp = t.clone().tfdFillTpl(name, data[i]).prepare();
+        tmp = tplClone(t, name, data[i]);
         deps = $(deps).last().after(tmp).end().add(tmp).get();
+        tplInit(tmp);
       }
     }
 
     if (data.length)
-      $("[data-dep\\.depends~='tpl\\."+name+"']").show();
+      $("[data-tpl~='"+name+"']").show();
 
     $UI.initComplete = false;
     $UI.run();
   };
 
-  $UI.dep.prepare("tpl", function(elem, name) {
-    if (! tpl[name])
-      tpl[name] = elem.hide().clone();
+  $UI.prepare.push(function(elem) {
+    if (elem.attr("data-tpl"))
+      map(function(x) {
+        if (! tpl[x])
+          tpl[x] = elem.hide().clone();
+      }, elem.attr("data-tpl").split(/[\s]+/));
   });
 
 })(jQuery);
@@ -1058,9 +1090,14 @@ function tfdDoEval($expr, $this, $$, $same) {
 
 (function($) {
 
-  var hlr = {};
+  var hlr = {},
+      pcs = {},
+      fQ  = [];
 
-  $UI.form = partial(assoc, hlr);
+  $UI.form = {
+    submit:  partial(assoc, hlr),
+    process: partial(assoc, pcs)
+  };
 
   $.fn.tfdFormData = function() {
     var ret = into({},
@@ -1077,12 +1114,249 @@ function tfdDoEval($expr, $this, $$, $same) {
     return ret;
   };
 
+  function doForm(hlr, data) {
+    var jself = $(this);
+    map(function(x) {
+      var m = x[0].match(/^data-form\.(.*)$/),
+          s = partial(onSuccess, jself),
+          e = partial(onError, jself);
+      if (m && (m[1] in hlr))
+        hlr[m[1]](jself, x[1], data, s, e);
+    }, outof($(this).attrMap()));
+  }
+
+  var count = 1;
+
+  function handleData(mode, form, data) {
+    form.data("tfd-form"+(mode ? "error" : "data"), null);
+    form.attr("data-form."+(mode ? "error" : "success"), false)
+        .attr("data-form."+(mode ? "success" : "error"), true)
+        .data("tfd-form"+(mode ? "data" : "error"), data)
+        .qEvent();
+    $UI.run();
+    doForm.call(form, pcs, data);
+    form.data("tfd-form"+(mode ? "data" : "error"), null);
+  }
+
+  var onSuccess = partial(handleData, true);
+  var onError   = partial(handleData, false);
+
   $UI.prepare.push(function(elem) {
+    var form;
+
     if (elem.is("form"))
       elem.on("submit", function(event) {
         event.preventDefault();
-        console.log("submit!");
+        doForm.call(this, hlr, $(this).tfdFormData());
       });
+
+    if (elem.is("input,select,textarea") &&
+      (form = elem.parentsUntil("body").filter("form")).size() &&
+      ! form.find("[type='submit']").size()) {
+      if (elem.type() == "checkbox" || elem.type() == "radio")
+        elem.bindAttr("data-checked", function(name, ini, fin) {
+          if (((elem.type() == "radio" && fin) || elem.type() != "radio") &&
+            ini != fin)
+            fQ.push(form[0]);
+        });
+      else
+        elem.bindAttr("data-value", function(name, ini, fin) {
+          if (ini != fin)
+            fQ.push(form[0]);
+        });
+    }
+  });
+
+  $UI.finalize.push(function(q) {
+    var tmpQ = $.unique(fQ);
+    fQ = [];
+
+    map(function(x) {
+      $(x).trigger("submit");
+    }, tmpQ);
+  });
+
+  $UI.form.submit("log", function(form, val, data) {
+    console.log("form data: ",
+                [form.tfdEval(val, data, ""), form.data("tfd-formdata")]);
+  });
+
+  $UI.form.submit("json", function(form, val, data, success, error) {
+    $.ajax({
+      url:      val,
+      dataType: "json",
+      data:     data,
+      async:    true,
+      success:  success,
+      error:    function(xhr, err, msg) { error([{ message: msg }]) }
+    });
+  });
+
+  $UI.form.process("tpl.success", function(form, val, data) {
+    data = form.data("tfd-formdata");
+    $.tfdFillTpl(val, data);
+  });
+
+  $UI.form.process("tpl.error", function(form, val, data) {
+    data = form.data("tfd-formerror");
+    $.tfdFillTpl(val, data);
+  });
+
+})(jQuery);
+
+/******************************************************************************
+ ** Widget module.                                                           **
+ ******************************************************************************/
+
+(function($) {
+
+  var wgt = {};
+
+  function Widget() {}
+
+  function doApply(_js, jQuery, $, _obj, _args, _ref, sym) {
+    var _f, _i;
+    for (_i in _ref)
+      eval("var "+_i+" = _ref."+_i);
+    eval("_f = "+_js);
+    _f.apply(_obj, _args);
+  };
+
+  var gensym = (function(count) {
+    return function(sym) {
+      return sym.replace(/\*$/,'_')+String(count++);
+    };
+  })(1);
+
+  function makeConstructor(name, cmp) {
+    var result = function() {
+      var argv  = vec(arguments),
+          obj   = this,
+          attrs = {},
+          ref   = {},
+          i;
+
+      $fake = function(selector, context) {
+        var isHtml = /^[^<]*(<(.|\s)+>)[^>]*$/;
+
+        // if it's a function then immediately execute it (DOM loading
+        // is guaranteed to be complete by the time this runs)
+        if ($.isFunction(selector)) {
+          selector();
+          return;
+        }
+
+        // if it's not a css selector then passthru to jQ
+        if (typeof selector != "string" || selector.match(isHtml))
+          return new $(selector);
+
+        // it's a css selector
+        if (context != null)
+          return $(context).find(selector)
+                           .not($("[data-widget\\.inst] *", obj._dom).get())
+                           .not($("* [data-widget\\.inst]", context).get());
+        else 
+          return $(obj._dom).find("*")
+                      .andSelf()
+                      .filter(selector)
+                      .not($("[data-widget\\.inst] *", obj._dom).get())
+                      .not($("* [data-widget\\.inst]", obj._dom).get());
+      };
+
+      $.extend($fake, $);
+      $fake.prototype = $fake.fn;
+      $fake.component = cmp;
+
+      if (cmp) {
+        obj._dom = cmp.dom.clone();
+        obj.$    = $fake;
+        obj._dom.find("*").add(obj._dom).filter(function() {
+          return $(this).is("[data-widget\\.ref]");
+        }).each(function() {
+          var r = $(this).attr("data-widget.ref");
+          if (r)
+            ref[r] = $(this);
+        });
+        
+        // Gensyms (FIXME: unimplemented)
+        syms = {};
+
+        // Find gensym declarations
+        obj._dom.find("[name$='*'],[data-name$='*']").each(function() {
+          var name = $(this).name(),
+              sym  = gensym(name);
+
+          // Add to syms map, so that syms are accessible in the JS widget
+          // constructor.
+          syms[name.replace(/\*$/, '')] = sym;
+
+          // Replace name with gensym name
+          $(this).name(sym);
+
+          // Replace all references to the name with the gensym name
+          obj._dom.find("*").andSelf().each(function() {
+            var jself = $(this);
+            map(function(x) {
+            var r = new RegExp(requote(name), 'g'),
+                m = x[1].match(r);
+            if (m)
+              jself.attr(x[0], x[1].replace(r, sym));
+            }, outof(jself.attrMap()));
+          });
+        });
+
+        // Prevent endless loops
+        argv[0].removeAttr("data-widget");
+
+        // Parse the placeholder to create template data
+        attrs = into({}, map(function(x) {
+          return [x[0].replace(/^data-/, ""), x[1]];
+        }, outof(argv[0].attrMap())));
+
+        attrs[':children']  = argv[0].children();
+
+        // Copy attributes from placeholder to widget instance
+        /*
+        map(function(x) {
+          if (! x[0].match(/^:/) && ! obj._dom.is("["+x[0]+"]"))
+            obj._dom.attr(x[0], x[1]);
+        }, outof(argv[0].attrMap()));
+        */
+
+        // Fill the widget as an inline template
+        obj._dom.tfdFillTpl("widget."+name, attrs);
+
+        // Run the widget constructor
+        doApply(cmp.js, $fake, $fake, obj, argv, ref, into({}, outof(syms)));
+      } else {
+        throw "can't find widget: "+name;
+      }
+    };
+
+    result.prototype = new Widget();
+    return result;
+  };
+
+  $UI.prepare.push(function(elem) {
+    var e, cmp, name;
+
+    if (elem.attr("data-widget.def")) {
+      name = elem.attr("data-widget.def");
+      cmp = {
+        js:   elem.find("script").remove().text() || "function() {}",
+        dom:  elem.removeAttr("data-widget.def").attr("data-widget.inst", name)
+      };
+
+      wgt[name] = makeConstructor(name, cmp);
+      elem.remove();
+    } else if (elem.attr("data-widget")) {
+      name = elem.attr("data-widget");
+      if (wgt[name]) {
+        e = (new wgt[name](elem))._dom;
+        elem.replaceWith(e);
+        e.prepare();
+      }
+    }
   });
 
 })(jQuery);

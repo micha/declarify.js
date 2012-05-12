@@ -9,6 +9,7 @@
     <script type="text/javascript" src="/js/ui.js"></script>
 
     <style type="text/css">
+      /*
       div.hover {
         background-color: yellowgreen;
         border: 1px solid red;
@@ -16,6 +17,10 @@
       div.active {
         background-color: yellow;
         border: 1px solid orange;
+      }
+      */
+      div.focused {
+        border-color: blue;
       }
       div {
         border: 1px solid black;
@@ -49,7 +54,35 @@
   </head>
   <body>
 
-    <form>
+    <div data-widget.def="foo">
+      <p>Yup, yup.</p>
+      <div data-widget="bar">asdf</div>
+    </div>
+
+    <div data-widget.def="bar">
+      <input
+        type                = "text"
+        name                = "local1*"
+        data-a::dep         = "widget.bar"
+        data-a::attr.value  = "$$.bar" />
+      <p
+        data-a::dep   = "local1*"    
+        data-a::text  = "$$.value">
+      </p>
+      <button data-name="hello*">Hello</button>
+    </div>
+
+    <input type="text" name="tpltest" value="hey"/>
+
+    <div data-widget="foo" data-bar="asdf"></div>
+    <div data-widget="foo" data-bar="qwer"></div>
+
+    <form
+      data-name             = "f1"
+      data-form.log         = "$$.toMap()"
+      data-form.json        = "data.json"
+      data-form.tpl.success = "tpl.tpl1"
+      data-form.tpl.error   = "tpl.formerr">
       <fieldset>
         <ul>
           <li
@@ -127,15 +160,13 @@
           </code>
         </p>
 
-        <select
-          name            = "s2"
-          data-a::dep     = "s2"
-          data-a::log.foo = "[$$.toMap(), $this]">
+        <select name="s2">
           <option
+            data-tpl              = "tpl.tpl1"
             data-a::dep           = "tpl.tpl1"
+            data-a::text          = "$$.text"
             data-a::attr.value    = "$$.value"
-            data-a::attr.selected = "$$.i == 1"
-            data-a::text          = "$$.text">
+            data-a::attr.selected = "$$.value == 'FL'">
           </option>
         </select>
 
@@ -163,6 +194,25 @@
         <hr>
 
         <input type="submit" value="click me"/>
+        <span
+          style             = "color:green"
+          data-a::dep       = "f1"
+          data-a::attr.hide = "! $$['form.success']">
+          <code>
+            OK
+          </code>
+        </span>
+        <span
+          style             = "color:red"
+          data-tpl          = "tpl.formerr"
+          data-a::dep       = "f1"
+          data-a::attr.hide = "! $$['form.error']">
+          <code
+            data-a::dep       = "tpl.formerr"
+            data-a::text      = "$$.message">
+            ERROR
+          </code>
+        </span>
       </fieldset>
     </form>
 
