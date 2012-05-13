@@ -1117,11 +1117,11 @@ function tfdDoEval($expr, $this, $$, $same) {
   function doForm(hlr, data) {
     var jself = $(this);
     map(function(x) {
-      var m = x[0].match(/^data-form\.(.*)$/),
+      var m = x[0].match(/^data-form\.([^\.]+)(\.(.*))?$/),
           s = partial(onSuccess, jself),
           e = partial(onError, jself);
       if (m && (m[1] in hlr))
-        hlr[m[1]](jself, x[1], data, s, e);
+        hlr[m[1]](jself, m[3], x[1], data, s, e);
     }, outof($(this).attrMap()));
   }
 
@@ -1176,12 +1176,37 @@ function tfdDoEval($expr, $this, $$, $same) {
     }, tmpQ);
   });
 
-  $UI.form.submit("log", function(form, val, data) {
-    console.log("form data: ",
-                [form.tfdEval(val, data, ""), form.data("tfd-formdata")]);
+  $UI.form.submit("log", function(form, sub, val, data) {
+    var m     = sub.match(/^(submit)(\.(.*))?$/),
+        same  = {},
+        tag, log;
+
+    if (!m)
+      return;
+
+    tag = m[3] ? m[3] + ": " : "";
+
+    if ((log = form.tfdEval(val, data, same)) !== same)
+      console.log(tag, log);
   });
 
-  $UI.form.submit("json", function(form, val, data, success, error) {
+  $UI.form.process("log", function(form, sub, val, data) {
+    var m     = sub.match(/^(process)(\.(.*))?$/),
+        same  = {},
+        tag, log;
+
+    if (!m)
+      return;
+
+    tag = m[3] ? m[3] + ": " : "";
+
+    log = { success:  form.data("tfd-formdata"),
+            error:    form.data("tfd-formerror") };
+    if ((log = form.tfdEval(val, log, same)) !== same)
+      console.log(tag, log);
+  });
+
+  $UI.form.submit("json", function(form, sub, val, data, success, error) {
     $.ajax({
       url:      val,
       dataType: "json",
@@ -1192,14 +1217,10 @@ function tfdDoEval($expr, $this, $$, $same) {
     });
   });
 
-  $UI.form.process("tpl.success", function(form, val, data) {
-    data = form.data("tfd-formdata");
-    $.tfdFillTpl(val, data);
-  });
-
-  $UI.form.process("tpl.error", function(form, val, data) {
-    data = form.data("tfd-formerror");
-    $.tfdFillTpl(val, data);
+  $UI.form.process("tpl", function(form, sub, val, data) {
+    var m = (sub == "success" ? "data" : (sub == "error" ? "error" : ""));
+    if (m)
+      $.tfdFillTpl(val, form.data("tfd-form" + m));
   });
 
 })(jQuery);
@@ -1336,7 +1357,6 @@ function tfdDoEval($expr, $this, $$, $same) {
         // Copy the attributes of the placeholder onto the outer element
         // of the widget instance
         map(function(x) {
-          console.log("attr", (x[0][0] == ":" ? "data-" : "") + x[0]);
           if (x[0] != "class")
             obj._dom.attr((x[0][0] == ":" ? "data-" : "") + x[0], x[1]);
           else

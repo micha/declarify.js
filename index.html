@@ -60,7 +60,6 @@
       </style>
       <p
         data-a::dep         = "local*"
-        data-a::log         = "$$.toMap()"
         data-a::text        = "$$[':text']">
         Yup, yup.
       </p>
@@ -132,11 +131,12 @@
     </div>
 
     <form
-      data-name             = "f1"
-      data-form.log         = "$$.toMap()"
-      data-form.json        = "data.json"
-      data-form.tpl.success = "tpl.tpl1"
-      data-form.tpl.error   = "tpl.formerr">
+      data-name                 = "f1"
+      data-form.log.submit.f1   = "$$.toMap()"
+      data-form.log.process.uh-oh = "$$.toMap().error ? $$.toMap().error[0].message : $same"
+      data-form.json            = "data.json"
+      data-form.tpl.success     = "tpl.tpl1"
+      data-form.tpl.error       = "tpl.formerr">
       <fieldset>
         <ul>
           <li
