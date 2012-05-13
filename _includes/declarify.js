@@ -1222,9 +1222,23 @@ function tfdDoEval($expr, $this, $$, $same) {
     _f.apply(_obj, _args);
   };
 
+  function parseCSS(src) {
+    var parsed = (new CSSParser()).parse(src, false, false);
+
+    if (!parsed)
+      return {};
+
+    return into({}, map(function(x) {
+      var decl = into({}, map(function(y) {
+        return [y.property, y.valueText];
+      }, x.declarations));
+      return [x.mSelectorText, decl];
+    }, parsed.cssRules));
+  }
+
   var gensym = (function(count) {
     return function(sym) {
-      return sym.replace(/\*$/,'_')+String(count++);
+      return "gensym_"+sym.replace(/\*$/,'_')+String(count++);
     };
   })(1);
 
@@ -1282,28 +1296,32 @@ function tfdDoEval($expr, $this, $$, $same) {
         syms = {};
 
         // Find gensym declarations
-        obj._dom.find("[name$='*'],[data-name$='*']").each(function() {
-          var name = $(this).name(),
-              sym  = gensym(name);
+        obj._dom
+          .find("*")
+          .andSelf()
+          .filter("[name$='*'],[data-name$='*']")
+          .each(function() {
+            var name = $(this).name(),
+                sym  = gensym(name);
 
-          // Add to syms map, so that syms are accessible in the JS widget
-          // constructor.
-          syms[name.replace(/\*$/, '')] = sym;
+            // Add to syms map, so that syms are accessible in the JS widget
+            // constructor.
+            syms[name.replace(/\*$/, '')] = sym;
 
-          // Replace name with gensym name
-          $(this).name(sym);
+            // Replace name with gensym name
+            $(this).name(sym);
 
-          // Replace all references to the name with the gensym name
-          obj._dom.find("*").andSelf().each(function() {
-            var jself = $(this);
-            map(function(x) {
-            var r = new RegExp(requote(name), 'g'),
-                m = x[1].match(r);
-            if (m)
-              jself.attr(x[0], x[1].replace(r, sym));
-            }, outof(jself.attrMap()));
+            // Replace all references to the name with the gensym name
+            obj._dom.find("*").andSelf().each(function() {
+              var jself = $(this);
+              map(function(x) {
+              var r = new RegExp(requote(name), 'g'),
+                  m = x[1].match(r);
+              if (m)
+                jself.attr(x[0], x[1].replace(r, sym));
+              }, outof(jself.attrMap()));
+            });
           });
-        });
 
         // Prevent endless loops
         argv[0].removeAttr("data-widget");
@@ -1315,19 +1333,26 @@ function tfdDoEval($expr, $this, $$, $same) {
 
         attrs[':children']  = argv[0].children();
 
-        // Copy attributes from placeholder to widget instance
-        /*
+        // Copy the attributes of the placeholder onto the outer element
+        // of the widget instance
         map(function(x) {
-          if (! x[0].match(/^:/) && ! obj._dom.is("["+x[0]+"]"))
-            obj._dom.attr(x[0], x[1]);
+          console.log("attr", (x[0][0] == ":" ? "data-" : "") + x[0]);
+          if (x[0] != "class")
+            obj._dom.attr((x[0][0] == ":" ? "data-" : "") + x[0], x[1]);
+          else
+            map(function(y) { obj._dom.addClass(y) }, x[1].split(/[\s]+/));
         }, outof(argv[0].attrMap()));
-        */
 
         // Fill the widget as an inline template
         obj._dom.tfdFillTpl("widget."+name, attrs);
 
         // Run the widget constructor
         doApply(cmp.js, $fake, $fake, obj, argv, ref, into({}, outof(syms)));
+        
+        // Apply widget CSS styles
+        map(function(x) {
+          $fake("*").andSelf().filter(x[0]).each($.invoke("css", x[1]));
+        }, outof(parseCSS(cmp.css)));
       } else {
         throw "can't find widget: "+name;
       }
@@ -1343,10 +1368,10 @@ function tfdDoEval($expr, $this, $$, $same) {
     if (elem.attr("data-widget.def")) {
       name = elem.attr("data-widget.def");
       cmp = {
+        css:  elem.find("style").remove().text() || "",
         js:   elem.find("script").remove().text() || "function() {}",
         dom:  elem.removeAttr("data-widget.def").attr("data-widget.inst", name)
       };
-
       wgt[name] = makeConstructor(name, cmp);
       elem.remove();
     } else if (elem.attr("data-widget")) {

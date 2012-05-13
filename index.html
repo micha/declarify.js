@@ -4,23 +4,15 @@
     <meta charset="UTF-8">
     <title>Example</title>
 
-    <script type="text/javascript" src="js/jquery.js"></script>
-    <script type="text/javascript" src="js/lambda.js"></script>
-    <script type="text/javascript" src="js/ui.js"></script>
+    <script type="text/javascript" src="js/declarify.js"></script>
 
     <style type="text/css">
-      /*
       div.hover {
         background-color: yellowgreen;
         border: 1px solid red;
       }
-      div.active {
-        background-color: yellow;
-        border: 1px solid orange;
-      }
-      */
       div.focused {
-        border-color: blue;
+        border-color: red;
       }
       div {
         border: 1px solid black;
@@ -52,30 +44,92 @@
       }
     </style>
   </head>
+
   <body>
 
-    <div data-widget.def="foo">
-      <p>Yup, yup.</p>
-      <div data-widget="bar">asdf</div>
+    <!--
+    // The `control-text-2` widget definition: note the nested widget, and how
+    // arguments are passed to it. Also note that "forward" declarations are
+    // not necessary.
+    -->
+    <div data-widget.def="control-text-2" data-name="local*">
+      <style type="declarify">
+        div {
+          border: 1px solid green;
+        }
+      </style>
+      <p
+        data-a::dep         = "local*"
+        data-a::log         = "$$.toMap()"
+        data-a::text        = "$$[':text']">
+        Yup, yup.
+      </p>
+      <input
+        data-widget         = "control-text"
+        data-a::dep         = "widget.control-text-2"
+        data-a::attr.:name  = "$$[':name']"
+        data-a::attr.:value = "$$[':value']" />
     </div>
 
-    <div data-widget.def="bar">
+    <!--
+    // The `control-text` widget definition: note the JS widget constructor's
+    // restricted $ object and the widget-encapsulated CSS rules.
+    -->
+    <div data-widget.def="control-text">
+      <style type="declarify">
+        p {
+          text-decoration: underline;
+        }
+        p.foo {
+          color: red;
+        }
+        button {
+          color: blue;
+        }
+      </style>
+      <script type="declarify">
+        function() {
+          $("input").css("color", "#c94");
+        }
+      </script>
       <input
         type                = "text"
-        name                = "local1*"
-        data-a::dep         = "widget.bar"
-        data-a::attr.value  = "$$.bar" />
-      <p
-        data-a::dep   = "local1*"    
-        data-a::text  = "$$.value">
+        data-a::dep         = "widget.control-text"
+        data-a::attr.value  = "$$[':value']"
+        data-a::attr.name   = "$$[':name']" />
+      <p>The input box says:
+        <code
+          class               = "foo"
+          data-a::dep         = "widget.control-text"    
+          data-a::attr.b::dep = "$$[':name']"
+          data-b::text        = "$$.value">
+        </code>
       </p>
       <button data-name="hello*">Hello</button>
     </div>
 
-    <input type="text" name="tpltest" value="hey"/>
+    <!--
+    // Widget instances: note the method of specifying arguments.
+    -->
+    <input data-widget="control-text-2" :name="ct2-1" :text="hello" :value="asdf"/>
+    <input data-widget="control-text-2" :name="ct2-2" :text="world" :value="qwer"/>
 
-    <div data-widget="foo" data-bar="asdf"></div>
-    <div data-widget="foo" data-bar="qwer"></div>
+    <div>
+      <p>First input box says:
+        <code
+          data-a::dep   = "ct2-1"
+          data-a::text  = "$$.value">
+          foo
+        </code>
+      </p>
+      <p>Second input box says:
+        <code
+          data-a::dep   = "ct2-2"
+          data-a::text  = "$$.value">
+          foo
+        </code>
+      </p>
+    </div>
 
     <form
       data-name             = "f1"
@@ -233,6 +287,5 @@
       data-a::attr.hide.style = "$$('c2').checked ? 'slide' : false" >
       <p>This is the help text!</p>
     </div>
-
   </body>
 </html>
