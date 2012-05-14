@@ -1,0 +1,87 @@
+
+<div
+  data-widget.def = "control-group"
+  class           = "control-group">
+  <label
+    data-a::dep   = "widget.control-group"
+    data-a::text  = "$$[':label']">
+    ID
+  </label>
+  
+  <div
+    class           = "controls"
+    data-a::dep     = "widget.control-group"
+    data-a::append  = "$$[':children']">
+  </div>
+</div>
+
+<div
+  data-widget.def = "control-text"
+  data-name       = "local*">
+  <div
+    class="control control-text"
+    data-a::dep             = "local*"
+    data-a::class.success   = "$$[':status'] == 'success'"
+    data-a::class.error     = "$$[':status'] == 'error'"
+    data-a::class.warning   = "$$[':status'] == 'warning'"
+    data-a::class.disabled  = "$$[':status'] == 'disabled'">
+    <input
+      type                  = "text"
+      data-a::dep           = "local*"
+      data-a::attr.name     = "$$[':name']"
+      data-a::attr.value    = "$$[':value']"
+      data-a::attr.disabled = "$$[':status'] == 'disabled'" />
+  </div>
+  <p
+    class                   = "message"
+    data-a::dep             = "local*"
+    data-a::class.success   = "$$[':status'] == 'success'"
+    data-a::class.error     = "$$[':status'] == 'error'"
+    data-a::class.warning   = "$$[':status'] == 'warning'"
+    data-a::class.disabled  = "$$[':status'] == 'disabled'"
+    data-a::text            = "$$[':message']">
+  </p>
+  <p
+    data-a::dep             = "local*"
+    data-a::text            = "$$[':help']">
+  </p>
+</div>
+
+<div
+  data-widget.def = "control-checkbox"
+  class           = "group checkbox">
+  <div
+    class                 = "control control-checkbox"
+    data-a::dep           = "widget.control-checkbox"
+    data-a::attr.b::dep   = "$$[':name']"
+    data-b::attr.checked  = "$$.checked">
+    <div class="control-checkbox-inner">
+      <input
+        type                  = "checkbox"
+        data-a::dep           = "widget.control-checkbox"
+        data-a::attr.name     = "$$[':name']"
+        data-a::attr.checked  = "$$[':checked']"
+        data-a::attr.:label   = "$$[':label']" />
+    </div>
+  </div>
+  <span
+    data-a::dep           = "widget.control-checkbox"
+    data-a::attr.b::dep   = "$$[':name']"
+    data-b::text          = "$$[':label']">
+    This is a checkbox
+  </span>
+</div>
+                
+<div
+  data-widget.def = "control-textarea"
+  class           = "control control-text"
+  data-name       = "local*">
+  <textarea
+    data-a::dep             = "local*"
+    data-a::class.success   = "$$[':status'] == 'success'"
+    data-a::class.error     = "$$[':status'] == 'error'"
+    data-a::class.warning   = "$$[':status'] == 'warning'"
+    data-a::class.disabled  = "$$[':status'] == 'disabled'"
+    data-a::text            = "$$[':value']">
+  </textarea>
+</div>

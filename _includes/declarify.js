@@ -763,8 +763,7 @@ Fundaments.load();
   });
 
   $UI.dep("log", {}, function(name, attr, val) {
-    //if (attr == "fill")
-    console.log((attr ? attr+": " : ""), $(this).tfdEval(val, name, ""));
+    $UI.log($(this), attr, val, name, {});
   });
 
 })(jQuery);
@@ -877,6 +876,12 @@ function tfdDoEval($expr, $this, $$, $same) {
 (function($) {
  
   var reg = {};
+
+  $UI.log = function(elem, sub, val, data, same) {
+    var log;
+    if ((log = elem.tfdEval(val, data, (same = same || {}))) !== same)
+      console.log(sub ? sub+": " : "", log);
+  };
 
   $.fn.tfdEval = function(val, name, same) {
     return tfdDoEval(val, this, asMap(name), same);
@@ -1000,7 +1005,10 @@ function tfdDoEval($expr, $this, $$, $same) {
   });
 
   $UI.dep("append", {}, function(name, attr, val) {
-    this.append(this.tfdEval(val, name, this.text()));
+    var same = {},
+        chld = this.tfdEval(val, name, same);
+    if (chld !== same)
+      this.append(chld);
   });
 
 })(jQuery);
@@ -1177,33 +1185,17 @@ function tfdDoEval($expr, $this, $$, $same) {
   });
 
   $UI.form.submit("log", function(form, sub, val, data) {
-    var m     = sub.match(/^(submit)(\.(.*))?$/),
-        same  = {},
-        tag, log;
-
-    if (!m)
-      return;
-
-    tag = m[3] ? m[3] + ": " : "";
-
-    if ((log = form.tfdEval(val, data, same)) !== same)
-      console.log(tag, log);
+    var m;
+    if (m = sub.match(/^submit(\.(.*))?$/))
+      $UI.log(form, m[2], val, data, {});
   });
 
   $UI.form.process("log", function(form, sub, val, data) {
-    var m     = sub.match(/^(process)(\.(.*))?$/),
-        same  = {},
-        tag, log;
-
-    if (!m)
-      return;
-
-    tag = m[3] ? m[3] + ": " : "";
-
-    log = { success:  form.data("tfd-formdata"),
-            error:    form.data("tfd-formerror") };
-    if ((log = form.tfdEval(val, log, same)) !== same)
-      console.log(tag, log);
+    var s = form.data("tfd-formdata"),
+        e = form.data("tfd-formerror"),
+        m;
+    if (m = sub.match(/^process(\.(.*))?$/))
+      $UI.log(form, m[2], val, { success: s, error: e }, {});
   });
 
   $UI.form.submit("json", function(form, sub, val, data, success, error) {
