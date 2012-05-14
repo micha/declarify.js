@@ -537,7 +537,7 @@
               args2 = F.vec(arguments);
           return f.apply(window, args2.concat(args1));
         }
-      },
+      }
 
   };
 
