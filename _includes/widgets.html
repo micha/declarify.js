@@ -27,10 +27,11 @@
     data-a::class.disabled  = "$$[':status'] == 'disabled'">
     <input
       type                  = "text"
-      data-a::dep           = "local*"
-      data-a::attr.name     = "$$[':name']"
+      data-a::dep           = "widget.control-text"
       data-a::attr.value    = "$$[':value']"
-      data-a::attr.disabled = "$$[':status'] == 'disabled'" />
+      data-b::dep           = "local*"
+      data-b::attr.name     = "$$[':name']"
+      data-b::attr.disabled = "$$[':status'] == 'disabled'" />
   </div>
   <p
     class                   = "message"
