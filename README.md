@@ -79,6 +79,8 @@ attributes that are grouped together by a common **prefix**. (All attributes
 used by declarify are themselves prefixed with `data-`.) In this example the
 prefix is `data-a`, or, equivalently, just `a`.
 
+The prefix is separated from the **directive** by a double-colon (`::`).
+
 ## Contribute
 
 Jekyll is used to build the final js file, just because I'm using that for
