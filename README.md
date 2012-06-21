@@ -5,7 +5,8 @@
 HTML&mdash;no JavaScript coding required.
 * Create and organize frontend code efficiently, without requiring a
 secondary effort to develop a JavaScript architecture.
-* Supports dynamic behaviors, widgets, AJAX communication with the server, etc.
+* Supports dynamic behaviors, custom HTML widgets, AJAX communication
+with the server, etc.
 
 ## Demo
 
