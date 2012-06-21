@@ -1,10 +1,11 @@
 # Declarify JS
 
-A clientside library for declarative UI development. Develop dynamic user
-interfaces for modern web applications in pure HTML---no JavaScript coding
-required. The library allows the designer to create and organize frontend
-code efficiently without requiring a secondary effort to develop a JavaScript
-architecture to support dynamic behaviors and communication with the server.
+* A clientside library for declarative UI development.
+* Develop dynamic user interfaces for modern web applications in pure
+HTML&mdash;no JavaScript coding required.
+* Create and organize frontend code efficiently, without requiring a
+secondary effort to develop a JavaScript architecture to support dynamic
+behaviors and communication with the server.
 
 ## Demo
 
