@@ -81,6 +81,13 @@ prefix is `data-a`, or, equivalently, just `a`.
 
 The prefix is separated from the **directive** by a double-colon (`::`).
 
+There are two directives in this dependency set. The first one,
+`dep="ex1-input1"`, sets up the dependency relationship between the `<code>`
+element and the `<input>`. The second directive, `text="$$.value"`, sets an
+operation to be performed when the **referent** (i.e. the thing that the 
+**dependent** element depends on) changes&mdash;it sets the text of the 
+`<code>` element to be the value of the `<input>` element.
+
 ## Contribute
 
 Jekyll is used to build the final js file, just because I'm using that for
