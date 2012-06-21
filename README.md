@@ -62,7 +62,7 @@ are specified declaritively rather than imperatively.
 #### Example 1
 
 ```html
-<input type="text" name="ex1-input1" />
+<label>Text: <input type="text" name="ex1-input1" /></label>
 <br>
 <div>
   <span>The value of the text input above is: </span>
