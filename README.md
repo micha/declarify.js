@@ -2,6 +2,11 @@
 
 A clientside library for declarative UI development. No JS coding involved.
 
+## Demo
+
+A couple of (rough) demos [here](http://micha.github.com/declarify.js/test.html)
+and [here](http://micha.github.com/declarify.js/index.html).
+
 ## Use It
 
 To use declarify you can download the `_site/declarify.js` file and include
