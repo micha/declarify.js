@@ -74,7 +74,10 @@ are specified declaritively rather than imperatively.
 </div>
 ```
 
-This is a basic example of a **dependency set**.
+This is a basic example of a **dependency set**. A dependency set is a set of
+attributes that are grouped together by a common **prefix**; in this case the
+prefix is `data-a`. (All declarify attributes start with `data-` to avoid any
+possible browser oddities.)
 
 ## Contribute
 
