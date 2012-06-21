@@ -1,6 +1,10 @@
 # Declarify JS
 
-A clientside library for declarative UI development. No JS coding involved.
+A clientside library for declarative UI development. Develop dynamic user
+interfaces for modern web applications in pure HTML---no JavaScript coding
+required. The library allows the designer to create and organize frontend
+code efficiently without requiring a secondary effort to develop a JavaScript
+architecture to support dynamic behaviors and communication with the server.
 
 ## Demo
 
@@ -17,3 +21,9 @@ that in the HTML document head.
 Jekyll is used to build the final js file, just because I'm using that for
 other things in the project I'm working on anyway. The source files are in
 the `_includes` directory. Fork and send pull request, by all means.
+
+## Motivation
+
+
+
+
