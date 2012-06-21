@@ -74,7 +74,7 @@ are specified declaritively rather than imperatively.
 </div>
 ```
 
-This is a basic example of a *dependency set*.
+This is a basic example of a _dependency set_.
 
 ## Contribute
 
