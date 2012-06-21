@@ -13,11 +13,6 @@ with the server, etc.
 A couple of (rough) demos [here](http://micha.github.com/declarify.js/test.html)
 and [here](http://micha.github.com/declarify.js/index.html).
 
-## Use It
-
-To use declarify you can download the `_site/declarify.js` file and include
-that in the HTML document head. 
-
 ## Motivation
 
 Web user interface development is a complex process. Designing a good-looking,
