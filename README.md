@@ -74,12 +74,13 @@ are specified declaritively rather than imperatively.
 </div>
 ```
 
-This is a basic example of a **dependency set**. A dependency set is a set of
-attributes that are grouped together by a common **prefix**. (All attributes
-used by declarify are themselves prefixed with `data-`.) In this example the
-prefix is `data-a`, or, equivalently, just `a`.
+This is a basic example of a **dependency set**. A dependency set is a
+set of attributes that are grouped together by a common **prefix**. (All
+attributes used by declarify are themselves prefixed with `data-`.) In this
+example the prefix is `data-a`, or, equivalently, just `a`. The prefix is
+separated from the **directive** by a double-colon.
 
-The prefix is separated from the **directive** by a double-colon (`::`).
+* **Prefix:** *a*
 
 There are two directives in this dependency set. The first one,
 `dep="ex1-input1"`, sets up the dependency relationship between the `<code>`
