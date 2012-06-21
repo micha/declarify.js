@@ -81,6 +81,9 @@ example the prefix is `data-a`, or, equivalently, just `a`. The prefix is
 separated from the **directive** by a double-colon.
 
 * **Prefix:** *a*
+* **Directives:**
+  1. **dep = "ex1-input1"** &mdash; establish a dependency relationship
+     between this element and the element named "ex1-input1".
 
 There are two directives in this dependency set. The first one,
 `dep="ex1-input1"`, sets up the dependency relationship between the `<code>`
