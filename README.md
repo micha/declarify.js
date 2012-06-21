@@ -46,7 +46,33 @@ explicit composition in one of the two domains (i.e. DOM and JavaScript).
 app-level composition and abstraction in the HTML DOM. Declarify.js takes
 a complimentary approach, removing the need for JavaScript composition.
 
-##
+Declarify provides a universal mechanism for declaratively "wiring up" DOM
+elements to the JavaScript behavior implementations. A full complement of
+behaviors are included with the declarify JS distribution and it's easy to
+define new ones to suit special needs. Additionally, a means of abstraction
+is provided, by which the designer can define "widgets" that encapsulate
+behavior and state information in an extensible, composeable way.
+
+## Dependencies
+
+The primary mechanism employed by declarify is a dependency-based event
+propagation model that replaces the browser's DOM event system. Dependencies
+are specified declaritively rather than imperatively.
+
+#### Example 1
+
+```html
+<input type="text" name="ex1-input1" />
+<br>
+<div>
+  <span>The value of the text input above is: </span>
+  <code
+    data-a::dep   = "ex1-input1"
+    data-a::text  = "$$.value"
+    >
+  </code>
+</div>
+```
 
 ## Contribute
 
