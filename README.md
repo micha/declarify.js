@@ -80,12 +80,11 @@ attributes used by declarify are themselves prefixed with `data-`.) In this
 example the prefix is `data-a`, or, equivalently, just `a`. The prefix is
 separated from the **directive** by a double-colon.
 
-*   **Prefix:** *a*
-*   `dep = "ex1-input1"` &mdash; establish a dependency relationship
-    between this element and the element named "ex1-input1".
-*   `text = "$$.value"` &mdash; set the contents of this element's text node
-    to the value of the referent element's `value` attribute whenever the
-    referent element changes.
+There are two directives declared in this dependency set: the first one sets
+up the dependency relationship, and the second performs an operation (in this
+case sets the text of the dependent element to the value of the referent)
+whenever the referent element changes. The **referent** element is what we
+call the element that the **dependent** element depends on.
 
 This relationship is completely dynamic, meaning that any time the value of
 the input element changes, the code element is automatically updated in real
