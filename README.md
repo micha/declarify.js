@@ -75,9 +75,9 @@ are specified declaritively rather than imperatively.
 ```
 
 This is a basic example of a **dependency set**. A dependency set is a set of
-attributes that are grouped together by a common **prefix**; in this case the
-prefix is `data-a`. (All declarify attributes start with `data-` to avoid any
-possible browser oddities.)
+attributes that are grouped together by a common **prefix**. (All attributes
+used by declarify are themselves prefixed with `data-`.) In this example the
+prefix is `data-a`, or, equivalently, just `a`.
 
 ## Contribute
 
