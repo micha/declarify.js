@@ -74,6 +74,8 @@ are specified declaritively rather than imperatively.
 </div>
 ```
 
+This is a basic example of a *dependency set*.
+
 ## Contribute
 
 Jekyll is used to build the final js file, just because I'm using that for
