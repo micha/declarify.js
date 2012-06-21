@@ -5,9 +5,59 @@ Fundaments.load();
  ** Core $UI module                                                          **
  ******************************************************************************/
 
-(function($) {
+elapsed = (function() {
+  var start = {};
+  return function(key, op) {
+    if (op == "end")
+      delete start[key];
+    else if (op == "start")
+      start[key] = (new Date()).getTime();
+    return start[key] ? ((new Date()).getTime() - start[key]) / 1000 : -1;
+  };
+})();
 
-  var eventQ = [];
+function logElapsed(key, desc) {
+  var e = elapsed(key);
+  if (e < 0)
+    return;
+  e = ("     "+e.toFixed(4)).substr(-8);
+  key = ("        "+key).substr(-8);
+  console.log("====> Elapsed: "+key+" "+e+" <==== "+desc);
+}
+
+elapsed("load", "start");
+logElapsed("load", "START LOADING");
+
+(function($) {
+  var eventQ = [],
+      nextQ  = [];
+
+  /**
+   * Quote special css chars in a selector.
+   */
+  $.sq = function(x) {
+    return x.replace(/([^a-zA-Z0-9-_])/g, '\\$1');
+  };
+
+  /**
+   * Gets the query parameters from the URI.
+   */
+  $.getArgv = function() {
+    return into({}, map(function(x) {
+      return map(decodeURIComponent, x.split('='));
+    }, window.location.search.replace(/^\?/,'').split('&')));
+  };
+
+  /**
+   * Get the cookie data from the headers.
+   */
+  $.getCookie = function() {
+    function decode(x) { return $.type(x)=="string"?decodeURIComponent(x):'' }
+
+    return into({}, map(function(x) {
+      return map(decode, x.split('='));
+    }, document.cookie.split('; ')));
+  };
 
   /**
    * Returns `true` if `needle` is in `haystack` array.
@@ -15,25 +65,6 @@ Fundaments.load();
   $.isInArray = function(needle, haystack) {
     return $.inArray(needle, haystack) >= 0;
   };
-
-  /**
-   * Returns an array without duplicate elements, where "duplicate" is defined
-   * by the (optional) `comparator` function. If the comparator is omitted then
-   * the default, `eq` is used.
-   */
-  $.uniqueArray = function(arr, comparator) {
-    var i, j, l=arr.length, ret=[];
-    comparator = comparator || eq;
-
-    for (i=0; i<l; i++) {
-      for (j=i+1; j<l; j++)
-        if (comparator(arr[i], arr[j]))
-          j = ++i;
-      ret.push(arr[i]);
-    }
-
-    return ret;
-  }
 
   /**
    * Create an object containing the key-value pairs in a query string. This
@@ -92,6 +123,14 @@ Fundaments.load();
     var args = rest(arguments);
     return function() {
       return $(this)[meth].apply($(this), args);
+    }
+  };
+
+  $.fn.invoke = function(meth) {
+    var args  = rest(arguments),
+        jself = this;
+    return function() {
+      return jself[meth].apply(jself, args);
     }
   };
 
@@ -171,7 +210,8 @@ Fundaments.load();
   };
 
   $.fn.hidden = function() {
-    return this.is(":hidden");
+    return false;
+    //return this.is(":hidden");
   };
 
   /**
@@ -205,8 +245,8 @@ Fundaments.load();
    * and not hidden by the tfd-ui state.
    */
   $.fn.byName = function(name) {
-    var ret = $("[data-name='"+name+"']", this);
-    ret = ret.filter($.invoke("isVisibleParents"));
+    var ret = $("[data-name='"+$.sq(name)+"']", this);
+    //ret = ret.filter($.invoke("isVisibleParents"));
     return ret.type() == "radio" ? ret.filter("[data-checked]") : ret;
   };
 
@@ -232,6 +272,10 @@ Fundaments.load();
       });
   }
 
+  function prefilter(q) {
+    return apply(comp, prefilter.fns.reverse())(q);
+  }
+
   function action(elem) {
     map(partial(apply, _, [elem]), action.fns);
   }
@@ -243,23 +287,40 @@ Fundaments.load();
   function run() {
     var tmpQ, doneQ=[];
 
+    logElapsed("load", "RUN()");
+
+    eventQ = prefilter(eventQ);
+
     while (eventQ.length) {
-      tmpQ = $($.uniqueArray(eventQ)).filter($.invoke("hasAttr", "data-name")).get();
+      tmpQ = $(uniquearray(eqq, eventQ))
+               .filter($.invoke("hasAttr", "data-name")).get();
       eventQ.length = 0;
       map(action, tmpQ);
-      doneQ = $.uniqueArray(doneQ.concat(tmpQ));
+      doneQ = uniquearray(eqq, doneQ.concat(tmpQ));
     }
+
+    logElapsed("load", "FINALIZE()");
 
     finalize(doneQ);
 
-    return ($UI.initComplete = true);
+    $UI.initComplete = true;
+
+    logElapsed("load", "AGAIN()");
+
+    if (nextQ.length) {
+      map(apply, nextQ);
+      nextQ.length = 0;
+      $UI.run();
+    }
   }
 
   window.$UI = {
     q:            eventQ,
+    qNext:        function(f) { nextQ.push(f) },
     initComplete: false,
     init:         init.fns        = [],
     prepare:      prepare.fns     = [],
+    prefilter:    prefilter.fns   = [],
     action:       action.fns      = [],
     finalize:     finalize.fns    = [],
     run:          run
@@ -273,8 +334,12 @@ Fundaments.load();
   });
 
   $(function() {
+    logElapsed("load", "INIT()");
     init();
     run();
+
+    logElapsed("load", "END LOADING");
+    elapsed("load", "end");
   });
 
 })(jQuery);
@@ -315,7 +380,10 @@ Fundaments.load();
 
 (function($) {
 
-  var reg = [];
+  var reg = [],
+      lnk = {};
+
+  window.lnk = lnk;
 
   $UI.attr = function(name, f) { reg.push(vec(arguments)) };
 
@@ -359,8 +427,27 @@ Fundaments.load();
     return attrHandler("remove", this, attr, f);
   };
 
-  $.fn.pureAttr = $.fn.attr;
+  $.fn.updateLinkedAttrs = function(attrname) {
+    var jself = $(this),
+        name  = $(this).attr("data-name"),
+        lv    = $(this).attr(attrname),
+        ref, rname, rk, rv;
+    if (this.size() == 1) {
+      if (name && lnk[name] && lnk[name][1][attrname]) {
+        rname   = lnk[name][0];
+        ref     = $("body").byName(rname);
+        rk      = lnk[name][1][attrname];
+        rv      = ref.attr(attrname);
+        if (rv != lv)
+          ref.attr(rk, lv);
+      }
+    } else
+      this.each($.invoke("updateLinkedAttrs", attrname));
+  };
+
+  $.fn.pureAttr       = $.fn.attr;
   $.fn.pureRemoveAttr = $.fn.removeAttr;
+  $.fn.pureVal        = $.fn.val;
 
   function addRadioAttr(elem, attr, pure) {
     elem[pure ? "pureAttr" : "attr"]("data-"+attr, "data-"+attr)
@@ -419,12 +506,22 @@ Fundaments.load();
           if (ini != fin) {
             jself.qEvent();
             map(applyto([name, ini, fin]), hlrs);
+            jself.updateLinkedAttrs(name);
           }
         });
         return this;
       };
     })($.fn[x]);
   }, ["attr", "removeAttr"]);
+
+  $.fn.val = function() {
+    var ret = $.fn.pureVal.apply(this, vec(arguments));
+
+    if (arguments.length)
+      this.pureAttr("data-value", this.val());
+
+    return ret;
+  };
 
   $UI.prepare.push(function(elem) {
 
@@ -482,7 +579,7 @@ Fundaments.load();
       .bindAttr("data-checked", function(name, ini, fin) {
         var nm = elem.attr("data-name"), e;
         if (elem.type() == "radio" && fin && nm) {
-          e = $("[data-name='"+nm+"']").not(elem);
+          e = $("[data-name='"+$.sq(nm)+"']").not(elem);
           removeRadioAttr(e.removeAttr("checked"), "checked", true);
         }
       })
@@ -546,7 +643,8 @@ Fundaments.load();
     }).on("mousedown.tfd", function(event) {
       addRadioAttrEvent($(this), "active");
     }).on("mouseup.tfd", function(event) {
-      removeRadioAttrEvent($(this), "active");
+      var jself = $(this);
+      $UI.qNext(function() { removeRadioAttrEvent(jself, "active") });
     });
 
     // Install registered attr change handlers
@@ -565,6 +663,18 @@ Fundaments.load();
       }, 0);
     else
       elem.qEvent();
+
+    // Prepare linked attributes
+
+    map(function(x) {
+      var m = x[0].match(/^data-linkattr\.(.+)$/),
+          n = elem.attr("data-name"),
+          lk;
+      if (m && n && (lk = m[1]) && (m = x[1].match(/^([^:]+)::([^:]+)$/))) {
+        assoc(lnk, n, [ m[1], assoc({}, "data-"+lk, "data-"+m[2]) ]);
+        assoc(lnk, m[1], [ n, assoc({}, "data-"+m[2], "data-"+lk) ]);
+      }
+    }, outof(elem.attrMap()));
   });
 
 })(jQuery);
@@ -656,9 +766,10 @@ Fundaments.load();
 
 (function($) {
 
-  var reg = {},
-      dfl = {},
-      phl = {};
+  var reg       = {},
+      dfl       = {},
+      phl       = {},
+      firstRun  = true;
 
   $UI.dep = function(name, obj, f) {
     reg[name] = obj;
@@ -670,7 +781,7 @@ Fundaments.load();
   function byModule(obj) {
     return reduce(function(x, xs) {
       map(function(y) {
-        var m = y[0].match(/^([^.]+)(\.(.+))?$/);
+        var m = String(y[0]).match(/^([^.]+)(\.(.+))?$/);
 
         if (m) {
           xs[m[1]] = xs[m[1]] || {};
@@ -692,7 +803,7 @@ Fundaments.load();
         xs[xname] = xs[xname] || {};
 
         map(function(y) {
-          if ( (m = y[0].match(/^([^.]+)(\.(.+))?$/)) ) {
+          if ( (m = String(y[0]).match(/^([^.]+)(\.(.+))?$/)) ) {
             z = xs[xname][x[0]] = xs[xname][x[0]] || {};
             z[m[1]] = assoc(z[m[1]], m[3] || "", y[1]);
           }
@@ -718,7 +829,7 @@ Fundaments.load();
       if (y.length == x[0].length)
         return xs;
 
-      var m = y.match(/^([a-z0-9-]+)::(.*)$/i),
+      var m = y.match(/^([a-z0-9-\._]+)::(.*)$/i),
           j = m ? m[1] : "",
           k = m ? m[2] : y;
 
@@ -733,7 +844,14 @@ Fundaments.load();
         obj   = name,
         name  = $.type(obj) == "string" ? obj : obj.name;
 
+    if ($.type(obj) == "string" && ! $("body").byName(obj).size())
+      return this;
+
     map(function(x) {
+      if (('if' in x[1] && ! jself.tfdEval(x[1]['if'][''], name, true)) ||
+        ('unless' in x[1] && !! jself.tfdEval(x[1]['unless'][''], name, false)))
+        return;
+        
       map(function(y) {
         if (reg[y[0]])
           map(function(z) {
@@ -742,7 +860,33 @@ Fundaments.load();
           }, outof(y[1]));
       }, outof(x[1]));
     }, outof(jself.tfdAttrMap(name)));
+
+    return this;
   };
+
+  // The initial run must queue events for each element that is depended upon
+  // so that the dependent element's initial state is correctly set. By default
+  // the `prepare` method queues an event for any new element that has a name,
+  // but this is not necessary for the initial run because no dynamically
+  // created elements have been introduced yet.
+
+  // This prefilter queues events for all elements that are depended upon by an
+  // existing element in the document at this time.
+
+  $UI.prefilter.unshift(function(q) {
+    if (! firstRun)
+      return q;
+
+    firstRun = false;
+
+    return $(map(function(x) {
+      return "[data-name='"+$.sq(x)+"']";
+    }, uniquearray(eq, mapcat(identity,
+      $("body").find("[data-dep\\.depends]").map(function() {
+        return $(this).attr("data-dep.depends").split(' ');
+      })))
+    ).join(",")).get();
+  });
 
   $UI.prepare.push(function(elem) {
     var a = allDeps(elem),
@@ -758,7 +902,7 @@ Fundaments.load();
 
   $UI.action.push(function(elem) {
     var name  = $(elem).attr("data-name"),
-        sel   = "[data-dep\\.depends~='"+name+"']";
+        sel   = "[data-dep\\.depends~='"+$.sq(name)+"']";
     $(sel).each($.invoke("tfdProcessDep", name));
   });
 
@@ -869,7 +1013,7 @@ Fundaments.load();
 function tfdDoEval($expr, $this, $$, $same) {
   return (function() {
     $this = $this.tfdAsMap();
-    return eval($expr);
+    return eval("("+$expr+")");
   }).call($this);
 }
 
@@ -918,6 +1062,18 @@ function tfdDoEval($expr, $this, $$, $same) {
         op       = attr in reg ? reg[attr] : this.attr;
     op.call(this, attrname, this.tfdEval(val, name, this.attr(attrname)));
   });
+
+  $UI.dep("window",
+    { location: function(name, attr, val) {
+        var same = {};
+        if ((val = this.tfdEval(val, name, same)) !== same)
+          window.location.assign(val);
+      }
+    },
+    function(name, attr, val) {
+      console.warn("window."+attr+": unimplemented");
+    }
+  );
 
 })(jQuery);
 
@@ -973,7 +1129,7 @@ function tfdDoEval($expr, $this, $$, $same) {
 
 (function($) {
 
-  var reg = {};
+  var reg     = {};
 
   $UI.dep.attr.hide = partial(assoc, reg);
 
@@ -984,6 +1140,27 @@ function tfdDoEval($expr, $this, $$, $same) {
         op  = reg[eff] && $UI.initComplete ? reg[eff] : this;
 
     op[!! fin ? "hide" : "show"].call(this);
+  });
+
+  $UI.finalize.push(function(q) {
+    $("[data-hide]:visible").hide();
+  });
+
+})(jQuery);
+
+(function($) {
+
+  $UI.dep.attr("flash", function(attr, val) {
+    var curval  = this.attr("data-flash"),
+        jself   = this;
+
+    if (val != curval)
+      if (!! val)
+        this.slideUp("fast", function() {
+          jself.slideDown("fast").pureAttr("data-flash", val);
+        });
+      else
+        this.slideUp("fast").pureRemoveAttr("data-flash");
   });
 
 })(jQuery);
@@ -1011,6 +1188,47 @@ function tfdDoEval($expr, $this, $$, $same) {
       this.append(chld);
   });
 
+  $UI.dep("submit", {}, function(name, attr, val) {
+    var same = {},
+        expr = this.tfdEval(val, name, same);
+    if (!!expr && expr !== same)
+      $UI.form.q(this);
+  });
+
+  $UI.dep("prefill", {}, function(name, attr, val) {
+    var form    = this,
+        myName  = this.attr("data-name"),
+        pat     = new RegExp("^"+requote(val)+"\\."),
+        data;
+
+    map(function(x) {
+      var t = form.byName(x[0].replace(pat, myName+"."));
+      if (! t.attr("data-disabled"))
+        t.attr("data-value", x[1]);
+    }, outof($("body").byName(val).tfdFormData()));
+  });
+
+})(jQuery);
+
+/******************************************************************************
+ ** Defines the `emit` module to send a message into the ether...            **
+ ******************************************************************************/
+
+(function($) {
+
+  $.tfdEmit = function(event, data) {
+    $("[data-dep\\.depends~='"+$.sq(event)+"']")
+      .each($.invoke("tfdProcessDep", assoc(data, "name", event)));
+  };
+
+  $UI.dep("emit", {}, function(name, event, val) {
+    var same = {},
+        data = this.tfdEval(val, this.tfdAsMap(), same);
+
+    if (data !== same)
+      $.tfdEmit(event, data);
+  });
+
 })(jQuery);
 
 /******************************************************************************
@@ -1030,9 +1248,13 @@ function tfdDoEval($expr, $this, $$, $same) {
   // the template is filled, so must synthetically do this to ensure that the
   // initial state is consistent.
   function tplInit(elem) {
-    map(function(x) {
-      elem.tfdProcessDep(x);
-    }, elem.attr("data-dep.depends").split(" "));
+    elem.find("*").andSelf().each(function() {
+      var jself = $(this);
+      if (jself.is("[data-dep\\.depends]"))
+        map(function(x) {
+          jself.tfdProcessDep(x);
+        }, jself.attr("data-dep.depends").split(" "));
+    });
   }
 
   $.fn.tfdFillTpl = function(name, data) {
@@ -1044,7 +1266,7 @@ function tfdDoEval($expr, $this, $$, $same) {
   $.tfdFillTpl = function(name, data) {
     data = data || [];
 
-    var deps  = $("[data-tpl~='"+name+"']").get(),
+    var deps  = $("[data-tpl~='"+$.sq(name)+"']").get(),
         t     = tpl[name],
         minl  = min(deps.length, data.length),
         tmp, i;
@@ -1067,7 +1289,7 @@ function tfdDoEval($expr, $this, $$, $same) {
     }
 
     if (data.length > deps.length) {
-      deps  = $("[data-tpl~='"+name+"']").get();
+      deps  = $("[data-tpl~='"+$.sq(name)+"']").get();
       for (i=minl; i<data.length; i++) {
         tmp = tplClone(t, name, data[i]);
         deps = $(deps).last().after(tmp).end().add(tmp).get();
@@ -1076,7 +1298,7 @@ function tfdDoEval($expr, $this, $$, $same) {
     }
 
     if (data.length)
-      $("[data-tpl~='"+name+"']").show();
+      $("[data-tpl~='"+$.sq(name)+"']").show();
 
     $UI.initComplete = false;
     $UI.run();
@@ -1103,8 +1325,9 @@ function tfdDoEval($expr, $this, $$, $same) {
       fQ  = [];
 
   $UI.form = {
-    submit:  partial(assoc, hlr),
-    process: partial(assoc, pcs)
+    q:        function(elem) { fQ.push(elem[0]) },
+    submit:   partial(assoc, hlr),
+    process:  partial(assoc, pcs)
   };
 
   $.fn.tfdFormData = function() {
@@ -1122,8 +1345,39 @@ function tfdDoEval($expr, $this, $$, $same) {
     return ret;
   };
 
+  function doValidate() {
+    var form = $(this),
+        deps = form.find("input,select,textarea").filter("[data-val]");
+
+    if (form.find("[type='submit']").size()) {
+      $("[data-not-valid]").each($.invoke("removeAttr", "data-not-valid"));
+
+      $("form")
+        .not(form)
+        .removeAttr("data-form.error")
+        .removeAttr("data-form.success");
+
+      deps.each(function() {
+        var jself = $(this),
+            val   = $(this).attr("data-val"),
+            name  = $(this).attr("data-name"),
+            tst;
+
+        tst = !! form.tfdEval(val, name, "");
+        jself.attr("data-not-valid", ! tst);
+      });
+    }
+
+    return ! form.find("[data-not-valid]").size();
+  }
+
   function doForm(hlr, data) {
     var jself = $(this);
+    
+    logElapsed("load", "FORM START '"+jself.attr("data-name")+"'");
+    if ($UI.initComplete)
+      doValidate.call(jself);
+
     map(function(x) {
       var m = x[0].match(/^data-form\.([^\.]+)(\.(.*))?$/),
           s = partial(onSuccess, jself),
@@ -1136,9 +1390,10 @@ function tfdDoEval($expr, $this, $$, $same) {
   var count = 1;
 
   function handleData(mode, form, data) {
+    logElapsed("load", "FORM DONE '"+form.attr("data-name")+"'");
     form.data("tfd-form"+(mode ? "error" : "data"), null);
     form.attr("data-form."+(mode ? "error" : "success"), false)
-        .attr("data-form."+(mode ? "success" : "error"), true)
+        .attr("data-form."+(mode ? "success" : "error"), count++)
         .data("tfd-form"+(mode ? "data" : "error"), data)
         .qEvent();
     $UI.run();
@@ -1152,31 +1407,49 @@ function tfdDoEval($expr, $this, $$, $same) {
   $UI.prepare.push(function(elem) {
     var form;
 
-    if (elem.is("form"))
+    if (elem.is("form")) {
       elem.on("submit", function(event) {
         event.preventDefault();
+        var jself = $(this);
         doForm.call(this, hlr, $(this).tfdFormData());
+        $(this).attr("data-form.submit", true).attr("data-form.dirty", true);
+        $UI.qNext(function() { jself.attr("data-form.submit", false) });
       });
+      if (! elem.find("[type='submit']").size() &&
+          ! elem.is("[data-form\\.nosubmit]"))
+        $UI.form.q(elem);
+    }
 
     if (elem.is("input,select,textarea") &&
-      (form = elem.parentsUntil("body").filter("form")).size() &&
-      ! form.find("[type='submit']").size()) {
-      if (elem.type() == "checkbox" || elem.type() == "radio")
-        elem.bindAttr("data-checked", function(name, ini, fin) {
-          if (((elem.type() == "radio" && fin) || elem.type() != "radio") &&
-            ini != fin)
-            fQ.push(form[0]);
-        });
-      else
-        elem.bindAttr("data-value", function(name, ini, fin) {
-          if (ini != fin)
-            fQ.push(form[0]);
-        });
+      (form = elem.parentsUntil("body").filter("form")).size()) {
+      if (! form.is("[data-form\\.nosubmit]")) {
+        if (elem.type() == "checkbox" || elem.type() == "radio") {
+          elem.bindAttr("data-checked", function(name, ini, fin) {
+            if (((elem.type() == "radio" && fin) || elem.type() != "radio") &&
+              ini != fin) {
+              if (! form.find("[type='submit']").size())
+                $UI.form.q(form);
+              else if (form.attr("data-form.dirty"))
+                doValidate.call(form);
+            }
+          });
+        } else {
+          elem.bindAttr("data-value", function(name, ini, fin) {
+            if (ini != fin) {
+              if (! form.find("[type='submit']").size())
+                $UI.form.q(form);
+              else if (form.attr("data-form.dirty"))
+                doValidate.call(form);
+            }
+          });
+        }
+      }
     }
   });
 
   $UI.finalize.push(function(q) {
     var tmpQ = $.unique(fQ);
+
     fQ = [];
 
     map(function(x) {
@@ -1211,8 +1484,10 @@ function tfdDoEval($expr, $this, $$, $same) {
 
   $UI.form.process("tpl", function(form, sub, val, data) {
     var m = (sub == "success" ? "data" : (sub == "error" ? "error" : ""));
-    if (m)
-      $.tfdFillTpl(val, form.data("tfd-form" + m));
+    map(function(x) {
+      if (m)
+        $.tfdFillTpl(x, form.data("tfd-form" + m));
+    }, val.split(" "));
   });
 
 })(jQuery);
@@ -1329,7 +1604,7 @@ function tfdDoEval($expr, $this, $$, $same) {
               var jself = $(this);
               map(function(x) {
               var r = new RegExp(requote(name), 'g'),
-                  m = x[1].match(r);
+                  m = String(x[1]).match(r);
               if (m)
                 jself.attr(x[0], x[1].replace(r, sym));
               }, outof(jself.attrMap()));
@@ -1374,14 +1649,22 @@ function tfdDoEval($expr, $this, $$, $same) {
     return result;
   };
 
+  // This is not so good. Leaky abstraction. Need to prevent the form module
+  // from submitting a form element that is a widget placeholder.
+  
+  $UI.init.unshift(function() {
+    $("form[data-widget]").each(
+      $.invoke("pureAttr", "data-form.nosubmit", "data-form.nosubmit"));
+  });
+
   $UI.prepare.push(function(elem) {
     var e, cmp, name;
 
     if (elem.attr("data-widget.def")) {
       name = elem.attr("data-widget.def");
       cmp = {
-        css:  elem.find("style").remove().text() || "",
-        js:   elem.find("script").remove().text() || "function() {}",
+        css:  elem.find("style").remove().html() || "",
+        js:   elem.find("script").remove().html() || "function() {}",
         dom:  elem.removeAttr("data-widget.def").attr("data-widget.inst", name)
       };
       wgt[name] = makeConstructor(name, cmp);
@@ -1394,6 +1677,66 @@ function tfdDoEval($expr, $this, $$, $same) {
         e.prepare();
       }
     }
+  });
+
+})(jQuery);
+
+/******************************************************************************
+ ** Initialize query string form data.                                       **
+ ******************************************************************************/
+
+(function($) {
+
+  $UI.format = {};
+
+})(jQuery);
+
+/******************************************************************************
+ ** Initialize query string form data.                                       **
+ ******************************************************************************/
+
+(function($) {
+
+  $.tfdDataForm = function(data, name) {
+    var form = $("<form></form>").attr("name", name);
+    map(function(x) {
+      form.append($("<input/>").attr({
+        type:   "hidden",
+        name:   name + "." + x[0],
+        value:  x[1]
+      }));
+    }, outof(data));
+    return form.prepare();
+  };
+  $UI.init.push(function() {
+    var loc = into({}, filter(function(x) {
+      return $.type(x[1]) != "function";
+    }, outof(window.location)));
+    $("body").prepend($.tfdDataForm(loc, "page.location"));
+    $("body").prepend($.tfdDataForm($.getCookie(), "page.cookie"));
+    $("body").prepend($.tfdDataForm($.getArgv(), "page.param"));
+  });
+
+  $UI.prepare.push(function(elem) {
+    if (elem.is("a") && elem.attr("href") == "#")
+      elem.on("click.tfd", function(event) { event.preventDefault() });
+  });
+
+})(jQuery);
+
+/******************************************************************************
+ ** Initialize query string form data.                                       **
+ ******************************************************************************/
+
+(function($) {
+
+  $UI.prepare.push(function(elem) {
+    var val = elem.attr("data-interval");
+    if (val)
+      setInterval(function() {
+        elem.attr("data-value", 1+elem.attr("data-value"));
+        $UI.run();
+      }, val);
   });
 
 })(jQuery);

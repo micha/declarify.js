@@ -136,11 +136,30 @@
         }
       },
 
+    iserr :
+      function() {
+        try {
+          F.apply(F.first(arguments), F.rest(arguments));
+          return false;
+        } catch (e) {
+          return true;
+        }
+      },
+
     _typeof :
       function(x) { return typeof(x) },
 
     _instanceof :
       function(x, y) { return x instanceof y },
+
+    evalenv :
+      function(_expr, _env) {
+        var _i, _ret;
+        for (_i in _env)
+          eval("var "+_i+" = _env['"+_i+"']");
+        eval("_ret = ("+_expr+")");
+        return _ret;
+      },
 
     /*************************************************************************
      * STRING FUNCTIONS                                                      *
@@ -153,6 +172,9 @@
       function(x, y, len) {
         return F.strcmp(x.substr(0, len), y.substr(0, len));
       },
+
+    strreplace :
+      function(x, re, y) { return x.replace(re, y) },
 
     split :
       function(x, y) {
@@ -236,6 +258,20 @@
         return ret;
       },
 
+    uniquearray :
+      function(pred, arr) {
+        var i, j, l=arr.length, ret=[];
+
+        for (i=0; i<l; i++) {
+          for (j=i+1; j<l; j++)
+            if (pred(arr[i], arr[j]))
+              j = ++i;
+          ret.push(arr[i]);
+        }
+
+        return ret;
+      },
+
     /*************************************************************************
      * OBJECT FUNCTIONS                                                      *
      *************************************************************************/
@@ -246,6 +282,13 @@
         for (i in obj)
           ret.push([i, obj[i]]);
         return ret;
+      },
+
+    keyvalmap :
+      function(obj) {
+        return F.map(function(x) {
+          return { key:x[0], val:x[1] };
+        }, F.outof(obj));
       },
 
     into :
@@ -366,6 +409,11 @@
         return y.apply(x, z);
       },
 
+    invoke :
+      function(f, obj) {
+        return function() { f.apply(obj, F.vec(arguments)) };
+      },
+
     argrev :
       function(f) {
         return function() { return F.apply(f, F.reverse(F.vec(arguments))) };
@@ -430,6 +478,14 @@
     mapargs :
       function(f, g) {
         return function() { return F.apply(f, F.map(g, F.vec(arguments))) };
+      },
+
+    mapcat :
+      function (f, arr) {
+        var i, j, ret=[];
+        for (i=0; i<arr.length; i++)
+          ret = ret.concat(f(arr[i]));
+        return ret;
       },
 
     filter :
@@ -548,6 +604,8 @@
   F.map(function(x) {
     F[x] = function() { return Math[x].apply(window, F.vec(arguments)) };
   }, mathfns);
+
+  F.now = function() { return (new Date()).getTime() };
 
   window.Fundaments = F;
 

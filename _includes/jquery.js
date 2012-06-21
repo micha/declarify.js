@@ -2691,12 +2691,14 @@ if ( !getSetAttribute ) {
 		},
 		set: function( elem, value, name ) {
 			// Set the existing or create a new attribute node
-			var ret = elem.getAttributeNode( name );
-			if ( !ret ) {
-				ret = document.createAttribute( name );
-				elem.setAttributeNode( ret );
-			}
-			return ( ret.nodeValue = value + "" );
+      try {
+        var ret = elem.getAttributeNode( name );
+        if ( !ret ) {
+          ret = document.createAttribute( name );
+          elem.setAttributeNode( ret );
+        }
+        return ( ret.nodeValue = value + "" );
+      } catch (e) { }
 		}
 	};
 
