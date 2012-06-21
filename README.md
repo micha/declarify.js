@@ -45,7 +45,11 @@ It takes years of programming experience to understand the complexities
 involved enough to design a really good, extensible, and maintainable JS
 architecture to support a complex UI.
 
-So, what to do?
+So, what to do? Well, one way to solve this problem is to eliminate the need
+for explicit composition in one of the two domains (i.e. DOM and JavaScript).
+[Cappuccino](http://cappuccino.org) takes this approach, eliminating the
+need for composition and abstraction in the HTML DOM. Declarify.js takes a
+complimentary approach, removing the need for JavaScript composition.
 
 ## Contribute
 
