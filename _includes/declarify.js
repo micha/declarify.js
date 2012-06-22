@@ -539,8 +539,14 @@ logElapsed("load", "START LOADING");
     if (elem.attr("type"))
       elem.pureAttr("data-type", elem.attr("type"));
 
-    if (elem.is("option") && elem.attr("data-selected"))
+    if (elem.is("option") && elem.is("[data-selected]"))
       elem.pureAttr("selected", true);
+
+    if (elem.is("input,select,textarea,option") && elem.is("[data-disabled]"))
+      elem.pureAttr("disabled", true);
+
+    if (elem.is("input,select,textarea,option") && elem.is("[data-readonly]"))
+      elem.pureAttr("readonly", true);
 
     // Some browsers may check a checkbox in a form when the page is reloaded
     // (if the box was previously checked), like firefox, for example.
@@ -550,6 +556,9 @@ logElapsed("load", "START LOADING");
     
     if (elem.is(":disabled")) 
       elem.attr("data-disabled", "data-disabled");
+    
+    if (elem.is("[readonly]")) 
+      elem.attr("data-readonly", "data-readonly");
     
     if (elem.is(":selected")) 
       elem.attr("data-selected", "data-selected");
@@ -586,6 +595,7 @@ logElapsed("load", "START LOADING");
       .bindAttr("data-checked", handleFlag("checked"))
       .bindAttr("data-selected", handleFlag("selected"))
       .bindAttr("data-disabled", handleFlag("disabled"))
+      .bindAttr("data-readonly", handleFlag("readonly"))
       .bindAttr("data-value", function(name, ini, fin) {
         if (elem.is("input,select,option") && elem.val() != fin)
           elem.val(fin);
@@ -597,7 +607,7 @@ logElapsed("load", "START LOADING");
       elem.attr("data-value", elem.val());
     else
       map(function(x) {
-        if (x[0] in {"data-checked":1, "data-disabled":1, "data-selected":1})
+        if (x[0] in {"data-checked":1, "data-disabled":1, "data-readonly":1, "data-selected":1})
           elem.removeAttr(x[0]).attr(x[0], x[0]);
         else if (x[0] == "data-value")
           elem.removeAttr(x[0]).attr(x[0], x[1]);
@@ -1047,6 +1057,7 @@ function tfdDoEval($expr, $this, $$, $same) {
 
   $UI.dep.attr("checked");
   $UI.dep.attr("disabled");
+  $UI.dep.attr("readonly");
 
   function asMap(name) {
     var ret = function(name) { return asMap(name) },
