@@ -7,6 +7,12 @@
 
 {% include jquery.js %}
 
+{% include mutations.core.js %}
+
+{% include mutations.attr.js %}
+
+{% include mutations.val.js %}
+
 {% include lambda.js %}
 
 {% include declarify.js %}

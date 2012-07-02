@@ -193,6 +193,15 @@
     vec :
       function(arr) { return arr ? Array.prototype.slice.call(arr) : [] },
 
+    tovec :
+      function(arr) {
+        var ret;
+        ret = $.type(arr) == "string" ? [] : F.vec(arr);
+        return ret.length > 0 && arr
+          ? ret
+          : (arr ? ret.concat([arr]) : ret);
+      },
+
     count :
       function(arr) { return arr.length },
 
@@ -316,9 +325,11 @@
 
     assoc :
       function() {
-        var obj = first(arguments) || {},
-            kvs = rest(arguments),
+        var obj = F.first(arguments) || {},
+            kvs = F.rest(arguments),
             k, v, t;
+        if (kvs.length == 1)
+          return obj[kvs[0]];
         while (kvs.length >= 2) {
           k = kvs.shift();
           v = kvs.shift();
@@ -367,6 +378,31 @@
         }
       },
 
+
+    /*************************************************************************
+     * FP STUFF                                                              *
+     *************************************************************************/
+
+    cons :
+      function() {
+        var fns = F.vec(arguments);
+        return function() {
+          var i, ret=[], argv=F.vec(arguments);
+          for (i=0; i<fns.length; i++)
+            ret[i] = fns[i].apply(window, argv);
+          return ret;
+        }
+      },
+
+    applyall :
+      function(fn) {
+        return function() {
+          var i, len=arguments.length, ret=[];
+          for (i=0; i<len; i++)
+            ret[i] = fn(arguments[i]);
+          return ret;
+        }
+      },
 
     /*************************************************************************
      * FUNDAMENTS                                                            *
@@ -606,6 +642,8 @@
   }, mathfns);
 
   F.now = function() { return (new Date()).getTime() };
+
+  F.map(function(x) { F["s"+x] = F.partial(F.nth, F._, x) }, F.range(0,16));
 
   window.Fundaments = F;
 
