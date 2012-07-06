@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="declarify.js"></script>
+  </head>
+  <body>
+
+    <h3>Testing</h3>
+    <label>foo: <input type="radio" name="r1" value="foo" /></label><br>
+    <label>bar: <input type="radio" name="r1" value="bar" checked /></label><br>
+    <label>baz: <input type="radio" name="r1" value="baz" /></label><br>
+
+    <h4>Testing</h4>
+    <p
+      data-dep::r1:checked  = "a b"
+      data-a::text          = "'The value is <' + $$.value + '>.'"
+      data-b::foobar        = "$$.name + ':' + $$.value"
+      >
+      Heyho.
+    </p>
+  </body>
+</html>
+

@@ -1,3 +1,35 @@
+
+//console.time implementation for IE
+if(window.console && typeof(window.console.time) == "undefined") {
+  console.time = function(name, reset) {
+    if(!name)
+      return;
+    var time = new Date().getTime();
+    if(!console.timeCounters)
+      console.timeCounters = {};
+    var key = "KEY" + name.toString();
+    if(!reset && console.timeCounters[key])
+      return;
+    console.timeCounters[key] = time;
+  };
+
+  console.timeEnd = function(name){
+    var time = new Date().getTime();
+    if(!console.timeCounters)
+      return;
+    var key = "KEY" + name.toString();
+    var timeCounter = console.timeCounters[key];
+    if(timeCounter) {
+      var diff = time - timeCounter;
+      var label = name + ": " + diff + "ms";
+      console.info(label);
+      delete console.timeCounters[key];
+    }
+    return diff;
+  };
+}
+
+
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -15187,298 +15219,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 })( window );
 
 
-/*!
- * jQuery Mutation Events @VERSION
- *
- * Copyright (c) 2009 Adaptavist.com Ltd
- * Dual licensed under the MIT (MIT-LICENSE.txt)
- * and GPL (GPL-LICENSE.txt) licenses.
- *
- * Author: Mark Gibson (jollytoad at gmail dot com)
- */
-(jQuery.mutations || (function($) {
-
-var m;
-m = $.mutations = {
-
-	REMOVAL:		3,
-	ADDITION:		2,
-	MODIFICATION:	1,
-	INIT:			-1,
-	
-	// pre-mutation event prefix
-	pre: 'pre-',
-
-	// Construct a new mutation event
-	event: function( type, params ) {
-		var event = $.extend(new $.Event( type ), params);
-		
-		if ( event.attrChange === undefined ) {
-			event.attrChange =
-				event.newValue === null || event.newValue === undefined   ? m.REMOVAL :
-				event.prevValue === null || event.prevValue === undefined ? m.ADDITION :
-																			m.MODIFICATION;
-		}
-		
-		return event;
-	},
-	
-	// Trigger a pre and post mutation event, the pre mutation handlers may
-	// cancel the mutation using event.preventDefault(), it may also modify
-	// the mutation by setting the event fields.
-	trigger: function( elem, eventType, eventParams, commit ) {
-		var event = m.event( m.pre + eventType, eventParams ),
-			opts = m.type[eventType],
-			ret;
-		
-		if ( opts.pre ) {
-//			console.log('trigger %s %s: %o -> %o %o', event.type, event.attrName, event.prevValue, event.newValue, elem);
-			$.event.trigger( event, undefined, elem );
-		} else {
-			event.target = elem;
-		}
-		
-		if ( !event.isDefaultPrevented() ) {
-			event.type = eventType;
-			ret = commit(event);
-			
-			if ( opts.post ) {
-//				console.log('trigger %s %s: %o -> %o %o', event.type, event.attrName, event.prevValue, event.newValue, event.target);
-				$.event.trigger( event, undefined, event.target );
-			}
-		}
-		
-		return ret;
-	},
-
-	type: {},
-	
-	// Register a new mutation event
-	register: function( opts ) {
-		m.type[opts.type] = opts;
-		
-		// Track how many bindings we have for this event type
-		opts.pre = 0;
-		opts.post = 0;
-
-		// Register the pre/post mutation event types as special event type
-		// so we can hook into jQuery on the first binding of this type		
-		
-		function special( eventType, stage ) {
-			$.event.special[eventType] = {
-				add: function(handler, data, namespaces) {
-					
-          namespaces = namespaces || [];
-
-					// Call the setup on the first binding
-					if ( !(opts.pre + opts.post) ) {
-						opts.setup();
-					}
-					opts[stage]++;
-					
-					// If any namespaces are given prefixed with @ then limit
-					// the handler to the bound element and attrNames specified
-					// by the @-prefixed names.
-					if ( namespaces.length ) {
-						var attrNames = {}, proxy;
-						
-						$.each(namespaces, function() {
-							if ( '@' === this.charAt(0) ) {
-								attrNames[this.substring(1)] = true;
-								proxy = true;
-							}
-						});
-						
-						if ( proxy ) {
-							proxy = function(event) {
-								if ( this === event.target && attrNames[event.attrName] ) {
-									return handler.apply(this, arguments);
-								}
-							};
-							proxy.type = handler.type;
-							return proxy;
-						}
-					}
-				},
-		
-				remove: function() {
-					// Call teardown when last binding is removed
-					opts[stage]--;
-					if ( !(opts.pre + opts.post) ) {
-						opts.teardown();
-					}
-				}
-			};
-		}
-		
-		special(m.pre + opts.type, 'pre');
-		special(opts.type, 'post');
-	}
-};
-
-$.fn.extend({
-	// Trigger a fake mutation event for initialisation
-	initMutation: function( type, names, defaultValue ) {
-		var self = this, opts = m.type[type];
-		
-		if ( opts && opts.init && opts.post ) {
-			if ( names === undefined ) {
-				self.each(function() { opts.init(this, undefined, defaultValue); });
-			} else {
-				$.each(names.split(/\s+/), function(n, name) {
-					self.each(function() { opts.init(this, name, defaultValue); });
-				});
-			}
-		}
-		
-		return this;
-	}
-});
-
-})(jQuery));
-
-
-
-/*
- * jQuery.attr Mutation Events @VERSION
- *
- * Copyright (c) 2009 Adaptavist.com Ltd
- * Dual licensed under the MIT (MIT-LICENSE.txt)
- * and GPL (GPL-LICENSE.txt) licenses.
- *
- * Author: Mark Gibson (jollytoad at gmail dot com)
- */
-(jQuery.mutations && (function($) {
-
-$.mutations.register({
-	// The event type triggered after a mutation,
-	// "pre-" is prepended to this for the pre-mutation event.
-	type: 'attr',
-	
-	// The blacklist can hold attributes that should never trigger an event
-	blacklist: {},
-	
-	// Hook into jQuery when an event of this type is first bound
-	setup: function() {
-		var opts = this,
-			attr = $.attr,
-			trigger = $.mutations.trigger;
-		
-		// Save the original $.attr function
-		this._attr = attr;
-		
-		// Override $.attr
-		$.attr = function( elem, name, newValue, silent ) {
-			var prevValue = attr(elem, name);
-
-			if ( newValue === undefined ) {
-				return prevValue;
-			}
-
-			if ( silent || opts.blacklist[name] ) {
-
-				return attr(elem, name, newValue);
-				
-      } else if ( ""+(newValue||"") !== ""+(prevValue||"") ) {
-				return trigger( elem, opts.type, {
-						attrName: name,
-						prevValue: prevValue,
-						newValue: newValue === "" ? undefined : newValue
-					},
-					function( event ) {
-						return attr( event.target, event.attrName, event.newValue );
-					}
-				);
-			}
-		};
-	},
-	
-	// Remove hooks once all events of this type have been unbound
-	teardown: function() {
-		$.attr = this._attr;
-		delete this._attr;
-	},
-	
-	// Force an event to be trigger - useful for initialisation
-	init: function( elem, name, defaultValue ) {
-		var value = this._attr(elem, name) || defaultValue;
-		if ( value !== undefined ) {
-			$.event.trigger(
-				$.mutations.event(this.type, {
-					attrName: name,
-					newValue: value,
-					attrChange: $.mutations.INIT
-				}),
-				undefined, elem
-			);
-		}	
-	}
-});
-
-})(jQuery));
-
-
-
-/*
- * jQuery.fn.val Mutation Events @VERSION
- *
- * Copyright (c) 2009 Adaptavist.com Ltd
- * Dual licensed under the MIT (MIT-LICENSE.txt)
- * and GPL (GPL-LICENSE.txt) licenses.
- *
- * Author: Mark Gibson (jollytoad at gmail dot com)
- */
-(jQuery.mutations && (function($) {
-
-$.mutations.register({
-	type: 'val',
-	
-	setup: function() {
-		var opts = this,
-			val = $.fn.val,
-			trigger = $.mutations.trigger;
-		
-		this._val = val;
-		
-		$.fn.val = function( newValue, silent ) {
-			if ( newValue === undefined ) {
-				return val.apply(this);
-			}
-			
-			if ( silent ) {
-				return val.call( this, newValue );
-			}
-			
-			return this.each(function() {
-				var prevValue = val.apply([this]);
-				
-				if ( newValue !== prevValue ) {
-					trigger( this, opts.type,
-						{ newValue: newValue, prevValue: prevValue},
-						function( event ) {
-							val.call( $(event.target), event.newValue );
-						}
-					);
-				}
-			});
-		};
-	},
-	
-	// Remove hooks once all events of this type have been unbound
-	teardown: function() {
-		$.fn.val = this._val;
-		delete this._val;
-	},
-	
-	init: function( elem, name ) {
-		$.event.trigger($.mutations.event(this.type, { attrChange: $.mutations.INIT }), undefined, elem);	
-	}
-});
-
-})(jQuery));
-
-
-
 
 (function($) {
 
@@ -16134,10 +15874,16 @@ $.mutations.register({
 
 Fundaments.load();
 
-(function() {
-  
-  var eventQ = [];
+console = console || {};
+console.time = console.time || function() {};
+console.timeEnd = console.timeEnd || function() {};
 
+console.time("load");
+
+(function() {
+
+  var eventQ=[], nextQ=[];
+  
   /**
    * Returns a function that, when called with no arguments, invokes the given
    * method on the `this` object, with the given (optional) arguments. This is
@@ -16159,23 +15905,122 @@ Fundaments.load();
     return x.replace(/([^a-zA-Z0-9-_])/g, '\\$1');
   };
 
-  $.fn.qElem = function() {
-    if (this.size() > 1)
-      return this.each($.invoke("qElem"));
-    eventQ.push(this[0]);
-    return this;
+  /**
+   * Get a map of this element's attributes and their associated values.
+   */
+  $.fn.attrMap = function() {
+    var ret = {};
+    if (this.size())
+      $.each(this.get(0).attributes, function(i,attr) {
+        ret[attr.nodeName.toLowerCase()] = attr.nodeValue;
+      });
+    return ret;
+  };
+
+  /**
+   * Get the child element of this element with name attribute set to `name`
+   */
+  $.fn.byName = function(name) {
+    var ret = $("[data-name='"+$.sq(name)+"']", this);
+    //ret = ret.filter($.invoke("isVisibleParents"));
+    return ret.type() == "radio" ? ret.filter("[data-checked]") : ret;
+  };
+
+  /**
+   * The type attribute of this element.
+   */
+  $.fn.type = function() {
+    var n;
+    return (n = this.attr("type") || this.attr("data-type"))
+      ? n.toLowerCase()
+      : "";
+  };
+
+  function attr(name, fn) {
+    attr.fns[name] = (attr.fns[name]||[]).concat([fn]);
   }
 
-  function prepare(elem) {
-    map(partial(apply, _, [elem]), prepare.fns);
-    return elem;
+  attr.fns = {};
+
+  function onAttr(elem, name, ini, fin, op) {
+    if (name in attr.fns)
+      map(applyto([elem, ini, fin, op]), attr.fns[name]);
   }
 
   function init() {
     map(apply, init.fns);
   }
 
-  function run() {
+  function prepare(ctx) {
+    map(partial(apply, _, [ctx]), prepare.fns);
+    return ctx;
+  }
+
+  function prerun(q) {
+    map(applyto([q]), prerun.fns);
+  }
+
+  function process(q) {
+    map(applyto([q]), process.fns);
+  }
+
+  function finalize(q) {
+    map(applyto([q]), finalize.fns);
+  }
+
+  function run(defer) {
+    var pre=0, tmpQ, elemQ, doneQ=[];
+
+    console.time("run");
+
+    if ($.type(defer) === "number")
+      return setTimeout(function() {
+        $(document).trigger("attr-change");
+      }, defer);
+
+    function elems(q) {
+      return keep(map(function(x) {
+        var y = x.split(":"),
+            e = $("body").byName(y[0]);
+        return e.size() ? [e, x, y[0], y[1]] : false;
+      }, q));
+    }
+
+    while (eventQ.length) {
+      console.time("run iter", true);
+
+      tmpQ = uniquearray(eqq, eventQ);
+      eventQ.length = 0;
+
+      elemQ = elems(tmpQ);
+
+      if (! pre++)
+        prerun(elemQ);
+
+      process(elemQ);
+      doneQ = doneQ.concat(tmpQ);
+
+      console.timeEnd("run iter");
+    }
+
+    console.time("finalize");
+    finalize(elems(uniquearray(eqq, doneQ)));
+    console.timeEnd("finalize");
+
+    console.timeEnd("run");
+    console.timeEnd("load");
+
+    $UI.initComplete = true;
+  }
+
+  function enqueue(meth, q) {
+    return function() {
+      if (this.size() > 1)
+        return this.each($.invoke(meth));
+      if ( (n = this.attr("data-name")) || (n = this.attr("name")) )
+        q.push(n);
+      return this;
+    };
   }
 
   $.fn.prepare = function() {
@@ -16184,108 +16029,288 @@ Fundaments.load();
     return prepare(this);
   };
 
+  $.fn.qNow   = enqueue("qNow", eventQ);
+  $.fn.qNext  = enqueue("qNext", nextQ);
+
   $UI = {
+    CREATE:       1,
+    UPDATE:       2,
+    REMOVE:       3,
     q:            function() { return eventQ },
-    init:         init.fns    = [],
-    prepare:      prepare.fns = [],
-    run:          run,
+    m:            {},
+    attr:         attr,
+    init:         init.fns      = [],
+    prepare:      prepare.fns   = [],
+    prerun:       prerun.fns    = [],
+    process:      process.fns   = [],
+    finalize:     finalize.fns  = [],
+    run:          run
   };
 
   $(function() {
     init();
     prepare($("html"));
+    run();
+  });
+
+  (function(orig) {
+    $UI._attr = orig;
+    $.attr = function(elem, name, value, pass) {
+      var len=arguments.length, ini, op, n;
+
+      if ((len == 3 || len == 4) && name.substr(0,5) === "data-") {
+        ini = orig(elem, name);
+
+        op = arguments.length == 3
+          ? $UI.REMOVE
+          : (ini === undefined ? $UI.CREATE : $UI.UPDATE);
+
+        if (value === true) {
+          value = name;
+        } else if (value === false) {
+          op = $UI.UPDATE;
+          value = null;
+        }
+
+        if (op !== $UI.UPDATE || value !== null) {
+          onAttr(elem, name, ini, value, op);
+          if ( (n = orig(elem, "data-name")) || (n = orig(elem, "name")) )
+            eventQ.push(n+":"+name);
+        }
+      }
+
+      return apply(orig, vec(arguments));
+    };
+  })($.attr);
+
+  $(document).on("attr-change", function(event) {
+    $UI.run();
+  });
+})();
+
+
+
+(function() {
+
+  $UI.m.stateAttr = function stateAttr(name, fn) {
+    $UI.attr(name, function(elem, ini, fin, op) {
+      $(elem)[(fin ? "add" : "remove")+"Class"](name.replace(/^data-/,""));
+      if (fn)
+        fn(elem, ini, fin, op);
+    });
+  };
+
+  $UI.m.stateAttr("data-checked");
+  $UI.m.stateAttr("data-selected");
+  $UI.m.stateAttr("data-active");
+  $UI.m.stateAttr("data-focused");
+  $UI.m.stateAttr("data-disabled");
+  $UI.m.stateAttr("data-readonly");
+
+  function dataAttrs(elem, sel, attrs, flag) {
+    map(function(x) {
+      elem
+        .andSelf()
+        .find(sel)
+        .filter("["+$.sq(x)+"]")
+        .each(function() {
+          $UI._attr(this, "data-"+x, flag ? "data-"+x : $(this).attr(x));
+        })
+        .end()
+        .filter("[data-"+$.sq(x)+"]")
+        .not("["+$.sq(x)+"]")
+        .each(function() {
+          $UI._attr(this, x, flag ? x : $(this).attr("data-"+x));
+        });
+    }, attrs);
+  }
+
+  function linkedAttrs(names) {
+    map(function(x) {
+      $UI.attr("data-"+x, function(elem, ini, fin, op) {
+        if (op === $UI.REMOVE) {
+          if (x === "value")
+            $(elem).attr(x, "");
+          else
+            $(elem).removeAttr(x);
+        } else {
+          $(elem).attr(x, fin);
+        }
+      });
+    }, names);
+  }
+
+  var dAttrs = {
+    "input,select,textarea":  ["name", "type", "value"]
+  };
+
+  var fAttrs = {
+    "input,select,textarea":  ["checked", "disabled", "readonly"],
+    "option":                 ["selected"]
+  };
+
+  $UI.prepare.push(function prepareAttrs(ctx) {
+    var radios  = "input[type='radio']",
+        checks  = "input[type='checkbox']",
+        others  = "input[type!='radio'][type!='checkbox'],select,textarea",
+        i;
+
+    for (i in dAttrs) {
+      dataAttrs(ctx, i, dAttrs[i], false);
+      linkedAttrs(dAttrs[i]);
+    }
+
+    for (i in fAttrs) {
+      dataAttrs(ctx, i, fAttrs[i], true);
+    }
+
+    ctx.find(radios).on("click", function(event) {
+      var jself = $(this),
+          nm = jself.attr("data-name") || jself.attr("name");
+      $("[data-name='"+$.sq(nm)+"']").not(jself).removeAttr("data-checked");
+      jself.attr("data-checked", true);
+      $UI.run(0);
+    });
+
+    ctx.find(checks).on("click", function(event) {
+      var jself = $(this);
+      jself.attr("data-checked", !! jself.is(":checked"));
+      $UI.run(0);
+    });
+
+    ctx.find(others).on("change", function(event) {
+      var jself = $(this);
+      jself.attr("data-value", jself.val());
+      $UI.run(0);
+    });
   });
 
 })();
 
+
+
 (function() {
+  
+  var mods  = {},
+      flags = {};
 
-  var attrHlrs    = {},
-      preAttrHlrs = {};
+  $UI.m.dep       = partial(assoc, mods);
+  $UI.m.dep.flags = partial(assoc, mods, _, true);
 
-  // Log attr mutation events in the console (if available)
-  if ( window.console && window.console.log ) { 
-    $(document).bind('pre-attr attr pre-val val', function(event) {
-      console.log('Event %s%s: %o %o %o', event.type, 
-        event.attrName ? ' @'+event.attrName : '', 
-        event.newValue, event, event.target);
+  function processDep(elem, tag, name, attr) {
+    var deps = $("["+$.sq("data-dep::"+name+":"+attr.substr(5))+"]");
 
-      if ( event.isDefaultPrevented() ) { 
-        console.log('DEFAULT PREVENTED');
-      }   
-    }); 
+    deps.each(function() {
+      processDepElem($(this), elem, tag, name, attr);
+    });
   }
 
-  $(document).initMutation();
+  function processDepElem(dep, ref, tag, name, attr) {
+      var depset = dep.attr("data-dep::"+name+":"+attr.substr(5));
 
-  (function(orig) {
-    $.attr = function(elem, name, newValue, silent) {
-      return $.type(newValue) === "boolean"
-        ? (newValue
-            ? orig.call(this, elem, name, name, silent)
-            : $.removeAttr(elem, name))
-        : orig.call(this, elem, name, newValue, silent);
+      map(function(x) {
+        map(function(y) {
+          var same = {},
+              expr = dep.tfdEval(y[1], ref, same);
+          if (y[0] in mods)
+            mods[y[0]](dep, expr, same);
+          else
+            dep.attr("data-"+y[0], expr);
+        }, outof(dep.tfdAttrMap()[x]));
+      }, depset.split(" "));
+  }
+
+  function asMap(name) {
+    var ret = function(name) { return asMap(name) },
+        obj = $.type(name) == "string"
+                ? $("body").byName(name).tfdAsMap()
+                : name;
+    ret.toMap = function() { return obj };
+    return $.extend({}, ret, obj);
+  }
+
+  $.fn.tfdEval = function(expr, ref, same, opts) {
+    var env = {
+      "$this":  this,
+      "$same":  same,
+      "$$":     $(ref).tfdAsMapFn()
     };
-  })($.attr);
-
-  function handler(hlrs) {
-    return function(event) {
-      if (event.attrName in hlrs)
-        map(applyto([event.target, event.prevValue, event.newValue, event]),
-            hlrs[event.attrName]);
-    }
+    return evalenv(expr, $.extend({}, env, opts));
   };
 
-  $UI.attr = function(name, fn) {
-    attrHlrs[name] = concat(attrHlrs[name] || [], [fn]);
+  $.fn.tfdAsMapFn = function() {
+    return asMap(this.tfdAsMap());
   };
 
-  $UI.preAttr = function(name, fn) {
-    preAttrHlrs[name] = concat(preAttrHlrs[name] || [], [fn]);
+  $.fn.tfdAsMap = function() {
+    return into({}, keep(map(function(x) {
+      return x[0].indexOf("::") >= 0 || x[0].substr(0, 5) !== "data-"
+        ? null
+        : [x[0].substr(5), x[1]];
+    }, outof(this.attrMap()))));
   };
 
-  $(document).bind('pre-attr', handler(preAttrHlrs));
-  $(document).bind('attr', handler(attrHlrs));
+  $.fn.tfdAttrMap = function(name) {
+    return reduce(function(x, xs) {
+      var y = x[0].replace(/^data-/, '');
+
+      if (y.length == x[0].length)
+        return xs;
+
+      var m = y.match(/^([a-z0-9-\._]+)::(.*)$/i),
+          j = m ? m[1] : "",
+          k = m ? m[2] : y;
+
+      return assoc(xs, j, assoc(xs[j], k, x[1]));
+    }, {}, outof(this.attrMap()));
+  };
+
+  $.fn.tfdGetDeps = function() {
+    //(tag, name, attr)
+    return map(function(x) {
+      var y = x[0].split(":");
+      return [x[0], y[0], "data-"+y[1]];
+    }, outof(this.tfdAttrMap().dep));
+  };
+
+  $.fn.tfdInitDep = function() {
+    var jself = this, ref;
+    if (this.size() > 1)
+      return this.each($.invoke("tfdInitDep"));
+    map(function(x) {
+      ref = $("body").byName(x[1]);
+      processDepElem.apply(window, [jself, ref].concat(x));
+    }, this.tfdGetDeps());
+  };
+
+  $UI.prepare.push(function prepareDep(ctx) {
+    console.time("init state");
+
+    var deps = ctx.find("[data-declarify-init]");
+
+    if (! deps.size())
+      deps = ctx.find("*");
+      
+    console.log("# of deps:", deps.size());
+
+    deps.tfdInitDep();
+
+    console.timeEnd("init state");
+  });
+
+  $UI.process.push(function processDeps(q) {
+    map(partial(apply, processDep), q);
+  });
+
 })();
 
+
+
 (function() {
-
-  $UI.prepare.push(function(elem) {
-    var fe;
-
-    function dataAttrs(sel, attrs) {
-      map(function(x) {
-        elem
-          .andSelf()
-          .find(sel)
-          .filter("["+$.sq(x)+"]")
-          .each(function() {
-            $.attr(this, "data-"+x, $(this).attr(x), true);
-          })
-          .end()
-          .filter("[data-"+$.sq(x)+"]")
-          .not("["+$.sq(x)+"]")
-          .each(function() {
-            $.attr(this, x, $(this).attr("data-"+x), true);
-          });
-      }, attrs);
-    }
-
-    function stateAttr(name) {
-      $UI.attr(name, function(elem, ini, fin) {
-        $(elem)[(fin ? "add" : "remove")+"Class"](name.replace(/^data-/,""));
-      });
-    }
-
-    dataAttrs("input,select,textarea", ["checked", "type", "value"]);
-    dataAttrs("option", ["selected"]);
-
-    stateAttr("data-checked");
-    stateAttr("data-selected");
-    stateAttr("data-active");
-    stateAttr("data-focused");
-    stateAttr("data-disabled");
-    stateAttr("data-readonly");
+  
+  $UI.m.dep("text", function(elem, val, same) {
+    if (val !== same)
+      elem.text(val);
   });
 
 })();

@@ -1,1 +1,1 @@
-exclude: .git
+exclude: .git, zzz
