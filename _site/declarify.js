@@ -16278,7 +16278,7 @@ console.time("load");
       text: elem.nodeValue
     };
 
-    if (ret.name.substr(0,1) !== "#") {
+    if (isElemNode(ret)) {
       ret.attr = into({}, mapn(function(x) {
         return [x.nodeName.toLowerCase(), x.nodeValue];
       }, filter(partial(assoc, _, "specified"), seq2vec(elem.attributes))));
