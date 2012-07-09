@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="declarify.js"></script>
+  </head>
+  <body>
+
+    <define>
+      <foo></foo>
+      <div style="border:1px solid blue" hello="world!">
+        baf: <input type="checkbox"/>
+      </div>
+    </define>
+
+    <define>
+      <bar></bar>
+      <foo style="border:1px solid red" hello="universe!">
+        <hr>
+      </foo>
+    </define>
+
+    <h3>Testing</h3>
+
+    <!-- This is
+         a multi-line comment -->
+    <label>foo: <input type="radio" name="r1" value="foo" /></label><br>
+    <label>bar: <input type="radio" name="r1" value="bar" checked /></label><br>
+    <label>baz: <input type="radio" name="r1" value="baz" /></label><br>
+
+    <foo></foo>
+    <bar></bar>
+
+    <conj>
+      <bar></bar>
+      <p>This is "conj"-ed on a &lt;bar/&gt;!</p>
+      <p>And so is this.</p>
+    </conj>
+
+    <h4>Testing</h4>
+
+    <p>
+      The value is
+      <span
+        data-dep::r1:checked  = "a b"
+        data-a::text          = "$$.value"
+        data-b::foobar        = "$$.name + ':' + $$.value"
+        >
+        Heyho.
+      </span>
+    </p>
+  </body>
+</html>
+

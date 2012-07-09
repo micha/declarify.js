@@ -15906,6 +15906,13 @@ console.time("load");
   };
 
   /**
+   * The tag name of this element.
+   */
+  $.fn.nodeName = function() {
+    return this[0].nodeName.toLowerCase();
+  };
+
+  /**
    * Get a map of this element's attributes and their associated values.
    */
   $.fn.attrMap = function() {
@@ -15914,6 +15921,18 @@ console.time("load");
       $.each(this.get(0).attributes, function(i,attr) {
         ret[attr.nodeName.toLowerCase()] = attr.nodeValue;
       });
+    return ret;
+  };
+
+  $.fn.pop = function() {
+    var ret = this.get(-1);
+    this.splice(this.length-1,1);
+    return ret;
+  };
+
+  $.fn.shift = function() {
+    var ret = this.get(0);
+    this.splice(0,1);
     return ret;
   };
 
@@ -16149,40 +16168,53 @@ console.time("load");
     "option":                 ["selected"]
   };
 
-  $UI.prepare.push(function prepareAttrs(ctx) {
+  $UI.init.push(function() {
     var radios  = "input[type='radio']",
         checks  = "input[type='checkbox']",
         others  = "input[type!='radio'][type!='checkbox'],select,textarea",
         i;
 
-    for (i in dAttrs) {
-      dataAttrs(ctx, i, dAttrs[i], false);
+    for (i in dAttrs)
       linkedAttrs(dAttrs[i]);
-    }
 
-    for (i in fAttrs) {
-      dataAttrs(ctx, i, fAttrs[i], true);
-    }
-
-    ctx.find(radios).on("click", function(event) {
-      var jself = $(this),
+    function radioClick(elem, event) {
+      var jself = $(elem),
           nm = jself.attr("data-name") || jself.attr("name");
       $("[data-name='"+$.sq(nm)+"']").not(jself).removeAttr("data-checked");
       jself.attr("data-checked", true);
       $UI.run(0);
-    });
+    }
 
-    ctx.find(checks).on("click", function(event) {
-      var jself = $(this);
+    function checkboxClick(elem, event) {
+      var jself = $(elem);
       jself.attr("data-checked", !! jself.is(":checked"));
       $UI.run(0);
-    });
+    }
 
-    ctx.find(others).on("change", function(event) {
-      var jself = $(this);
+    function othersChange(elem, event) {
+      var jself = $(elem);
       jself.attr("data-value", jself.val());
       $UI.run(0);
+    }
+
+    $(document).on("click", function(event) {
+      if ($(event.target).is(radios))
+        radioClick(event.target, event);
+      else if ($(event.target).is(checks))
+        checkboxClick(event.target, event);
+      else if ($(event.target).is(others))
+        othersChange(event.target, event);
     });
+  });
+
+  $UI.prepare.push(function prepareAttrs(ctx) {
+    var i;
+
+    for (i in dAttrs)
+      dataAttrs(ctx, i, dAttrs[i], false);
+
+    for (i in fAttrs)
+      dataAttrs(ctx, i, fAttrs[i], true);
   });
 
 })();
@@ -16211,11 +16243,16 @@ console.time("load");
       map(function(x) {
         map(function(y) {
           var same = {},
-              expr = dep.tfdEval(y[1], ref, same);
-          if (y[0] in mods)
-            mods[y[0]](dep, expr, same);
-          else
-            dep.attr("data-"+y[0], expr);
+              opts = { "$val" : ref.attr(attr) },
+              expr = dep.tfdEval(y[1], ref, same, opts);
+          if (expr !== same) {
+            if (y[0] in mods)
+              mods[y[0]](dep, expr);
+            else if (y[0] in flags)
+              dep.attr("data-"+y[0], !!expr);
+            else
+              dep.attr("data-"+y[0], expr);
+          }
         }, outof(dep.tfdAttrMap()[x]));
       }, depset.split(" "));
   }
@@ -16279,7 +16316,8 @@ console.time("load");
       return this.each($.invoke("tfdInitDep"));
     map(function(x) {
       ref = $("body").byName(x[1]);
-      processDepElem.apply(window, [jself, ref].concat(x));
+      if (ref.size())
+        processDepElem.apply(window, [jself, ref].concat(x));
     }, this.tfdGetDeps());
   };
 
@@ -16308,9 +16346,134 @@ console.time("load");
 
 (function() {
   
-  $UI.m.dep("text", function(elem, val, same) {
+  $UI.m.dep("text", function attrlib_text(elem, val, same) {
     if (val !== same)
       elem.text(val);
+  });
+
+})();
+
+
+
+(function() {
+  
+  var T_OBJECT        = 1,
+      T_DEFINED       = 2,
+      T_FUNCTION      = 3,
+      T_SPECIAL_FORM  = 4,
+      T_NIL           = 5,
+      genv            = {};
+
+  $UI.m.macro = {
+    fn : function(name, fn) {
+      genv[name] = { type: T_FUNCTION, expr: fn };
+    },
+    fm : function(name, fn) {
+      genv[name] = { type: T_SPECIAL_FORM, expr: fn };
+    }
+  };
+
+  function dup(x) {
+    return $.extend.apply(
+      $, [true, $.type(x)==="array" ? [] : {}].concat(vec(arguments)));
+  }
+
+  function isElemNode(sexp) {
+    return sexp.name.substr(0,1) !== "#";
+  }
+
+  function onlyElems(sexps) {
+    return keep(mapn(function(x) {
+      return isElemNode(x) ? x : null;
+    }, sexps));
+  }
+
+  function toSexp(elem) {
+    var attrs = into({}, mapn(function(x) {
+      return [x.nodeName.toLowerCase(), x.nodeValue];
+    }, elem.attributes));
+
+    return {
+      name: elem.nodeName.toLowerCase(),
+      attr: attrs,
+      chld: mapn(toSexp, elem.childNodes),
+      text: elem.nodeValue
+    };
+  }
+
+  function createElem(sexp) {
+    return $(sexp.name === "#text"
+      ? document.createTextNode(sexp.text)
+      : (sexp.name === "#comment"
+          ? document.createComment(sexp.text)
+          : document.createElement(sexp.name)));
+  }
+
+  function fromSexp(sexp) {
+    var ret = createElem(sexp);
+    
+    return isElemNode(sexp)
+      ? reduce(function(x, xs) {
+          return xs.append(fromSexp(x));
+        }, ret.attr(sexp.attr), sexp.chld)
+      : ret;
+  }
+
+  function evalSexp(env, sexp) {
+    var s   = sexp ? dup(sexp) : { type: T_NIL, expr: null },
+        e   = dup(genv, env),
+        sym = e[s.name] || { type: T_OBJECT, expr: s },
+        typ = sym.type,
+        val = sym.expr,
+        c, t;
+    
+    c = typ === T_SPECIAL_FORM
+          ? s.chld
+          : keep(map(partial(evalSexp, e), s.chld));
+
+    switch (typ) {
+      case T_NIL:
+        return val;
+      case T_SPECIAL_FORM:
+      case T_FUNCTION:
+        return apply(val, [e].concat(onlyElems(c)));
+      case T_DEFINED:
+        t = dup(val);
+        return evalSexp(
+          e, assoc(t, "attr", dup(t.attr, s.attr), "chld", t.chld.concat(c)));
+      default:
+        return assoc(s, "chld", c);
+    }
+  }
+
+  $.fromSexp = function(sexp) {
+    return sexp ? $(fromSexp(sexp)) : $();
+  };
+
+  $.fn.toSexp = function() {
+    return toSexp(this[0]);
+  };
+
+  $.fn.evalSexp = function() {
+    return this.replaceWith($.fromSexp(evalSexp(null, this.toSexp())));
+  };
+
+  $UI.init.push(function() {
+    map(function(x) { $(x[0]).hide() }, outof(genv));
+  });
+
+  $UI.m.macro.fm("define", function mdefine(env, sym, val) {
+    var v = evalSexp(env, dup(val));
+    genv[sym.name] = { type: T_DEFINED, expr: v };
+    return null;
+  });
+
+  $UI.m.macro.fn("conj", function mconj() {
+    var arg = map(dup, arguments),
+        env = arg[0],
+        par = evalSexp(env, arg[1]);
+    par.chld = par.chld.concat(map(partial(evalSexp, env), rest(rest(arg))));
+    return par;
   });
 
 })();

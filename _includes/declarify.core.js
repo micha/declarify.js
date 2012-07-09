@@ -33,6 +33,13 @@ console.time("load");
   };
 
   /**
+   * The tag name of this element.
+   */
+  $.fn.nodeName = function() {
+    return this[0].nodeName.toLowerCase();
+  };
+
+  /**
    * Get a map of this element's attributes and their associated values.
    */
   $.fn.attrMap = function() {
@@ -41,6 +48,18 @@ console.time("load");
       $.each(this.get(0).attributes, function(i,attr) {
         ret[attr.nodeName.toLowerCase()] = attr.nodeValue;
       });
+    return ret;
+  };
+
+  $.fn.pop = function() {
+    var ret = this.get(-1);
+    this.splice(this.length-1,1);
+    return ret;
+  };
+
+  $.fn.shift = function() {
+    var ret = this.get(0);
+    this.splice(0,1);
     return ret;
   };
 

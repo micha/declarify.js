@@ -1,7 +1,7 @@
 
 (function() {
   
-  $UI.m.dep("text", function(elem, val, same) {
+  $UI.m.dep("text", function attrlib_text(elem, val, same) {
     if (val !== same)
       elem.text(val);
   });

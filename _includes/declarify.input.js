@@ -58,40 +58,53 @@
     "option":                 ["selected"]
   };
 
-  $UI.prepare.push(function prepareAttrs(ctx) {
+  $UI.init.push(function() {
     var radios  = "input[type='radio']",
         checks  = "input[type='checkbox']",
         others  = "input[type!='radio'][type!='checkbox'],select,textarea",
         i;
 
-    for (i in dAttrs) {
-      dataAttrs(ctx, i, dAttrs[i], false);
+    for (i in dAttrs)
       linkedAttrs(dAttrs[i]);
-    }
 
-    for (i in fAttrs) {
-      dataAttrs(ctx, i, fAttrs[i], true);
-    }
-
-    ctx.find(radios).on("click", function(event) {
-      var jself = $(this),
+    function radioClick(elem, event) {
+      var jself = $(elem),
           nm = jself.attr("data-name") || jself.attr("name");
       $("[data-name='"+$.sq(nm)+"']").not(jself).removeAttr("data-checked");
       jself.attr("data-checked", true);
       $UI.run(0);
-    });
+    }
 
-    ctx.find(checks).on("click", function(event) {
-      var jself = $(this);
+    function checkboxClick(elem, event) {
+      var jself = $(elem);
       jself.attr("data-checked", !! jself.is(":checked"));
       $UI.run(0);
-    });
+    }
 
-    ctx.find(others).on("change", function(event) {
-      var jself = $(this);
+    function othersChange(elem, event) {
+      var jself = $(elem);
       jself.attr("data-value", jself.val());
       $UI.run(0);
+    }
+
+    $(document).on("click", function(event) {
+      if ($(event.target).is(radios))
+        radioClick(event.target, event);
+      else if ($(event.target).is(checks))
+        checkboxClick(event.target, event);
+      else if ($(event.target).is(others))
+        othersChange(event.target, event);
     });
+  });
+
+  $UI.prepare.push(function prepareAttrs(ctx) {
+    var i;
+
+    for (i in dAttrs)
+      dataAttrs(ctx, i, dAttrs[i], false);
+
+    for (i in fAttrs)
+      dataAttrs(ctx, i, fAttrs[i], true);
   });
 
 })();

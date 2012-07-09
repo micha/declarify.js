@@ -18,3 +18,5 @@
 {% include declarify.dep.js %}
 
 {% include declarify.attrlib.js %}
+
+{% include declarify.macro.js %}

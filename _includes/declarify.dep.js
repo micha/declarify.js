@@ -21,11 +21,16 @@
       map(function(x) {
         map(function(y) {
           var same = {},
-              expr = dep.tfdEval(y[1], ref, same);
-          if (y[0] in mods)
-            mods[y[0]](dep, expr, same);
-          else
-            dep.attr("data-"+y[0], expr);
+              opts = { "$val" : ref.attr(attr) },
+              expr = dep.tfdEval(y[1], ref, same, opts);
+          if (expr !== same) {
+            if (y[0] in mods)
+              mods[y[0]](dep, expr);
+            else if (y[0] in flags)
+              dep.attr("data-"+y[0], !!expr);
+            else
+              dep.attr("data-"+y[0], expr);
+          }
         }, outof(dep.tfdAttrMap()[x]));
       }, depset.split(" "));
   }
@@ -89,7 +94,8 @@
       return this.each($.invoke("tfdInitDep"));
     map(function(x) {
       ref = $("body").byName(x[1]);
-      processDepElem.apply(window, [jself, ref].concat(x));
+      if (ref.size())
+        processDepElem.apply(window, [jself, ref].concat(x));
     }, this.tfdGetDeps());
   };
 
