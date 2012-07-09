@@ -16233,6 +16233,10 @@ console.time("load");
       T_NIL           = 5,
       genv            = {};
 
+  /***************************************************************************
+   * Declarify.js module                                                     *
+   ***************************************************************************/
+
   $UI.m.macro = {
     fn : function(name, fn) {
       genv[name] = { type: T_FUNCTION, expr: fn };
@@ -16335,6 +16339,10 @@ console.time("load");
     }
   }
 
+  /***************************************************************************
+   * JQuery modules                                                          *
+   ***************************************************************************/
+
   $.fromSexp = function(sexp) {
     return sexp ? $(fromSexp(sexp)) : $();
   };
@@ -16347,16 +16355,28 @@ console.time("load");
     return this.replaceWith($.fromSexp(evalSexp(null, this.toSexp())));
   };
 
+  /***************************************************************************
+   * Declarify.js hooks                                                      *
+   ***************************************************************************/
+
   $UI.init.push(function() {
     map(function(x) { $(x[0]).hide() }, outof(genv));
     $("body").evalSexp();
   });
+
+  /***************************************************************************
+   * Special forms                                                           *
+   ***************************************************************************/
 
   $UI.m.macro.fm("define", function mdefine(env, meta, sym, val) {
     var v = evalSexp(env, dup(val));
     genv[sym.name] = { type: T_DEFINED, expr: v };
     return null;
   });
+
+  /***************************************************************************
+   * Functions                                                               *
+   ***************************************************************************/
 
   $UI.m.macro.fn("conj", function mconj() {
     var arg   = map(dup, arguments),
