@@ -17,6 +17,12 @@
     }
   };
 
+  var gensym = (function(count) {
+    return function() {
+      return "gensym_"+String(count++);
+    };
+  })(1);
+
   function dup(x) {
     return $.extend.apply(
       $, [true, $.type(x)==="array" ? [] : {}].concat(vec(arguments)));
@@ -32,17 +38,29 @@
     }, sexps));
   }
 
-  function toSexp(elem) {
-    var attrs = into({}, mapn(function(x) {
-      return [x.nodeName.toLowerCase(), x.nodeValue];
-    }, elem.attributes));
+  function seq2vec(seq) {
+    var arr = new Array(seq.length), i;
+    for (i=0; i<seq.length; i++)
+      arr[i]= seq[i];
+    return arr;
+  };
 
-    return {
+  function toSexp(elem) {
+    var ret = {
       name: elem.nodeName.toLowerCase(),
-      attr: attrs,
-      chld: mapn(toSexp, elem.childNodes),
+      attr: {},
+      chld: [],
       text: elem.nodeValue
     };
+
+    if (ret.name.substr(0,1) !== "#") {
+      ret.attr = into({}, mapn(function(x) {
+        return [x.nodeName.toLowerCase(), x.nodeValue];
+      }, filter(partial(assoc, _, "specified"), seq2vec(elem.attributes))));
+      ret.chld = mapn(toSexp, seq2vec(elem.childNodes));
+    }
+
+    return ret;
   }
 
   function createElem(sexp) {
@@ -80,7 +98,7 @@
         return val;
       case T_SPECIAL_FORM:
       case T_FUNCTION:
-        return apply(val, [e].concat(onlyElems(c)));
+        return apply(val, [e, s.attr].concat(onlyElems(c)));
       case T_DEFINED:
         t = dup(val);
         return evalSexp(
@@ -104,20 +122,36 @@
 
   $UI.init.push(function() {
     map(function(x) { $(x[0]).hide() }, outof(genv));
+    $("body").evalSexp();
   });
 
-  $UI.m.macro.fm("define", function mdefine(env, sym, val) {
+  $UI.m.macro.fm("define", function mdefine(env, meta, sym, val) {
     var v = evalSexp(env, dup(val));
     genv[sym.name] = { type: T_DEFINED, expr: v };
     return null;
   });
 
   $UI.m.macro.fn("conj", function mconj() {
-    var arg = map(dup, arguments),
-        env = arg[0],
-        par = evalSexp(env, arg[1]);
-    par.chld = par.chld.concat(map(partial(evalSexp, env), rest(rest(arg))));
+    var arg   = map(dup, arguments),
+        env   = arg[0],
+        meta  = arg[1],
+        par   = evalSexp(env, arg[2]);
+    par.chld = par.chld.concat(map(partial(evalSexp, env), arg.slice(3)));
     return par;
+  });
+
+  $UI.m.macro.fn("depends", function mconj(env, meta, sexp) {
+    var sym   = gensym(),
+        attr  = into({}, keep(map(function(x) {
+          return x[0] === "ref"
+            ? [ "data-dep::"+x[1], sym ]
+            : (x[0].substr(0,1) === ":"
+                ? [ "data-"+sym+"::"+x[0].substr(1), x[1] ]
+                : null);
+        }, outof(meta))));
+
+    sexp.attr = dup(sexp.attr, attr);
+    return sexp;
   });
 
 })();

@@ -1,22 +1,34 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script type="text/javascript">
+      document.createElement("foo");
+      document.createElement("r1");
+      document.createElement("define");
+      document.createElement("depends");
+      document.createElement("conj");
+    </script>
     <script type="text/javascript" src="declarify.js"></script>
   </head>
   <body>
 
     <define>
-      <foo></foo>
-      <div style="border:1px solid blue" hello="world!">
-        baf: <input type="checkbox"/>
-      </div>
+      <foo> </foo>
+      <conj>
+        <div style="border:1px solid orange"></div>
+        <h5>hello</h5>
+        <conj>
+          <p>world</p>
+          <span style="color:red">!</span>
+        </conj>
+      </conj>
     </define>
 
     <define>
-      <bar></bar>
-      <foo style="border:1px solid red" hello="universe!">
-        <hr>
-      </foo>
+      <r1> </r1>
+      <depends ref="r1:checked" :text="$$.value">
+        <span>Heyho.</span>
+      </depends>
     </define>
 
     <h3>Testing</h3>
@@ -27,27 +39,12 @@
     <label>bar: <input type="radio" name="r1" value="bar" checked /></label><br>
     <label>baz: <input type="radio" name="r1" value="baz" /></label><br>
 
-    <foo></foo>
-    <bar></bar>
+    <hr>
 
-    <conj>
-      <bar></bar>
-      <p>This is "conj"-ed on a &lt;bar/&gt;!</p>
-      <p>And so is this.</p>
-    </conj>
+    <p>The value of <code>r1</code> is &lt;<r1></r1>&gt;.</p>
 
-    <h4>Testing</h4>
+    <foo> </foo>
 
-    <p>
-      The value is
-      <span
-        data-dep::r1:checked  = "a b"
-        data-a::text          = "$$.value"
-        data-b::foobar        = "$$.name + ':' + $$.value"
-        >
-        Heyho.
-      </span>
-    </p>
   </body>
 </html>
 

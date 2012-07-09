@@ -15,8 +15,8 @@
 
 {% include declarify.input.js %}
 
+{% include declarify.macro.js %}
+
 {% include declarify.dep.js %}
 
 {% include declarify.attrlib.js %}
-
-{% include declarify.macro.js %}
