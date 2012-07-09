@@ -16197,14 +16197,17 @@ console.time("load");
       $UI.run(0);
     }
 
-    $(document).on("click", function(event) {
-      if ($(event.target).is(radios))
-        radioClick(event.target, event);
-      else if ($(event.target).is(checks))
-        checkboxClick(event.target, event);
-      else if ($(event.target).is(others))
-        othersChange(event.target, event);
-    });
+    $(document)
+      .on("click", function(event) {
+        if ($(event.target).is(radios))
+          radioClick(event.target, event);
+        else if ($(event.target).is(checks))
+          checkboxClick(event.target, event);
+      })
+      .on("change", function(event) {
+        if ($(event.target).is(others))
+          othersChange(event.target, event);
+      });
   });
 
   $UI.prepare.push(function prepareAttrs(ctx) {
@@ -16279,6 +16282,8 @@ console.time("load");
       ret.attr = into({}, mapn(function(x) {
         return [x.nodeName.toLowerCase(), x.nodeValue];
       }, filter(partial(assoc, _, "specified"), seq2vec(elem.attributes))));
+      // ie7 doesn't have a value attribute for form elements
+      ret.attr.value = elem.value;
       ret.chld = mapn(toSexp, seq2vec(elem.childNodes));
     }
 
