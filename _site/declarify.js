@@ -16367,7 +16367,7 @@ console.time("load");
     return par;
   });
 
-  $UI.m.macro.fn("depends", function mconj(env, meta, sexp) {
+  $UI.m.macro.fn("depends", function mdepends(env, meta, sexp) {
     var sym = gensym(), attr;
     attr = into({}, keep(map(function(x) {
       return x[0] === "ref"
