@@ -2,34 +2,89 @@
 <html>
   <head>
     <script type="text/javascript">
-      document.createElement("quote");
-      document.createElement("foo");
-      document.createElement("r1");
       document.createElement("define");
+      document.createElement("quote");
+
+      document.createElement("identity");
       document.createElement("depends");
       document.createElement("conj");
+      document.createElement("map");
+      
+      document.createElement("foo");
+      document.createElement("bar");
+      document.createElement("r1");
     </script>
     <script type="text/javascript" src="declarify.js"></script>
   </head>
   <body>
 
+    <!--
+    (define foo
+      (conj div{style "border:1px solid orange"}
+            (define foo (h1{style "display:inline"} "Hello,"))
+            foo
+            (conj (p{style "display:inline;color:blue"} " world")
+                  (span{style "color:red"} "!"))))
+    -->
+
     <define>
       <foo></foo>
       <conj>
         <div style="border:1px solid orange"></div>
-        <h5>hello</h5>
+        <define>
+          <foo></foo>
+          <h1 style="display:inline">Hello,</h1>
+        </define>
+        <foo></foo>
         <conj>
-          <p>world</p>
+          <p style="display:inline;color:blue"> world</p>
           <span style="color:red">!</span>
         </conj>
       </conj>
     </define>
 
+    <!--
+    (define test
+      (lambda (list baf)
+        (conj (span (code "&lt;"))
+              (map depends{ref "r1:checked" :text "$$.value"}
+                   baf)
+              (code "&gt;"))))
+    -->
+
+    <define>
+      <test></test>
+      <lambda>
+        <list>
+          <baf></baf>
+        </list>
+        <conj>
+          <span><code>&lt;</code></span>
+          <map>
+            <depends ref="r1:checked" :text="$$.value"></depends>
+            <baf></baf>
+          </map>
+          <code>&gt;</code>
+        </conj>
+      </lambda>
+    </define>
+
+    <!--
+    (define r1
+      (test (span (code{style "color:red"} "Heyho.")
+                  (code{style "color:green"} "Heyho.")
+                  (code{style "color:blue"} "Heyho."))))
+    -->
+
     <define>
       <r1></r1>
-      <depends ref="r1:checked" :text="$$.value">
-        <span>Heyho.</span>
-      </depends>
+      <test>
+        <span>
+          <code style="color:red">Heyho.</code>
+          <code style="color:green">Heyho.</code>
+          <code style="color:blue">Heyho.</code>
+        </span>
+      </test>
     </define>
 
     <h3>Testing</h3>
@@ -42,7 +97,7 @@
 
     <hr>
 
-    <p>The value of <code>r1</code> is &lt;<r1></r1>&gt;.</p>
+    <p> The value of <code>r1</code> is <r1></r1>.</p>
 
     <foo></foo>
 

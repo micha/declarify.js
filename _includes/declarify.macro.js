@@ -5,7 +5,8 @@
       T_DEFINED       = 2,
       T_FUNCTION      = 3,
       T_SPECIAL_FORM  = 4,
-      T_NIL           = 5,
+      T_LAMBDA        = 5,
+      T_NIL           = 6,
       genv            = {};
 
   /***************************************************************************
@@ -98,20 +99,31 @@
   function evalSexp(env, sexp) {
     sexp = dup(sexp || { type: T_NIL, expr: null });
 
-    var sym = dup(env[sexp.name] || { type: T_OBJECT, expr: sexp }),
-        typ = sym.type,
-        val = sym.expr,
-        arg = sexp.chld;
+    var sym   = dup(env[sexp.name] || { type: T_OBJECT, expr: sexp }),
+        typ   = sym.type,
+        val   = sym.expr,
+        arg   = sexp.chld,
+        f, e, i;
     
     if (typ !== T_SPECIAL_FORM)
-      arg = keep(map(partial(evalSexp, (env = dup(env))), arg));
+      arg = keep(mapn(partial(evalSexp, (env = dup(env))), arg));
 
     switch (typ) {
       case T_NIL:
         return val;
+      case T_LAMBDA:
+        arg = onlyElems(arg);
+        map(function(x,i) {
+          sym.env[x] = { type: T_DEFINED, expr: arg[i] };
+        }, sym.free);
+        console.log("env", sym.env);
+        console.log("expr", sym.expr);
+        return evalSexp(sym.env, sym.expr);
       case T_FUNCTION:
       case T_SPECIAL_FORM:
-        return apply(val, [env, sexp.attr].concat(onlyElems(arg)));
+        return sexp.chld.length
+          ? apply(val, [env, sexp.attr].concat(onlyElems(arg)))
+          : sexp;
       case T_DEFINED:
         t = dup(val);
         return evalSexp(env, assoc(val, "attr", dup(val.attr, sexp.attr),
@@ -142,7 +154,7 @@
    ***************************************************************************/
 
   $UI.init.push(function() {
-    map(function(x) { $(x[0]).hide() }, outof(genv));
+    mapn(function(x) { $(x[0]).hide() }, outof(genv));
     $("body").evalSexp();
   });
 
@@ -160,22 +172,39 @@
     return sym;
   });
 
+  $UI.m.macro.fm("lambda", function mquote(env, meta, sym, body) {
+    var name  = gensym(),
+        e     = dup(env),
+        free  = mapn(partial(assoc, _, "name"), onlyElems(sym.chld));
+    env[name] = {
+      type: T_LAMBDA,
+      expr: body,
+      free: free,
+      env:  e
+    };
+    return { name: name, attr: {}, chld: [] };
+  });
+
   /***************************************************************************
    * Functions                                                               *
    ***************************************************************************/
 
+  $UI.m.macro.fn("identity", function mquote(env, meta, sym) {
+    return sym;
+  });
+
   $UI.m.macro.fn("conj", function mconj() {
-    var arg   = map(dup, arguments),
+    var arg   = mapn(dup, arguments),
         env   = arg[0],
         meta  = arg[1],
         par   = evalSexp(env, arg[2]);
-    par.chld = par.chld.concat(map(partial(evalSexp, env), arg.slice(3)));
+    par.chld = par.chld.concat(mapn(partial(evalSexp, env), arg.slice(3)));
     return par;
   });
 
   $UI.m.macro.fn("depends", function mdepends(env, meta, sexp) {
     var sym = gensym(), attr;
-    attr = into({}, keep(map(function(x) {
+    attr = into({}, keep(mapn(function(x) {
       return x[0] === "ref"
         ? [ "data-dep::"+x[1], sym ]
         : (x[0].substr(0,1) === ":"
@@ -183,6 +212,14 @@
             : null);
     }, outof(meta))));
     return assoc(dup(sexp), "attr", dup(sexp.attr, attr));
+  });
+
+  $UI.m.macro.fn("map", function mdepends(env, meta, fn, list) {
+    return assoc(list, "chld", mapn(function(x) {
+      var f = dup(fn);
+      f.chld = f.chld.concat([x]);
+      return evalSexp(env, f);
+    }, onlyElems(list.chld)));
   });
 
 })();
