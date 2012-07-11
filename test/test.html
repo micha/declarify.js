@@ -2,6 +2,7 @@
 <html>
   <head>
     <script type="text/javascript">
+      document.createElement("quote");
       document.createElement("foo");
       document.createElement("r1");
       document.createElement("define");
@@ -43,7 +44,9 @@
 
     <p>The value of <code>r1</code> is &lt;<r1></r1>&gt;.</p>
 
-    <foo> </foo>
+    <foo></foo>
+
+    <quote><foo></foo></quote>
 
   </body>
 </html>

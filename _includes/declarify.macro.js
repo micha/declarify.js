@@ -42,6 +42,14 @@
     }, sexps));
   }
 
+  function a() {
+    var x = 1;
+
+    function b() {
+      return x;
+    }
+  }
+
   function seq2vec(seq) {
     var arr = new Array(seq.length), i;
     for (i=0; i<seq.length; i++)
@@ -88,29 +96,28 @@
   }
 
   function evalSexp(env, sexp) {
-    var s   = sexp ? dup(sexp) : { type: T_NIL, expr: null },
-        e   = dup(genv, env),
-        sym = e[s.name] || { type: T_OBJECT, expr: s },
+    sexp = dup(sexp || { type: T_NIL, expr: null });
+
+    var sym = dup(env[sexp.name] || { type: T_OBJECT, expr: sexp }),
         typ = sym.type,
         val = sym.expr,
-        c, t;
+        arg = sexp.chld;
     
-    c = typ === T_SPECIAL_FORM
-          ? s.chld
-          : keep(map(partial(evalSexp, e), s.chld));
+    if (typ !== T_SPECIAL_FORM)
+      arg = keep(map(partial(evalSexp, (env = dup(env))), arg));
 
     switch (typ) {
       case T_NIL:
         return val;
-      case T_SPECIAL_FORM:
       case T_FUNCTION:
-        return apply(val, [e, s.attr].concat(onlyElems(c)));
+      case T_SPECIAL_FORM:
+        return apply(val, [env, sexp.attr].concat(onlyElems(arg)));
       case T_DEFINED:
         t = dup(val);
-        return evalSexp(
-          e, assoc(t, "attr", dup(t.attr, s.attr), "chld", t.chld.concat(c)));
+        return evalSexp(env, assoc(val, "attr", dup(val.attr, sexp.attr),
+                                        "chld", val.chld.concat(arg)));
       default:
-        return assoc(s, "chld", c);
+        return assoc(sexp, "chld", arg);
     }
   }
 
@@ -127,7 +134,7 @@
   };
 
   $.fn.evalSexp = function() {
-    return this.replaceWith($.fromSexp(evalSexp(null, this.toSexp())));
+    return this.replaceWith($.fromSexp(evalSexp(genv, this.toSexp())));
   };
 
   /***************************************************************************
@@ -145,8 +152,12 @@
 
   $UI.m.macro.fm("define", function mdefine(env, meta, sym, val) {
     var v = evalSexp(env, dup(val));
-    genv[sym.name] = { type: T_DEFINED, expr: v };
+    env[sym.name] = { type: T_DEFINED, expr: v };
     return null;
+  });
+
+  $UI.m.macro.fm("quote", function mquote(env, meta, sym) {
+    return sym;
   });
 
   /***************************************************************************
