@@ -15,7 +15,7 @@
 
 {% include declarify.input.js %}
 
-{% include declarify.macro.js %}
+{% include declarify.lisp.js %}
 
 {% include declarify.dep.js %}
 

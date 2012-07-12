@@ -48,30 +48,26 @@
     </define>
 
     <!--
-    (define test
-      (lambda (list baf)
-        (conj (span (code "&lt;"))
-              (map depends{ref "r1:checked" :text "$$.value"}
-                   baf)
-              (code "&gt;"))))
+    (defn (test & baf)
+      (conj (span (code "&lt;"))
+            (map depends{ref "r1:checked" :text "$$.value"}
+                 baf)
+            (code "&gt;")))
     -->
 
-    <define>
-      <test></test>
-      <lambda>
-        <list>
+    <defn>
+      <test>
+        <baf ...></baf>
+      </test>
+      <conj>
+        <span><code>&lt;</code></span>
+        <map>
+          <depends ref="r1:checked" :text="$$.value"></depends>
           <baf></baf>
-        </list>
-        <conj>
-          <span><code>&lt;</code></span>
-          <map>
-            <depends ref="r1:checked" :text="$$.value"></depends>
-            <baf></baf>
-          </map>
-          <code>&gt;</code>
-        </conj>
-      </lambda>
-    </define>
+        </map>
+        <code>&gt;</code>
+      </conj>
+    </defn>
 
     <!--
     (define r1
@@ -83,11 +79,9 @@
     <define>
       <r1></r1>
       <test>
-        <span>
-          <code style="color:red">Heyho.</code>
-          <code style="color:green">Heyho.</code>
-          <code style="color:blue">Heyho.</code>
-        </span>
+        <code style="color:red">Heyho.</code>
+        <code style="color:green">Heyho.</code>
+        <code style="color:blue">Heyho.</code>
       </test>
     </define>
 
