@@ -68,9 +68,14 @@
 
     if (isElemNode(ret)) {
       ret.attr = into({}, mapn(function(x) {
-        return [x.nodeName.toLowerCase(), x.nodeValue];
+        var n = x.nodeName.toLowerCase();
+        switch (n) {
+          case "style": v = elem.style.cssText; break;
+          default     : v = x.nodeValue;
+        }
+        return [n, v];
       }, filter(partial(assoc, _, "specified"), seq2vec(elem.attributes))));
-      // ie7 doesn't have a value attribute for form elements
+      // ie7 workaround
       ret.attr.value = elem.value;
       ret.chld = mapn(toSexp, seq2vec(elem.childNodes));
     }
@@ -116,8 +121,6 @@
         map(function(x,i) {
           sym.env[x] = { type: T_DEFINED, expr: arg[i] };
         }, sym.free);
-        console.log("env", sym.env);
-        console.log("expr", sym.expr);
         return evalSexp(sym.env, sym.expr);
       case T_FUNCTION:
       case T_SPECIAL_FORM:
@@ -154,7 +157,6 @@
    ***************************************************************************/
 
   $UI.init.push(function() {
-    mapn(function(x) { $(x[0]).hide() }, outof(genv));
     $("body").evalSexp();
   });
 
