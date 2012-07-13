@@ -16276,6 +16276,16 @@ console.time("load");
     }
   }
 
+  function box(val) {
+    return { name: "val", attr: {}, chld: [
+      { name: "#text", attr: {}, chld: [], text: val }
+    ] };
+  }
+
+  function unbox(sexp) {
+    return sexp.chld[0].text;
+  }
+
   function seq2vec(seq) {
     var arr = new Array(seq.length), i;
     for (i=0; i<seq.length; i++)
@@ -16402,7 +16412,7 @@ console.time("load");
     return sym;
   });
 
-  $UI.m.lisp.fm("lambda", function mquote(env, meta, sym, body) {
+  $UI.m.lisp.fm("lambda", function mlambda(env, meta, sym, body) {
     function mkfree(sexp) {
       return "..." in sexp.attr ? [sexp.name] : sexp.name;
     }
@@ -16421,7 +16431,7 @@ console.time("load");
     return { name: name, attr: {}, chld: [] };
   });
 
-  $UI.m.lisp.fm("defn", function mquote(env, meta, sym, body) {
+  $UI.m.lisp.fm("defn", function mdefn(env, meta, sym, body) {
     return evalSexp(env, { name: "define", attr: {}, chld: [
       { name: sym.name, attr: {}, chld: [] },
       { name: "lambda", attr: {}, chld: [
@@ -16431,12 +16441,45 @@ console.time("load");
     ] });
   });
 
+  $UI.m.lisp.fm("apply", function mapply(env, meta, fn, args) {
+    args    = evalSexp(env, args);
+    fn.chld = fn.chld.concat(elems(args.chld));
+    fn.attr = dup(fn.attr, args.attr);
+    return evalSexp(env, fn);
+  });
+
   /***************************************************************************
    * Functions                                                               *
    ***************************************************************************/
 
-  $UI.m.lisp.fn("identity", function mquote(env, meta, sym) {
+  $UI.m.lisp.fn("identity", function midentity(env, meta, sym) {
     return sym;
+  });
+
+  $UI.m.lisp.fn("get", function mget(env, meta, sym, attr) {
+    return box(sym.attr[unbox(attr)]);
+  });
+
+  $UI.m.lisp.fn("set", function mset(env, meta, sym) {
+    var attrs = vec(arguments).slice(3);
+    while (attrs.length > 1)
+      sym.attr[unbox(attrs.shift())] = unbox(attrs.shift());
+    return sym;
+  });
+
+  $UI.m.lisp.fn("cat", function mcat(env, meta, coll1, coll2) {
+    coll1.chld = coll1.chld.concat(coll2.chld);
+    console.log("cat", coll1.chld);
+    return coll1;
+  });
+
+  $UI.m.lisp.fn("cons", function mcons() {
+    var arg   = mapn(dup, arguments),
+        env   = arg[0],
+        meta  = arg[1],
+        par   = evalSexp(env, arg[2]);
+    par.chld = mapn(partial(evalSexp, env), arg.slice(3)).concat(par.chld);
+    return par;
   });
 
   $UI.m.lisp.fn("conj", function mconj() {
@@ -16446,6 +16489,11 @@ console.time("load");
         par   = evalSexp(env, arg[2]);
     par.chld = par.chld.concat(mapn(partial(evalSexp, env), arg.slice(3)));
     return par;
+  });
+
+
+  $UI.m.lisp.fn("comp", function mcomp(env, meta) {
+
   });
 
   $UI.m.lisp.fn("depends", function mdepends(env, meta, sexp) {
@@ -16460,7 +16508,7 @@ console.time("load");
     return assoc(dup(sexp), "attr", dup(sexp.attr, attr));
   });
 
-  $UI.m.lisp.fn("map", function mdepends(env, meta, fn, list) {
+  $UI.m.lisp.fn("map", function mmap(env, meta, fn, list) {
     return assoc(list, "chld", mapn(function(x) {
       var f = dup(fn);
       f.chld = f.chld.concat([x]);

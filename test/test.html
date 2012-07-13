@@ -5,13 +5,19 @@
       document.createElement("define");
       document.createElement("quote");
       document.createElement("lambda");
+      document.createElement("defn");
 
       document.createElement("identity");
       document.createElement("depends");
       document.createElement("conj");
       document.createElement("map");
+      document.createElement("get");
+      document.createElement("set");
+      document.createElement("cat");
       
       document.createElement("list");
+      document.createElement("val");
+
       document.createElement("test");
       document.createElement("foo");
       document.createElement("bar");
@@ -23,7 +29,8 @@
   <body>
 
     <!--
-    (define foo
+    (define
+      foo
       (conj div{style "border:1px solid orange"}
             (define foo (h1{style "display:inline"} "Hello,"))
             foo
@@ -48,7 +55,8 @@
     </define>
 
     <!--
-    (defn (test & baf)
+    (defn
+      (test & baf)
       (conj (span (code "&lt;"))
             (map depends{ref "r1:checked" :text "$$.value"}
                  baf)
@@ -70,18 +78,20 @@
     </defn>
 
     <!--
-    (define r1
-      (test (span (code{style "color:red"} "Heyho.")
-                  (code{style "color:green"} "Heyho.")
-                  (code{style "color:blue"} "Heyho."))))
+    (define
+      r1
+      (test (code{style "color:red"}    "Heyho.")
+            (code{style "color:green"}  "Heyho.")
+            (code{style "color:blue"}   "Heyho.")))
     -->
 
     <define>
       <r1></r1>
-      <test>
+      <test foo="asdf" bar="qwer">
         <code style="color:red">Heyho.</code>
         <code style="color:green">Heyho.</code>
         <code style="color:blue">Heyho.</code>
+        <code style="color:brown">Heyho.</code>
       </test>
     </define>
 
@@ -99,7 +109,71 @@
 
     <foo></foo>
 
-    <quote><foo></foo></quote>
+    <!--
+    (defn
+      (partial fn & args)
+      (cat fn args))
+    -->
+
+    <defn>
+      <partial>
+        <fn></fn>
+        <args ...></args>
+      </partial>
+      <cat>
+        <fn></fn>
+        <args></args>
+      </cat>
+    </defn>
+
+    <!--
+    (define
+      myinput 
+      (set input (val "style") (val "border:1px solid blue")
+                 (val "id") (val "foo")
+                 (val "class") (val "bar")))
+    -->
+
+    <define>
+      <myinput></myinput>
+      <set>
+        <input/>
+        <val>style</val>
+        <val>border:1px solid blue</val>
+        <val>id</val>
+        <val>foo</val>
+        <val>class</val>
+        <val>bar</val>
+      </set>
+    </define>
+
+    <!--
+    (map (quote conj li)
+         (map (quote get myinputs)
+              (list (val "style") (val "id") (val "class"))))
+    -->
+
+    <ul>
+      <map>
+        <quote>
+          <conj>
+            <li></li>
+          </conj>
+        </quote>
+        <map>
+          <quote>
+            <get>
+              <myinput></myinput>
+            </get>
+          </quote>
+          <list>
+            <val>style</val>
+            <val>id</val>
+            <val>class</val>
+          </list>
+        </map>
+      </map>
+    </ul>
 
   </body>
 </html>
