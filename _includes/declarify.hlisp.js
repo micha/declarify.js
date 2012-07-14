@@ -13,7 +13,7 @@
    * Declarify.js module                                                     *
    ***************************************************************************/
 
-  $UI.m.lisp = {
+  $UI.m.hlisp = {
     fn : function(name, fn) {
       genv[name] = { type: T_FUNCTION, expr: fn };
     },
@@ -34,6 +34,7 @@
   }
 
   function isElemNode(sexp) {
+    console.log("sexp", sexp);
     return sexp.name.substr(0,1) !== "#";
   }
 
@@ -68,7 +69,76 @@
     return arr;
   };
 
+  function parseSexp(txt) {
+    function tr(txt) { return txt.replace(/^[\s]*/, '') }
+
+    var ret = { name: "", attr: {}, chld: [], text: "" }, t, k, v;
+
+    txt = tr(txt);
+
+    if (txt[0] !== "(")
+      throw "parse error: "+txt;
+
+    txt = tr(txt.substr(1));
+
+    t = /^[a-zA-Z0-9_-]+/.exec(txt);
+
+    if (! (t && (ret.name = t[0])))
+      throw "parse error: "+txt;
+
+    txt = tr(txt.substr(ret.name.length));
+
+    if (txt[0] === "{") {
+      txt = tr(txt.substr(1));
+      while (txt[0] !== "}") {
+        t = /^[a-zA-Z0-9_:.-]+/.exec(txt);
+        if (! (t && (k = t[0])))
+          throw "parse error: "+txt;
+        txt = tr(txt.substr(k.length));
+
+        t = /^"[^"]*"/.exec(txt);
+        v = t ? t[0].substr(1,t[0].length-2) : "";
+        txt = t ? tr(txt.substr(t[0].length)) : txt;
+
+        ret.attr[k] = v;
+      }
+
+      if (txt[0] !== "}")
+        throw "parse error: "+txt;
+
+      txt = tr(txt.substr(1));
+    }
+
+    if (txt[0] === '"') {
+      t = /^"[^"]*"/.exec(txt);
+      if (! t)
+        throw "parse error: "+txt;
+      ret.chld.push({
+        name: "#text",
+        attr: {},
+        chld: [],
+        text: t[0].substr(1,t[0].length-2)
+      });
+      txt = tr(txt.substr(t[0].length));
+    } else 
+      while (txt[0] !== ")") {
+        t = parseSexp(txt);
+        ret.chld.push(t[0]);
+        txt = tr(t[1]);
+      }
+
+    if (txt[0] !== ")")
+      throw "parse error: "+txt;
+
+    txt = tr(txt.substr(1));
+
+    return [ret, txt];
+  }
+
   function toSexp(elem) {
+    if ($(elem).is("script[type='text/hlisp']"))
+      return parseSexp($(elem).text())[0];
+
     var ret = {
       name: elem.nodeName.toLowerCase(),
       attr: {},
@@ -177,17 +247,17 @@
    * Special forms                                                           *
    ***************************************************************************/
 
-  $UI.m.lisp.fm("define", function mdefine(env, meta, sym, val) {
+  $UI.m.hlisp.fm("define", function mdefine(env, meta, sym, val) {
     var v = evalSexp(env, dup(val));
     env[sym.name] = { type: T_DEFINED, expr: v };
     return null;
   });
 
-  $UI.m.lisp.fm("quote", function mquote(env, meta, sym) {
+  $UI.m.hlisp.fm("quote", function mquote(env, meta, sym) {
     return sym;
   });
 
-  $UI.m.lisp.fm("lambda", function mlambda(env, meta, sym, body) {
+  $UI.m.hlisp.fm("lambda", function mlambda(env, meta, sym, body) {
     function mkfree(sexp) {
       return "..." in sexp.attr ? [sexp.name] : sexp.name;
     }
@@ -206,7 +276,7 @@
     return { name: name, attr: {}, chld: [] };
   });
 
-  $UI.m.lisp.fm("defn", function mdefn(env, meta, sym, body) {
+  $UI.m.hlisp.fm("defn", function mdefn(env, meta, sym, body) {
     return evalSexp(env, { name: "define", attr: {}, chld: [
       { name: sym.name, attr: {}, chld: [] },
       { name: "lambda", attr: {}, chld: [
@@ -216,7 +286,7 @@
     ] });
   });
 
-  $UI.m.lisp.fm("apply", function mapply(env, meta, fn, args) {
+  $UI.m.hlisp.fm("apply", function mapply(env, meta, fn, args) {
     args    = evalSexp(env, args);
     fn.chld = fn.chld.concat(elems(args.chld));
     fn.attr = dup(fn.attr, args.attr);
@@ -227,28 +297,28 @@
    * Functions                                                               *
    ***************************************************************************/
 
-  $UI.m.lisp.fn("identity", function midentity(env, meta, sym) {
+  $UI.m.hlisp.fn("identity", function midentity(env, meta, sym) {
     return sym;
   });
 
-  $UI.m.lisp.fn("get", function mget(env, meta, sym, attr) {
+  $UI.m.hlisp.fn("get", function mget(env, meta, sym, attr) {
     return box(sym.attr[unbox(attr)]);
   });
 
-  $UI.m.lisp.fn("set", function mset(env, meta, sym) {
+  $UI.m.hlisp.fn("set", function mset(env, meta, sym) {
     var attrs = vec(arguments).slice(3);
     while (attrs.length > 1)
       sym.attr[unbox(attrs.shift())] = unbox(attrs.shift());
     return sym;
   });
 
-  $UI.m.lisp.fn("cat", function mcat(env, meta, coll1, coll2) {
+  $UI.m.hlisp.fn("cat", function mcat(env, meta, coll1, coll2) {
     coll1.chld = coll1.chld.concat(coll2.chld);
     console.log("cat", coll1.chld);
     return coll1;
   });
 
-  $UI.m.lisp.fn("cons", function mcons() {
+  $UI.m.hlisp.fn("cons", function mcons() {
     var arg   = mapn(dup, arguments),
         env   = arg[0],
         meta  = arg[1],
@@ -257,7 +327,7 @@
     return par;
   });
 
-  $UI.m.lisp.fn("conj", function mconj() {
+  $UI.m.hlisp.fn("conj", function mconj() {
     var arg   = mapn(dup, arguments),
         env   = arg[0],
         meta  = arg[1],
@@ -267,11 +337,11 @@
   });
 
 
-  $UI.m.lisp.fn("comp", function mcomp(env, meta) {
+  $UI.m.hlisp.fn("comp", function mcomp(env, meta) {
 
   });
 
-  $UI.m.lisp.fn("depends", function mdepends(env, meta, sexp) {
+  $UI.m.hlisp.fn("depends", function mdepends(env, meta, sexp) {
     var sym = gensym(), attr;
     attr = into({}, keep(mapn(function(x) {
       return x[0] === "ref"
@@ -283,7 +353,7 @@
     return assoc(dup(sexp), "attr", dup(sexp.attr, attr));
   });
 
-  $UI.m.lisp.fn("map", function mmap(env, meta, fn, list) {
+  $UI.m.hlisp.fn("map", function mmap(env, meta, fn, list) {
     return assoc(list, "chld", mapn(function(x) {
       var f = dup(fn);
       f.chld = f.chld.concat([x]);

@@ -28,31 +28,17 @@
   </head>
   <body>
 
-    <!--
-    (define
-      foo
-      (conj div{style "border:1px solid orange"}
-            (define foo (h1{style "display:inline"} "Hello,"))
-            foo
-            (conj (p{style "display:inline;color:blue"} " world")
-                  (span{style "color:red"} "!"))))
-    -->
-
-    <define>
-      <foo></foo>
-      <conj>
-        <div style="border:1px solid orange"></div>
-        <define>
-          <foo></foo>
-          <h1 style="display:inline">Hello,</h1>
-        </define>
-        <foo></foo>
-        <conj>
-          <p style="display:inline;color:blue"> world</p>
-          <span style="color:red">!</span>
-        </conj>
-      </conj>
-    </define>
+    <script type="text/hlisp">
+      (define
+        (foo)
+        (conj (div {style "border:1px solid orange"})
+              (define
+                (foo)
+                (h1 {style "display:inline"} "Hello,"))
+              (foo)
+              (conj (p {style "display:inline;color:blue"} " world")
+                    (span {style "color:red"} "!"))))
+    </script>
 
     <!--
     (defn
