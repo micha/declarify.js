@@ -56,7 +56,38 @@
 
     </script>
 
-    <h3>Testing</h3>
+    <!--
+    <script type="text/hlisp">
+      (defn
+        (red-border (arg1))
+        (set (arg1) (val "style") (val "border:1px solid red")))
+    </script>
+    -->
+
+    <!-- The html markup below is the same as the hlisp script above -->
+
+    <defn>
+      <red-border>
+        <arg1></arg1>
+      </red-border>
+      <set>
+        <arg1></arg1>
+        <val>style</val>
+        <val>border:1px solid red</val>
+      </set>
+    </defn>
+
+    <!--
+    <script type="text/hlisp">
+      (red-border (h3 "Testing"))
+    </script>
+    -->
+
+    <!-- The html markup below is the same as the hlisp script above -->
+
+    <red-border>
+      <h3>Testing</h3>
+    </red-border>
 
     <!-- This is
          a multi-line comment -->
