@@ -29,6 +29,11 @@
   <body>
 
     <script type="text/hlisp">
+      
+      (defn
+        (partial (fn (args {...}))
+        (cat (fn) (args))))
+
       (define
         (foo)
         (conj (div {style "border:1px solid orange"})
@@ -38,48 +43,21 @@
               (foo)
               (conj (p {style "display:inline;color:blue"} " world")
                     (span {style "color:red"} "!"))))
+                      
+      (defn
+        (test (baf {...}))
+        (conj (span (code "<"))
+              (map (depends {ref "r1:checked" :text "$$.value"})
+                   (baf))
+              (code ">")))
+
+      (define
+        (r1)
+        (test (code {style "color:red"}    "Heyho.")
+              (code {style "color:green"}  "Heyho.")
+              (code {style "color:blue"}   "Heyho.")))
+
     </script>
-
-    <!--
-    (defn
-      (test & baf)
-      (conj (span (code "&lt;"))
-            (map depends{ref "r1:checked" :text "$$.value"}
-                 baf)
-            (code "&gt;")))
-    -->
-
-    <defn>
-      <test>
-        <baf ...></baf>
-      </test>
-      <conj>
-        <span><code>&lt;</code></span>
-        <map>
-          <depends ref="r1:checked" :text="$$.value"></depends>
-          <baf></baf>
-        </map>
-        <code>&gt;</code>
-      </conj>
-    </defn>
-
-    <!--
-    (define
-      r1
-      (test (code{style "color:red"}    "Heyho.")
-            (code{style "color:green"}  "Heyho.")
-            (code{style "color:blue"}   "Heyho.")))
-    -->
-
-    <define>
-      <r1></r1>
-      <test foo="asdf" bar="qwer">
-        <code style="color:red">Heyho.</code>
-        <code style="color:green">Heyho.</code>
-        <code style="color:blue">Heyho.</code>
-        <code style="color:brown">Heyho.</code>
-      </test>
-    </define>
 
     <h3>Testing</h3>
 
@@ -95,71 +73,17 @@
 
     <foo></foo>
 
-    <!--
-    (defn
-      (partial fn & args)
-      (cat fn args))
-    -->
+    <script type="text/hlisp">
+      (define
+        (myinput)
+        (set (input) (val "style") (val "border:1px solid blue")
+                     (val "id") (val "foo")
+                     (val "class") (val "bar")))
 
-    <defn>
-      <partial>
-        <fn></fn>
-        <args ...></args>
-      </partial>
-      <cat>
-        <fn></fn>
-        <args></args>
-      </cat>
-    </defn>
-
-    <!--
-    (define
-      myinput 
-      (set input (val "style") (val "border:1px solid blue")
-                 (val "id") (val "foo")
-                 (val "class") (val "bar")))
-    -->
-
-    <define>
-      <myinput></myinput>
-      <set>
-        <input/>
-        <val>style</val>
-        <val>border:1px solid blue</val>
-        <val>id</val>
-        <val>foo</val>
-        <val>class</val>
-        <val>bar</val>
-      </set>
-    </define>
-
-    <!--
-    (map (quote conj li)
-         (map (quote get myinputs)
-              (list (val "style") (val "id") (val "class"))))
-    -->
-
-    <ul>
-      <map>
-        <quote>
-          <conj>
-            <li></li>
-          </conj>
-        </quote>
-        <map>
-          <quote>
-            <get>
-              <myinput></myinput>
-            </get>
-          </quote>
-          <list>
-            <val>style</val>
-            <val>id</val>
-            <val>class</val>
-          </list>
-        </map>
-      </map>
-    </ul>
+      (ul (map (quote (conj (li)))
+               (map (quote (get (myinput)))
+                    (list (val "style") (val "id") (val "class")))))
+    </script>
 
   </body>
 </html>

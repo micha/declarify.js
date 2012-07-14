@@ -9,6 +9,8 @@
       T_NIL           = 6,
       genv            = {};
 
+  window.genv = function() { return dup(genv) };
+
   /***************************************************************************
    * Declarify.js module                                                     *
    ***************************************************************************/
@@ -28,13 +30,18 @@
     };
   })(1);
 
+  function semiflat(arr) {
+    return mapcat(function(x) {
+      return $.type(x) === "array" ? x : [x];
+    }, arr);
+  }
+
   function dup(x) {
     return $.extend.apply(
       $, [true, $.type(x)==="array" ? [] : {}].concat(vec(arguments)));
   }
 
   function isElemNode(sexp) {
-    console.log("sexp", sexp);
     return sexp.name.substr(0,1) !== "#";
   }
 
@@ -75,6 +82,9 @@
     var ret = { name: "", attr: {}, chld: [], text: "" }, t, k, v;
 
     txt = tr(txt);
+
+    if (! txt)
+      return;
 
     if (txt[0] !== "(")
       throw "parse error: "+txt;
@@ -136,17 +146,22 @@
   }
 
   function toSexp(elem) {
-    if ($(elem).is("script[type='text/hlisp']"))
-      return parseSexp($(elem).text())[0];
-
     var ret = {
-      name: elem.nodeName.toLowerCase(),
-      attr: {},
-      chld: [],
-      text: elem.nodeValue
-    };
+          name: elem.nodeName.toLowerCase(),
+          attr: {},
+          chld: [],
+          text: elem.nodeValue
+        },
+        p, t;
 
-    if (isElemNode(ret)) {
+    if ($(elem).is("script[type='text/hlisp']")) {
+      t   = $(elem).text();
+      ret = [];
+      while ( (p = parseSexp(t)) ) {
+        ret.push(p[0]);
+        t = p[1];
+      }
+    } else if (isElemNode(ret)) {
       ret.attr = into({}, mapn(function(x) {
         var n = x.nodeName.toLowerCase();
         switch (n) {
@@ -157,7 +172,7 @@
       }, filter(partial(assoc, _, "specified"), seq2vec(elem.attributes))));
       // ie7 workaround
       ret.attr.value = elem.value;
-      ret.chld = mapn(toSexp, seq2vec(elem.childNodes));
+      ret.chld = semiflat(mapn(toSexp, seq2vec(elem.childNodes)));
     }
 
     return ret;
@@ -191,7 +206,7 @@
         f, e, i;
     
     if (typ !== T_SPECIAL_FORM)
-      arg = keep(mapn(partial(evalSexp, (env = dup(env))), arg));
+      arg = keep(mapn(partial(evalSexp, env), arg));
 
     switch (typ) {
       case T_NIL:
@@ -314,7 +329,6 @@
 
   $UI.m.hlisp.fn("cat", function mcat(env, meta, coll1, coll2) {
     coll1.chld = coll1.chld.concat(coll2.chld);
-    console.log("cat", coll1.chld);
     return coll1;
   });
 
