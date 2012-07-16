@@ -1,0 +1,50 @@
+
+; this is a comment
+; and so is this...
+
+(defn ; this is also a comment
+  (partial (fn (args {...}))
+  (cat (fn) (args))))
+
+(defn
+  (setname (elem) (name))
+  (attr (elem) (val "name") (name)))
+
+(defn
+  (control-group (ctrl {...}))
+  (do
+    (def (outer) (div {class "control-group"}))
+    (def (inner) (div {class "controls"}))
+    (outer
+      (text (label) (attr (arguments) (val "label")))
+      (cat (inner) (ctrl)))))
+
+(defn
+  (control-text)
+  (do
+    (def (name) (attr (arguments) (val ":name")))
+    (def (help) (attr (arguments) (val ":help")))
+    (def (sym1) (gensym (p)))
+    (setname
+      (div
+        (div {class "control control-text"}
+          (setname (input {type "text"}) (name)))
+        (p {class "message"} "heyho")
+        (text (p) (help)))
+      (sym1))))
+      
+(defn
+  (input-text)
+  (do
+    (def (labl) (attr (arguments) (val ":label")))
+    (def (name) (attr (arguments) (val ":name")))
+    (def (help) (attr (arguments) (val ":help")))
+    (control-group {label "#{labl}"}
+      (control-text {:name "#{name}" :help "#{help}"}))))
+
+(defn
+  (test)
+  (span
+    (code "<")
+    (code "asdf")
+    (code ">")))
