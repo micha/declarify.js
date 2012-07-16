@@ -16,23 +16,29 @@
   }
 
   function processDepElem(dep, ref, tag, name, attr) {
-      var depset = dep.attr("data-dep::"+name+":"+attr.substr(5));
+    var depset = dep.attr("data-dep::"+name+":"+attr.substr(5));
 
-      map(function(x) {
-        map(function(y) {
-          var same = {},
-              opts = { "$val" : ref.attr(attr) },
-              expr = dep.tfdEval(y[1], ref, same, opts);
-          if (expr !== same) {
-            if (y[0] in mods)
-              mods[y[0]](dep, expr);
-            else if (y[0] in flags)
-              dep.attr("data-"+y[0], !!expr);
-            else
-              dep.attr("data-"+y[0], expr);
-          }
-        }, outof(dep.tfdAttrMap()[x]));
-      }, depset.split(" "));
+    if (! depset)
+      return;
+
+    map(function(x) {
+      map(function(y) {
+        var same = {},
+            opts = { "$val" : ref.attr(attr) },
+            expr = dep.tfdEval(y[1], ref, same, opts),
+            tmp;
+        if (expr !== same) {
+          if (y[0] in mods)
+            mods[y[0]](dep, expr);
+          else if (y[0] in flags)
+            dep.attr("data-"+y[0], !!expr);
+          else if ( (tmp = y[0].split(".")).length > 1 && tmp[0] in mods) {
+            mods[tmp[0]](dep, expr, tmp.slice(1).join("."));
+          } else
+            dep.attr("data-"+y[0], expr);
+        }
+      }, outof(dep.tfdAttrMap()[x]));
+    }, depset.split(" "));
   }
 
   function asMap(name) {
