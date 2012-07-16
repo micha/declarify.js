@@ -1,0 +1,813 @@
+/******************************************************************************
+ * CSS RESET
+ *****************************************************************************/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+input, textarea, select, button,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+
+body {
+    line-height: 1;
+}
+
+ol, ul {
+    list-style: none;
+}
+
+blockquote, q {
+    quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/******************************************************************************
+ * CLEAR FIX
+ *****************************************************************************/
+
+.clearfix:after,
+.form-horizontal div.control-group:after,
+.group:after,
+div.alert-inner:after,
+ul.pagination:after,
+div.data-table-main:after {
+    content: " ";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+.clearfix {
+    zoom: 1; /* IE 5.5/6/7 */
+}
+
+.clear {
+    clear: both;
+}
+
+/******************************************************************************
+ * GRID
+ *****************************************************************************/
+
+.span > div.span-inner {
+    /* padding: 2em; */
+}
+
+.span + .span > div.span-inner {
+    margin-left: 2em;
+}
+
+.span {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.span-1 { width: 5.801104972%; }
+.span-2 { width: 14.364640883%; }
+.span-3 { width: 22.928176794%; }
+.span-4 { width: 31.491712705%; }
+.span-5 { width: 40.055248616%; }
+.span-6 { width: 48.618784527%; }
+.span-7 { width: 57.182320438000005%; }
+.span-8 { width: 65.74585634900001%; }
+.span-9 { width: 74.30939226%; }
+.span-10 { width: 82.87292817100001%; }
+.span-11 { width: 91.436464082%; }
+.span-12 { width: 99.999999993%; }
+
+.span-main > div.span-inner,
+.span-aside > div.span-inner {
+    /* border: 1px solid #CCCCCC; */
+}
+
+button,
+div.control.control-select-single,
+div.tabs-controller > ul.tabs,
+div.control-checkbox-inner input,
+div.alert span.close,
+div.data-table span.pin {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+/******************************************************************************
+ * TYPOGRAPHY
+ *****************************************************************************/
+
+body {
+    font-family: "Helvetica Neue", "Helvetica", Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+a {
+    text-decoration: none;
+    color: blue;
+}
+
+pre, code {
+    font-family: "Andale Mono", "Lucida Console", "Courier", monospace;
+    line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 3em;
+    line-height: 1;
+    margin: .5em 0;
+}
+
+h2 {
+    font-size: 2em;
+    margin: .75em 0;
+}
+
+h3 {
+    font-size: 1.5em;
+    line-height: 1;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1.2em;
+    line-height: 1.25;
+    margin: 1.25em 0;
+}
+
+h5 {
+    font-size: 1em;
+    font-weight: bold;
+    margin: 1.5em 0;
+}
+
+h6 {
+    font-size: 1em;
+    font-weight: bold;
+}
+
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
+}
+
+hr {
+    margin: 2em 0 1em 0;
+    border: 0;
+    border-top: 2px dashed #DDDDDD;
+}
+
+p.copy-std {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+p.copy-lit {
+    text-indent: 1.5em;
+}
+
+/******************************************************************************
+ * LAYOUT - BODY
+ *****************************************************************************/
+
+.wrapper {
+    padding: 50px;
+}
+
+/******************************************************************************
+ * LAYOUT - FORMS
+ *****************************************************************************/
+
+legend {
+    display: block;
+    padding-bottom: .5em;
+    margin-bottom: 1em;
+    width: 100%;
+    font-size: 18px;
+    border-bottom: 1px solid #DDDDDD;
+}
+
+/* Labels
+ * ------------------------------------------------------------------------- */
+
+.form-horizontal label {
+    display: block;
+    width: 30%;
+    float: left;
+    padding-top: 5px;
+    font-weight: bold;
+    text-align: left;
+}
+
+/* Controls
+ * ------------------------------------------------------------------------- */
+
+legend + div.control-group {
+    -webkit-margin-top-collapse: separate;
+}
+
+.form-horizontal div.control-group {
+    padding: 1em 0;
+    border-bottom: 1px dashed #CCCCCC;
+}
+
+.form-horizontal div.controls {
+    width: 70%;
+    float: right;
+}
+
+div.controls p {
+    margin-top: .5em;
+}
+
+div.controls p {
+    color: #666666;
+}
+
+div.controls p.message {
+    font-weight: bold;
+    float: right;
+}
+
+div.controls p.message.warning {
+    color: orange;
+}
+
+div.controls p.message.success {
+    color: green;
+}
+
+div.controls p.message.error {
+    color: red;
+}
+
+div.controls p.message.disabled {
+    color: gray;
+}
+
+/* Text
+ * ------------------------------------------------------------------------- */
+
+div.control.control-text {
+    padding: 5px;
+    border: 1px solid #AAAAAA;
+    border-radius: 4px;
+    font-weight: normal;
+    background-color: #FFFFFF;
+}
+
+div.control-text + div.control-text {
+    margin-top: 1em;
+}
+
+div.control-text.focused {
+    border-color: blue;
+    box-shadow: 0 0 4px 0 blue;
+}
+
+div.control-text.warning {
+    border-color: orange;
+}
+
+div.control-text.warning.focused {
+    box-shadow: 0 0 4px 0 orange;
+}
+
+div.control-text.success {
+    border-color: green;
+}
+
+div.control-text.success.focused {
+    box-shadow: 0 0 4px 0 green;
+}
+
+div.control-text.error {
+    border-color: red;
+}
+
+div.control-text.error.focused {
+    box-shadow: 0 0 4px 0 red;
+}
+
+div.control-text.disabled {
+    border-color: gray;
+    background-color: #EEEEEE;
+}
+
+div.control-text.disabled.focused {
+    box-shadow: 0 0 4px 0 gray;
+}
+
+div.control-text input,
+div.control-text textarea {
+    width: 100%;
+    outline: 0;
+    background-color: transparent;
+}
+
+div.control-text textarea {
+    min-height: 75px;
+    resize: none;
+}
+
+/* Select Single
+ * ------------------------------------------------------------------------- */
+
+div.control.control-select-single {
+    border: 1px solid #AAAAAA;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+div.control.control-select-single.focused {
+    border: 1px solid blue;
+    box-shadow: 0 0 4px 0 blue;
+}
+
+div.control-select-single > div.selected {
+    /* Awaiting instructions, Andre... */
+}
+
+div.control-select-single > div.selected > span.icon {
+    float: right;
+}
+
+div.control-select-single > div.selected {
+    padding: .5em;
+}
+
+div.control-select-single > div.options {
+    border-top: 1px solid #CCCCCC;
+    overflow-y: auto;
+    max-height: 100px;
+    background-color: #EEEEEE;
+}
+
+div.control-select-single > div.options > ul li {
+    padding: .5em;
+}
+
+div.control-select-single > div.options > ul li.hover {
+    background-color: blue;
+    color: #FFFFFF;
+}
+
+div.control-select-single > div.options > ul li + li {
+    border-top: 1px solid #CCCCCC;
+}
+
+/* Checkbox
+ * ------------------------------------------------------------------------- */
+
+div.control-checkbox {
+    display: inline-block;
+    border: 1px solid #AAAAAA;
+    border-radius: 2px;
+}
+
+div.control-checkbox.focused {
+    border: 1px solid blue;
+    box-shadow: 0 0 4px 0 blue;
+}
+
+div.control-checkbox-inner {
+    display: block;
+    width: 9px;
+    height: 9px;
+    margin: 1px;
+    border-radius: 2px;
+}
+
+div.control-checkbox.checked div.control-checkbox-inner {
+    background-color: blue;
+}
+
+div.control-checkbox input {
+    opacity: 0;
+}
+
+div.control-checkbox + span {
+    margin-left: .5em;
+}
+
+div.group.checkbox + div.group.checkbox {
+    margin-top: .5em;
+}
+
+/* Actions
+ * ------------------------------------------------------------------------- */
+
+div.form-actions {
+    padding-top: 30px;
+    background-color: #EFEFEF;
+    padding: 1em;
+}
+
+/* Buttons
+ * ------------------------------------------------------------------------- */
+
+button {
+    background-color: #CCCCCC;
+    font-weight: bold;
+    padding: 4px 10px;
+    line-height: 1.6em;
+    border-radius: 4px;
+    border: 1px solid gray;
+}
+
+button:focus {
+    outline: 0;
+}
+
+button.focused {
+    box-shadow: 0 0 4px 0 gray;
+}
+
+button + button {
+    margin-left: .5em;
+}
+
+button.main {
+    border: 1px solid blue;
+    background-color: blue;
+    color: #FFFFFF;
+}
+
+button.main.focused {
+    box-shadow: 0 0 4px 0 blue;
+}
+
+/******************************************************************************
+ * LAYOUT - TABLE
+ *****************************************************************************/
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #CCCCCC;
+}
+
+table th,
+table td {
+    padding: .5em;
+    border: 1px solid #CCCCCC;
+}
+
+table th {
+    text-align: left;
+    font-weight: bold;
+}
+
+table tbody tr:nth-of-type(2n+1) {
+    background-color: #EEEEEE;
+}
+
+/******************************************************************************
+ * LAYOUT - DATA TABLE
+ *****************************************************************************/
+
+div.data-table {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+}
+
+div.data-table-header {
+    padding: 1em;
+    border-bottom: 1px solid #DDDDDD;
+}
+
+div.data-table-main {
+    padding: 1em;
+}
+
+div.data-table-footer {
+    padding: 1em;
+    border-top: 1px solid #DDDDDD;
+}
+
+div.data-table-docked {
+    float: left;
+    width: 40%;
+    overflow-x: auto;
+}
+
+div.data-table-all {
+    width: 60%;
+    overflow-x: auto;
+    float: left;
+}
+
+div.data-table-all th {
+    background-color: #EEEEEE;
+}
+
+div.data-table th {
+    white-space: nowrap;
+}
+
+div.data-table td {
+    word-wrap: break-word;
+}
+
+div.data-table span.pin {
+    float: right;
+    color: #CCCCCC;
+}
+
+div.data-table span.pin:hover {
+    color: green;
+}
+
+div.data-table-docked span.pin {
+    color: gray;
+}
+
+div.data-table-docked span.pin:hover {
+    color: red;
+}
+
+div.data-table th div.controls {
+    margin-top: 1em;
+}
+
+div.data-table th div.controls div.control-text {
+    width: 50px;
+    display: inline-block;
+}
+
+div.data-table th div.controls button {
+    font-size: 10px;
+    padding: .25em .5em;
+}
+
+/******************************************************************************
+ * LAYOUT - NAVIGATION
+ *****************************************************************************/
+ 
+/* Tabs
+ * ------------------------------------------------------------------------- */
+
+div.tabs {
+
+}
+
+div.tabs-controller {
+    background-color: #EEEEEE;
+    border: 1px solid #CCCCCC;
+    border-bottom: 0;
+}
+
+div.tabs-controller.tabs-std {
+    padding: 1em 1em 0 1em;
+}
+
+div.tabs-controller > ul.tabs {
+    
+}
+
+div.tabs-controller > ul.tabs > li {
+    display: block;
+    float: left;
+    padding: 1em;
+}
+
+div.tabs-controller.tabs-std > ul.tabs > li {
+    border: 1px solid #CCCCCC;
+    border-bottom: 0;
+}
+
+div.tabs-controller > ul.tabs > li + li {
+    border-left: 1px solid #CCCCCC;
+}
+
+div.tabs-controller.tabs-std > ul.tabs > li + li {
+    margin-left: .5em;
+}
+
+div.tabs-controller > ul.tabs > li {
+    background-color: #EEEEEE;
+}
+
+div.tabs-controller > ul.tabs > li.selected {
+    background-color: #FFFFFF;
+    font-weight: bold;
+}
+
+div.tabs-view {
+    padding: 2em;
+    border: 1px solid #CCCCCC;
+    border-top: 0;
+}
+
+/* Navigation List
+ * ------------------------------------------------------------------------- */
+
+ul.nav-list {
+    font-size: 14px;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+ul.nav-list li.nav-title {
+    font-weight: bold;
+    color: #666666;
+    padding: .5em;
+}
+
+ul.nav-list li a {
+    display: block;
+    padding: .5em;
+    width: 100%;
+}
+
+ul.nav-list li a:hover {
+    background-color: #EEEEEE;
+}
+
+ul.nav-list li + li {
+    border-top: 1px solid #DDDDDD;
+}
+
+ul.nav-list li.selected a {
+    background-color: blue;
+    color: #FFFFFF;
+}
+
+/* Breadcrumbs
+ * ------------------------------------------------------------------------- */
+
+div.breadcrumbs {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+div.breadcrumbs-inner {
+    padding: 1em;
+}
+
+div.breadcrumbs span.divider {
+    color: #CCCCCC;
+    margin: 0 .5em;
+}
+
+/* Pagination
+ * ------------------------------------------------------------------------- */
+
+ul.pagination {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+ul.pagination li {
+    float: left;
+}
+
+ul.pagination li + li {
+    border-left: 1px solid #DDDDDD;
+}
+
+ul.pagination li a {
+    padding: .75em;
+    display: block;
+}
+
+ul.pagination li a:hover {
+    background-color: #EEEEEE;
+}
+
+ul.pagination li.selected a {
+    background-color: blue;
+    color: #FFFFFF;
+}
+
+/******************************************************************************
+ * MISCELLANEOUS
+ *****************************************************************************/
+
+/* Alert
+ * ------------------------------------------------------------------------- */
+
+div.alert {
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    margin-bottom: 1em;
+}
+
+div.alert > div.alert-inner {
+    padding: .5em;
+}
+
+div.alert.warning {
+    border-color: orange;
+    color: orange;
+}
+
+div.alert.success {
+    border-color: green;
+    color: green;
+}
+
+div.alert.error {
+    border-color: red;
+    color: red;
+}
+
+div.alert-description {
+    float: left;
+    padding: .5em;
+    width: 80%;
+}
+
+div.alert span.close {
+    cursor: pointer;
+    font-size: 16px;
+    display: block;
+    float: right;
+    margin-right: .125em;
+}
+
+div.alert span.close:hover {
+    opacity: .5;
+}
+
+/* Label
+ * ------------------------------------------------------------------------- */
+
+span.label {
+    padding: .25em .5em;
+    border-radius: 4px;
+    font-weight: bold;
+    background-color: #EEEEEE;
+}
+
+span.label + span.label {
+    margin-left: .5em;
+}
+
+span.label.warning {
+    background-color: orange;
+    color: #FFFFFF;
+}
+
+span.label.success {
+    background-color: green;
+    color: #FFFFFF;
+}
+
+span.label.error {
+    background-color: red;
+    color: #FFFFFF;
+}
+
+@media screen and (max-device-width: 480px){
+  body{
+    -webkit-text-size-adjust: none;
+  }
+}

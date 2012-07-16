@@ -24,94 +24,69 @@
       document.createElement("baf");
       document.createElement("r1");
     </script>
+
+    <link rel="stylesheet" href="helpers.css" type="text/css" />
     <script type="text/javascript" src="declarify.js"></script>
+    <script type="text/hlisp" src="hlisp.hl"></script>
   </head>
   <body>
 
-    <script type="text/hlisp">
-      
-      (defn
-        (partial (fn (args {...}))
-        (cat (fn) (args))))
+    <div class="wrapper">
+      <div class="group">
+        <h1>UI Elements</h1>
+        <div class="span span-6">
+          <div class="span-inner">
+            <h2>Form Elements</h2>
+            <form class="form-horizontal">
+              <fieldset>
+                <legend>Test 1</legend>
 
-      (define
-        (foo)
-        (conj (div {style "border:1px solid orange"})
-              (h1 {style "display:inline"} "Hello,")
-              (conj (p {style "display:inline;color:blue"} " world")
-                    (span {style "color:red"} "!"))))
-                      
-      (defn
-        (test (baf {...}))
-        (conj (span (code "<"))
-              (map (depends {ref "r1:checked" :text "$$.value"})
-                   (baf))
-              (code ">")))
+                <div class="control-group">
+                  <label
+                    data-dep::r1:checked  = "a"
+                    data-a::text          = "'<' + $$.value + '>'"
+                    data-a::class.foo     = "$$.value === 'foo'"
+                    >
+                  </label>
+                    
+                  <div class="controls">
+                    <label>
+                      Foo:
+                      <input type="radio" name="r1" value="foo"/>
+                    </label>
+                    <label>
+                      Bar:
+                      <input type="radio" name="r1" value="bar" checked/>
+                    </label>
+                    <label>
+                      Baz:
+                      <input type="radio" name="r1" value="baz"/>
+                    </label>
+                  </div>
+                </div>
 
-      (define
-        (r1)
-        (test (code {style "color:red"}    "Heyho.")
-              (code {style "color:green"}  "Heyho.")
-              (code {style "color:blue"}   "Heyho.")))
+                <input-text
+                  :name   = "foo1"
+                  :label  = "Full Name"
+                  :help   = "Example: John Doe">
+                </input-text>
 
-    </script>
+                <input-text
+                  :name   = "foo2"
+                  :label  = "Email"
+                  :help   = "Example: user@example.com">
+                </input-text>
 
-    <!--
-    <script type="text/hlisp">
-      (defn
-        (red-border (arg1))
-        (set (arg1) (val "style") (val "border:1px solid red")))
-    </script>
-    -->
-
-    <!-- The html markup below is the same as the hlisp script above -->
-
-    <defn>
-      <red-border>
-        <arg1></arg1>
-      </red-border>
-      <set>
-        <arg1></arg1>
-        <val>style</val>
-        <val>border:1px solid red</val>
-      </set>
-    </defn>
-
-    <!--
-    <script type="text/hlisp">
-      (red-border (h3 "Testing"))
-    </script>
-    -->
-
-    <!-- The html markup below is the same as the hlisp script above -->
-
-    <red-border>
-      <h3>Testing</h3>
-    </red-border>
-
-    <!-- This is
-         a multi-line comment -->
-    <label>foo: <input type="radio" name="r1" value="foo" /></label><br>
-    <label>bar: <input type="radio" name="r1" value="bar" checked /></label><br>
-    <label>baz: <input type="radio" name="r1" value="baz" /></label><br>
-
-    <hr>
-
-    <p> The value of <code>r1</code> is <r1></r1>.</p>
-
-    <foo></foo>
-
-    <script type="text/hlisp">
-      (define
-        (myinput)
-        (set (input) (val "style") (val "border:1px solid blue")
-                     (val "id") (val "foo")
-                     (val "class") (val "bar")))
-
-      (ul (map (quote (conj (li)))
-               (map (quote (get (myinput)))
-                    (list (val "style") (val "id") (val "class")))))
-    </script>
+                <div class="form-actions">
+                  <button type="submit" class="main">Submit</button>
+                  <button type="submit">Clear</button>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </body>
 </html>
