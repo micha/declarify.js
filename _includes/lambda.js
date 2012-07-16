@@ -281,9 +281,27 @@
         return ret;
       },
 
+    semiflat :
+      function(arr) {
+        return F.mapcat(function(x) {
+          return $.type(x) === "array" ? x : [x];
+        }, arr);
+      },
+
+    wraparr :
+      function(thing) {
+        return $.type(thing) === "array" ? thing : [thing];
+      },
+
     /*************************************************************************
      * OBJECT FUNCTIONS                                                      *
      *************************************************************************/
+
+    dup :
+      function(x) {
+        return $.extend.apply(
+          $, [true, $.type(x)==="array" ? [] : {}].concat(F.vec(arguments)));
+      },
 
     outof :
       function(obj) {
