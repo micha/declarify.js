@@ -30,15 +30,17 @@
     };
   })(1);
 
-  function semiflat(arr) {
-    return mapcat(function(x) {
-      return $.type(x) === "array" ? x : [x];
-    }, arr);
-  }
+  function fetchSync(url, type, nocache) {
+    var ret;
 
-  function dup(x) {
-    return $.extend.apply(
-      $, [true, $.type(x)==="array" ? [] : {}].concat(vec(arguments)));
+    $.ajax(url, {
+      async:    false,
+      cache:    ! nocache,
+      dataType: type,
+      success:  function(data) { ret = data }
+    });
+
+    return ret;
   }
 
   function isElemNode(sexp) {
@@ -49,14 +51,6 @@
     return keep(mapn(function(x) {
       return isElemNode(x) ? x : null;
     }, sexps));
-  }
-
-  function a() {
-    var x = 1;
-
-    function b() {
-      return x;
-    }
   }
 
   function box(val) {
@@ -77,7 +71,12 @@
   };
 
   function parseSexp(txt) {
-    function tr(txt) { return txt.replace(/^[\s]*/, '') }
+    function tr(txt) {
+      var x;
+      while ( (x = /^\s*[;][^\n]*[\n]/.exec(txt)) )
+        txt = txt.substr(x[0].length);
+      return txt.replace(/^[\s]*/, '')
+    }
 
     var ret = { name: "", attr: {}, chld: [], text: "" }, t, k, v;
 
@@ -152,10 +151,11 @@
           chld: [],
           text: elem.nodeValue
         },
-        p, t;
+        s, p, t;
 
     if ($(elem).is("script[type='text/hlisp']")) {
-      t   = $(elem).text();
+      s   = $(elem).attr("src");
+      t   = s ? fetchSync(s, "text") : $(elem).text();
       ret = [];
       while ( (p = parseSexp(t)) ) {
         ret.push(p[0]);
@@ -219,6 +219,7 @@
             : arg[i];
           sym.env[x] = { type: T_DEFINED, expr: expr };
         }, sym.free);
+        sym.env.arguments = { type: T_DEFINED, expr: sexp };
         return evalSexp(sym.env, sym.expr);
       case T_FUNCTION:
       case T_SPECIAL_FORM:
@@ -247,14 +248,19 @@
   };
 
   $.fn.evalSexp = function() {
-    return this.replaceWith($.fromSexp(evalSexp(genv, this.toSexp())));
+    return this.replaceWith($.fromSexp(this.evalSexps()));
   };
+
+  $.fn.evalSexps = function() {
+    return reduce(partial(evalSexp, genv), null, wraparr(this.toSexp()));
+  }
 
   /***************************************************************************
    * Declarify.js hooks                                                      *
    ***************************************************************************/
 
   $UI.init.push(function() {
+    $("head script[type='text/hlisp']").each($.invoke("evalSexp"));
     $("body").evalSexp();
   });
 
@@ -262,7 +268,7 @@
    * Special forms                                                           *
    ***************************************************************************/
 
-  $UI.m.hlisp.fm("define", function mdefine(env, meta, sym, val) {
+  $UI.m.hlisp.fm("def", function mdef(env, meta, sym, val) {
     var v = evalSexp(env, dup(val));
     env[sym.name] = { type: T_DEFINED, expr: v };
     return null;
@@ -292,7 +298,7 @@
   });
 
   $UI.m.hlisp.fm("defn", function mdefn(env, meta, sym, body) {
-    return evalSexp(env, { name: "define", attr: {}, chld: [
+    return evalSexp(env, { name: "def", attr: {}, chld: [
       { name: sym.name, attr: {}, chld: [] },
       { name: "lambda", attr: {}, chld: [
         { name: "list", attr: sym.attr, chld: elems(sym.chld) },
@@ -301,29 +307,37 @@
     ] });
   });
 
-  $UI.m.hlisp.fm("apply", function mapply(env, meta, fn, args) {
-    args    = evalSexp(env, args);
+  /***************************************************************************
+   * Functions                                                               *
+   ***************************************************************************/
+
+  $UI.m.hlisp.fn("apply", function mapply(env, meta, fn, args) {
     fn.chld = fn.chld.concat(elems(args.chld));
     fn.attr = dup(fn.attr, args.attr);
     return evalSexp(env, fn);
   });
 
-  /***************************************************************************
-   * Functions                                                               *
-   ***************************************************************************/
+  $UI.m.hlisp.fn("do", function mdo(env, meta) {
+    return reduce(identity, null, vec(arguments).slice(2));
+  });
 
   $UI.m.hlisp.fn("identity", function midentity(env, meta, sym) {
     return sym;
   });
 
-  $UI.m.hlisp.fn("get", function mget(env, meta, sym, attr) {
-    return box(sym.attr[unbox(attr)]);
-  });
-
-  $UI.m.hlisp.fn("set", function mset(env, meta, sym) {
+  $UI.m.hlisp.fn("attr", function mset(env, meta, sym) {
     var attrs = vec(arguments).slice(3);
+    if (attrs.length == 1)
+      return box(sym.attr[unbox(attrs[0])]);
     while (attrs.length > 1)
       sym.attr[unbox(attrs.shift())] = unbox(attrs.shift());
+    return sym;
+  });
+
+  $UI.m.hlisp.fn("text", function mtext(env, meta, sym, txt) {
+    if (!txt)
+      return box($.fromSexp(sym).text());
+    sym.chld = [ { name: "#text", attr: {}, chld: [], text: unbox(txt) } ];
     return sym;
   });
 
@@ -350,6 +364,9 @@
     return par;
   });
 
+  $UI.m.hlisp.fn("gensym", function mgensym(env, meta, sexp) {
+    return box(gensym());
+  });
 
   $UI.m.hlisp.fn("comp", function mcomp(env, meta) {
 
@@ -358,12 +375,11 @@
   $UI.m.hlisp.fn("depends", function mdepends(env, meta, sexp) {
     var sym = gensym(), attr;
     attr = into({}, keep(mapn(function(x) {
-      return x[0] === "ref"
-        ? [ "data-dep::"+x[1], sym ]
-        : (x[0].substr(0,1) === ":"
-            ? [ "data-"+sym+"::"+x[0].substr(1), x[1] ]
-            : null);
+      return x[0].substr(0,1) === ":"
+        ? [ "data-"+sym+"::"+x[0].substr(1), x[1] ]
+        : null;
     }, outof(meta))));
+    attr["data-dep::"+meta.ref+":"+meta.attr] = sym;
     return assoc(dup(sexp), "attr", dup(sexp.attr, attr));
   });
 
