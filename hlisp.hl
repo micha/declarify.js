@@ -1,50 +1,89 @@
 
-; this is a comment
-; and so is this...
 
-(defn ; this is also a comment
-  (partial (fn (args {...}))
-  (cat (fn) (args))))
 
-(defn
-  (setname (elem) (name))
-  (attr (elem) (val "name") (name)))
 
-(defn
-  (control-group (ctrl {...}))
+
+;; skipping a few lines...
+
+
+
+
+;; Syntax (whitespace added to HTML for readability):
+;;
+;; (foo {bar "baz" baf fzz} "Hello, world!")
+;; <foo bar="baz" baf="" fzz="">Hello, world!</foo>
+;;
+;; (div p p)
+;; (div (p) (p))
+;; <div>
+;;   <p></p>
+;;   <p></p>
+;; </div>
+;;
+;; (div (h1 "greetings") (p (span "hello,") (span "world!")))
+;; <div>
+;;   <h1>greetings</h1>
+;;   <p>
+;;     <span>hello,<span><span>world!</span>
+;;   </p>
+;; </div>
+;;
+;; (div (p {foo "bar"} "hello") p (p "world"))
+;; <div>
+;;   <p foo="bar">hello</p>
+;;   <p></p>
+;;   <p>world</p>
+;; </div>
+;;
+;; [foo bar]
+;; (list foo bar)
+;; (list (foo) (bar))
+;; <list>
+;;   <foo></foo>
+;;   <bar></bar>
+;; </list>
+;;
+;; ^"hello world"
+;; (val "hello world")
+;; <val>hello world</val>
+
+
+;; Concatenate boxed strings.
+;; (strcat ^"hello, " ^"world!") => ^"hello, world!"
+
+(defn strcat [(strs {...})]
+  (cond
+    [ (eq (count strs) ^"0") ^"" ]
+    [ (eq (count strs) ^"1") (first strs) ]
+    [ else 
+      (do
+        (def s1 (first strs))
+        (def s2 (apply strcat (rest strs)))
+        (js ^"s1 + '' + s2")) ]))
+
+;; FP style insert function
+;; (ins f [w x y] z) => (f w (ins f [x y] z))
+
+(defn ins [f coll dfl]
+  (cond
+    [ (eq (count coll) ^"0") dfl ]
+    [ (eq (count coll) ^"1") (f (first coll) dfl) ]
+    [ else (f (first coll) (ins f (rest coll) dfl)) ]))
+
+;; Add declarify dependency attribues to an element.
+
+(defn (dep {ref on}) [elem]
   (do
-    (def (outer) (div {class "control-group"}))
-    (def (inner) (div {class "controls"}))
-    (outer
-      (text (label) (attr (arguments) (val "label")))
-      (cat (inner) (ctrl)))))
+    (def sym  (gensym nil))
+    (def elem (attr elem (strcat ^"data-dep::" ref ^":" on) sym))
+    (ins
+      (fn [x xs]
+        (cond
+          [ (eq (first x) ^"ref") xs ]
+          [ (eq (first x) ^"on") xs ]
+          [ else (attr xs 
+                       (strcat ^"data-" sym ^"::" (first x))
+                       (first (rest x))) ]))
+      (attrs arguments)
+      elem)))
 
-(defn
-  (control-text)
-  (do
-    (def (name) (attr (arguments) (val ":name")))
-    (def (help) (attr (arguments) (val ":help")))
-    (def (sym1) (gensym (p)))
-    (setname
-      (div
-        (div {class "control control-text"}
-          (setname (input {type "text"}) (name)))
-        (p {class "message"} "heyho")
-        (text (p) (help)))
-      (sym1))))
-      
-(defn
-  (input-text)
-  (do
-    (def (labl) (attr (arguments) (val ":label")))
-    (def (name) (attr (arguments) (val ":name")))
-    (def (help) (attr (arguments) (val ":help")))
-    (control-group {label "#{labl}"}
-      (control-text {:name "#{name}" :help "#{help}"}))))
-
-(defn
-  (test)
-  (span
-    (code "<")
-    (code "asdf")
-    (code ">")))

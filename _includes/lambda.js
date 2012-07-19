@@ -156,7 +156,9 @@
       function(_expr, _env) {
         var _i, _ret;
         for (_i in _env)
-          eval("var "+_i+" = _env['"+_i+"']");
+          try {
+            eval("var "+_i+" = _env['"+_i+"']");
+          } catch (e) { }
         eval("_ret = ("+_expr+")");
         return _ret;
       },

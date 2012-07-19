@@ -30,7 +30,6 @@
     <script type="text/hlisp" src="hlisp.hl"></script>
   </head>
   <body>
-
     <div class="wrapper">
       <div class="group">
         <h1>UI Elements</h1>
@@ -42,13 +41,28 @@
                 <legend>Test 1</legend>
 
                 <div class="control-group">
-                  <label
-                    data-dep::r1:checked  = "a"
-                    data-a::text          = "'<' + $$.value + '>'"
-                    data-a::class.foo     = "$$.value === 'foo'"
-                    >
-                  </label>
+                  <dep ref="r1" on="checked" text="'<' + $$.value + '>'"
+                    class.foo="$$.value === 'foo'">
+                    <dep ref="r2" on="checked" text="'<' + $$.value + '>'"
+                      class.foo="$$.value === 'foo'">
+                      <label></label>
+                    </dep>
+                  </dep>
                     
+                  <div class="controls">
+                    <label>
+                      Foo:
+                      <input type="radio" name="r2" value="foo2"/>
+                    </label>
+                    <label>
+                      Bar:
+                      <input type="radio" name="r2" value="bar2" checked/>
+                    </label>
+                    <label>
+                      Baz:
+                      <input type="radio" name="r2" value="baz2"/>
+                    </label>
+                  </div>
                   <div class="controls">
                     <label>
                       Foo:
