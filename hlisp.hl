@@ -8,73 +8,12 @@
 
 
 
-;; Syntax (whitespace added to HTML for readability):
-;;
-;; (foo {bar "baz" baf fzz} "Hello, world!")
-;; <foo bar="baz" baf="" fzz="">Hello, world!</foo>
-;;
-;; (div p p)
-;; (div (p) (p))
-;; <div>
-;;   <p></p>
-;;   <p></p>
-;; </div>
-;;
-;; (div (h1 "greetings") (p (span "hello,") (span "world!")))
-;; <div>
-;;   <h1>greetings</h1>
-;;   <p>
-;;     <span>hello,<span><span>world!</span>
-;;   </p>
-;; </div>
-;;
-;; (div (p {foo "bar"} "hello") p (p "world"))
-;; <div>
-;;   <p foo="bar">hello</p>
-;;   <p></p>
-;;   <p>world</p>
-;; </div>
-;;
-;; [foo bar]
-;; (list foo bar)
-;; (list (foo) (bar))
-;; <list>
-;;   <foo></foo>
-;;   <bar></bar>
-;; </list>
-;;
-;; ^"hello world"
-;; (val "hello world")
-;; <val>hello world</val>
-
-
-;; Concatenate boxed strings.
-;; (strcat ^"hello, " ^"world!") => ^"hello, world!"
-
-(defn strcat [(strs {...})]
-  (cond
-    [ (eq (count strs) ^"0") ^"" ]
-    [ (eq (count strs) ^"1") (first strs) ]
-    [ else 
-      (do
-        (def s1 (first strs))
-        (def s2 (apply strcat (rest strs)))
-        (js ^"s1 + '' + s2")) ]))
-
-;; FP style insert function
-;; (ins f [w x y] z) => (f w (ins f [x y] z))
-
-(defn ins [f coll dfl]
-  (cond
-    [ (eq (count coll) ^"0") dfl ]
-    [ (eq (count coll) ^"1") (f (first coll) dfl) ]
-    [ else (f (first coll) (ins f (rest coll) dfl)) ]))
-
-;; Add declarify dependency attribues to an element.
-
-(defn (dep {ref on}) [elem]
+(defn (dep {ref on})
+  [elem]
   (do
     (def sym  (gensym nil))
+    (log ^"sym1" sym)
+    (log ^"sym2" sym)
     (def elem (attr elem (strcat ^"data-dep::" ref ^":" on) sym))
     (ins
       (fn [x xs]
@@ -86,4 +25,40 @@
                        (first (rest x))) ]))
       (attrs arguments)
       elem)))
+
+(defn dep-status
+  [ref elem]
+  (conj
+    (attr dep ^"ref"              ref
+              ^"on"               ^"_status"
+              ^"class.success"    ^"$$['_status'] == 'success'"
+              ^"class.error"      ^"$$['_status'] == 'error'"
+              ^"class.warning"    ^"$$['_status'] == 'warning'"
+              ^"class.disabled"   ^"$$['_status'] == 'disabled'")
+    elem))
+
+(defn dep-state
+  [ref elem]
+  (conj
+    (attr dep ^"ref"              ref
+              ^"on"               ^"_status"
+              ^"class.disabled"   ^"$$['_status'] == 'disabled'")
+    (conj
+      (attr dep ^"ref"              ref
+                ^"on"               ^"_value"
+                ^"value"            ^"$$['_value']")
+      elem)))
+
+(defn (input-text {_name _label _message _help})
+  []
+  (do
+    (def sym (gensym nil))
+    (def inp (attr input ^"type" ^"text" ^"name" _name))
+    (conj
+      (attr div ^"data-name" sym)
+      (conj
+        (dep-status sym (div {class "control control-text"}))
+        (dep-status sym (dep-state sym inp)))
+      (dep-status sym (p {class "message"})))))
+
 

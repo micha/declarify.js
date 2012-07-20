@@ -16255,6 +16255,12 @@ console.time("load");
       T_NIL           = 7,
       genv;
       
+  var gensym = (function(count) {
+    return function() {
+      return "gensym_"+String(count++);
+    };
+  })(1);
+
   genv = {
     nil: { type: T_NIL, expr: mkSexp("nil") }
   };
@@ -16269,12 +16275,6 @@ console.time("load");
     fn : regSym(T_FUNCTION),
     fm : regSym(T_SPECIAL_FORM)
   };
-
-  var gensym = (function(count) {
-    return function() {
-      return "gensym_"+String(count++);
-    };
-  })(1);
 
   function regSym(type) {
     return function(name, val) {
@@ -16520,13 +16520,13 @@ console.time("load");
   }
 
   function evalSexp(env, sexp) {
-    sexp = dup(sexp || { type: T_NIL, expr: null });
+    sexp    = dup(sexp || { type: T_NIL, expr: null });
 
-    var sym   = dup(env[sexp.name] || genv[sexp.name] ||
-                    { type: T_OBJECT, expr: sexp }),
-        typ   = sym.type,
-        val   = sym.expr,
-        arg   = sexp.chld,
+    var sym = dup(env[sexp.name] || genv[sexp.name] ||
+                  { type: T_OBJECT, expr: sexp }),
+        typ = sym.type,
+        val = sym.expr,
+        arg = sexp.chld,
         f, e, i;
     
     if (typ !== T_SPECIAL_FORM && typ !== T_NLAMBDA && typ !== T_DEFINED)
@@ -16537,16 +16537,14 @@ console.time("load");
         return val;
       case T_NLAMBDA:
       case T_LAMBDA:
-        if (!sexp.chld.length)
+        if (sym.free.length && ! elems(sexp.chld).length)
           return sexp;
 
         arg = elems(arg);
 
         map(function(x) {
-          if (x[0] in sexp.attr) {
-            console.log("setting", [x[1], sexp.attr[x[0]]]);
+          if (x[0] in sexp.attr)
             sym.env[x[1]] = { type: T_DEFINED, expr: box(sexp.attr[x[0]]) };
-          }
         }, outof(sym.freeAttr));
 
         map(function(x,i) {
@@ -16568,8 +16566,6 @@ console.time("load");
           ? apply(val, [env, sexp.attr].concat(elems(arg)))
           : sexp;
       case T_DEFINED:
-        if (! val || ! val.chld)
-          console.log("null val: ", sexp, env[sexp.name]);
         return evalSexp(env, assoc(val, "attr", dup(val.attr, sexp.attr),
                                         "chld", val.chld.concat(arg)));
       default:
@@ -16602,8 +16598,12 @@ console.time("load");
    ***************************************************************************/
 
   $UI.init.push(function() {
+    console.time("hlisp xhr");
     $("head script[type='text/hlisp']").each($.invoke("evalSexp"));
+    console.timeEnd("hlisp xhr");
+    console.time("hlisp eval");
     $("body").evalSexp();
+    console.timeEnd("hlisp eval");
   });
 
   /***************************************************************************
@@ -16622,7 +16622,6 @@ console.time("load");
         }, outof(obj)));
       }
 
-      console.log("sym attr",sym.attr);
       var name      = gensym(),
           e         = dup(env),
           free      = mapn(mkfree, elems(sym.chld)),
@@ -16678,6 +16677,15 @@ console.time("load");
           if (x.chld[0].name === "else" || unbox(evalSexp(env, x.chld[0])))
             return evalSexp(env, x.chld[1]);
         }
+      },
+
+    time :
+      function mtime(env, meta, str, form) {
+        var ret, s = unbox(str);
+        console.time(s);
+        ret = evalSexp(env, form);
+        console.timeEnd(s);
+        return ret;
       }
   });
 
@@ -16785,6 +16793,26 @@ console.time("load");
         }, elems(list.chld)));
       },
 
+    ins :
+      function mins(env, meta, fn, list, dfl) {
+        var x;
+        switch (list.chld.length) {
+          case 0:
+            fn = dfl;
+            break;
+          case 1:
+            fn      = dup(fn);
+            fn.chld = fn.chld.concat([first(list.chld), dfl]);
+            break;
+          default:
+            fn = dup(fn);
+            x = mins(env, meta, fn, mkSexp("list", rest(list.chld)), dfl);
+            fn.chld = fn.chld.concat([first(list.chld), x]);
+            break;
+        }
+        return evalSexp(env, fn);
+      },
+
     first :
       function mfirst(env, meta, list) {
         return first(list.chld);
@@ -16815,6 +16843,11 @@ console.time("load");
               : x;
           }, vec(arguments).slice(2)));
         return mkSexp.nil();
+      },
+
+    strcat :
+      function mstrcat(env, meta) {
+        return box(mapn(unbox, vec(arguments).slice(2)).join(""));
       },
 
     js :

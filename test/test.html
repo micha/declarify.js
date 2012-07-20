@@ -43,26 +43,9 @@
                 <div class="control-group">
                   <dep ref="r1" on="checked" text="'<' + $$.value + '>'"
                     class.foo="$$.value === 'foo'">
-                    <dep ref="r2" on="checked" text="'<' + $$.value + '>'"
-                      class.foo="$$.value === 'foo'">
-                      <label></label>
-                    </dep>
+                    <label></label>
                   </dep>
                     
-                  <div class="controls">
-                    <label>
-                      Foo:
-                      <input type="radio" name="r2" value="foo2"/>
-                    </label>
-                    <label>
-                      Bar:
-                      <input type="radio" name="r2" value="bar2" checked/>
-                    </label>
-                    <label>
-                      Baz:
-                      <input type="radio" name="r2" value="baz2"/>
-                    </label>
-                  </div>
                   <div class="controls">
                     <label>
                       Foo:
@@ -79,16 +62,12 @@
                   </div>
                 </div>
 
-                <input-text
-                  :name   = "foo1"
-                  :label  = "Full Name"
-                  :help   = "Example: John Doe">
+                <input-text _name="foo1" _label="Full Name"
+                  _help="Example: John Doe" _value="asdf">
                 </input-text>
 
-                <input-text
-                  :name   = "foo2"
-                  :label  = "Email"
-                  :help   = "Example: user@example.com">
+                <input-text _name="foo2" _label="Email"
+                  _help="Example: john.doe@example.com">
                 </input-text>
 
                 <div class="form-actions">
