@@ -24,7 +24,7 @@
 (defn partial
   [f (vals {...})]
   (fn [(args {...})]
-    (apply f (cat vals args))))
+    (eval (cat 'f vals args))))
 
 (defn (foo {title})
   [(elems {...})]
