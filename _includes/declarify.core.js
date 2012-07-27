@@ -33,13 +33,6 @@ console.time("load");
   };
 
   /**
-   * The tag name of this element.
-   */
-  $.fn.nodeName = function() {
-    return this[0].nodeName.toLowerCase();
-  };
-
-  /**
    * Get a map of this element's attributes and their associated values.
    */
   $.fn.attrMap = function() {

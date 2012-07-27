@@ -517,16 +517,12 @@
       },
 
     mapn :
-      function() {
-        var f     = F.first(arguments),
-            arrs  = F.map(F.vec, F.rest(arguments)),
-            maxl  = F.reduce(function(x, xs) {
-                      return Math.max(x.length, xs);
-                    }, 0, arrs),
-            ret   = [], i;
+      function(f, arr) {
+        var ret = Array(arr.length),
+            i;
 
-        for (i=0; i<maxl; i++)
-          ret.push(f.apply(window, F.map(F.partial(F.nth, F._, i), arrs)));
+        for (i=0; i<arr.length; i++)
+          ret[i] = f(arr[i]);
 
         return ret;
       },

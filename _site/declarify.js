@@ -15738,16 +15738,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       },
 
     mapn :
-      function() {
-        var f     = F.first(arguments),
-            arrs  = F.map(F.vec, F.rest(arguments)),
-            maxl  = F.reduce(function(x, xs) {
-                      return Math.max(x.length, xs);
-                    }, 0, arrs),
-            ret   = [], i;
+      function(f, arr) {
+        var ret = Array(arr.length),
+            i;
 
-        for (i=0; i<maxl; i++)
-          ret.push(f.apply(window, F.map(F.partial(F.nth, F._, i), arrs)));
+        for (i=0; i<arr.length; i++)
+          ret[i] = f(arr[i]);
 
         return ret;
       },
@@ -15923,13 +15919,6 @@ console.time("load");
    */
   $.sq = function(x) {
     return x.replace(/([^a-zA-Z0-9-_])/g, '\\$1');
-  };
-
-  /**
-   * The tag name of this element.
-   */
-  $.fn.nodeName = function() {
-    return this[0].nodeName.toLowerCase();
   };
 
   /**
@@ -16246,44 +16235,9 @@ console.time("load");
 
 (function() {
   
-  var T_OBJECT        = 1,
-      T_DEFINED       = 2,
-      T_FUNCTION      = 3,
-      T_SPECIAL_FORM  = 4,
-      T_LAMBDA        = 5,
-      T_NLAMBDA       = 6,
-      T_NIL           = 7,
-      genv;
-      
-  var gensym = (function(count) {
-    return function() {
-      return "gensym_"+String(count++);
-    };
-  })(1);
-
-  genv = {
-    nil: { type: T_NIL, expr: mkSexp("nil") }
-  };
-
-  window.genv = function() { return dup(genv) };
-
   /***************************************************************************
-   * Declarify.js module                                                     *
+   * Hlisp expression data structure                                         *
    ***************************************************************************/
-
-  $UI.m.hlisp = {
-    fn : regSym(T_FUNCTION),
-    fm : regSym(T_SPECIAL_FORM)
-  };
-
-  function regSym(type) {
-    return function(name, val) {
-      if ($.type(name) === "object")
-        mapn(partial(apply, regSym(type)), outof(name));
-      else
-        genv[name] = { type: type, expr: val };
-    };
-  }
 
   function fetchSync(url, type, nocache) {
     var ret;
@@ -16309,7 +16263,7 @@ console.time("load");
   }
 
   function mkSexp(name) {
-    var attr={}, chld=[], text;
+    var attr={}, chld=[], text="", cargs=[], aargs={}, env={}, proc, meta={};
     map(function(x) {
       switch ($.type(x)) {
         case "object":  attr = x; break;
@@ -16317,7 +16271,8 @@ console.time("load");
         case "string":  text = x; break;
       }
     }, vec(arguments).slice(1));
-    return { name: name, attr: attr, chld: chld, text: text };
+    return { name: name, attr: attr, chld: chld, text: text, aargs: aargs,
+             cargs: cargs, env: env, proc: proc };
   }
 
   mkSexp.text = function(text) {
@@ -16327,41 +16282,6 @@ console.time("load");
   mkSexp.nil = function() {
     return dup(genv.nil.expr);
   };
-
-  function isBoxed(sexp) {
-    return sexp.name === "list" || sexp.name === "hash" ||
-      sexp.name === "val" || sexp.name === "true" || sexp.name === "false";
-  }
-
-  function box(val) {
-    switch ($.type(val)) {
-      case "null":
-        return mkSexp.nil();
-      case "boolean":
-        return mkSexp(String(val));
-      case "array":
-        return mkSexp("list", map(box, val));
-      case "object":
-        return mkSexp("hash", map(box, outof(val)));
-      default:
-        return mkSexp("val", [ mkSexp.text(val) ]);
-    }
-  }
-
-  function unbox(sexp) {
-    if (sexp.name === "true" || sexp.name === "false")
-      return sexp.name === "true";
-    else if (sexp.name === "nil")
-      return null;
-    else if (sexp.name === "val")
-      return sexp.chld[0].text;
-    else if (sexp.name === "list")
-      return map(unbox, elems(sexp.chld));
-    else if (sexp.name === "hash")
-      return into({}, map(unbox, elems(sexp.chld)));
-    else
-      return sexp;
-  }
 
   function seq2vec(seq) {
     var arr = new Array(seq.length), i;
@@ -16396,22 +16316,30 @@ console.time("load");
   }
 
   function parseSexp(txt) {
-    var ret = mkSexp(""), t, k, v;
+    var ret = mkSexp(""), quoted=false, t, k, v;
 
     txt = tr(txt);
 
     if (! txt)
       return;
 
+    if (txt === "#text")
+      return [mkSexp("#text"), ""];
+
+    if (txt.charAt(0) === "'") {
+      quoted  = true;
+      txt     = txt.substr(1);
+    }
+
     txt = txt.replace(/^([a-zA-Z0-9_-]+)/, "($1)");
 
-    if (txt[0] === "[")
+    if (txt.charAt(0) === "[")
       txt = "(list "+txt.substr(1);
 
-    if (txt[0] === "^")
+    if (txt.charAt(0) === "^")
       txt = txt.replace(/^[\^]("[^"]*")/, "(val $1)");
 
-    if (txt[0] !== "(")
+    if (txt.charAt(0) !== "(")
       throw new HLispParseError("expected (, got: \n"+txt);
 
     txt = tr(txt.substr(1));
@@ -16423,9 +16351,9 @@ console.time("load");
 
     txt = tr(txt.substr(ret.name.length));
 
-    if (txt[0] === "{") {
+    if (txt.charAt(0) === "{") {
       txt = tr(txt.substr(1));
-      while (txt[0] !== "}") {
+      while (txt.charAt(0) !== "}") {
         t = /^[a-zA-Z0-9_:.-]+/.exec(txt);
         if (! (t && (k = t[0])))
           throw new HLispParseError("expected attribute key, got: \n"+txt);
@@ -16438,20 +16366,20 @@ console.time("load");
         ret.attr[k] = v;
       }
 
-      if (txt[0] !== "}")
+      if (txt.charAt(0) !== "}")
         throw new HLispParseError("expected }, got: \n"+txt);
 
       txt = tr(txt.substr(1));
     }
 
-    if (txt[0] === '"') {
+    if (txt.charAt(0) === '"') {
       t = /^"[^"]*"/.exec(txt);
       if (! t)
         throw new HLispParseError("expected string, got: \n"+txt);
       ret.chld.push(mkSexp.text(t[0].substr(1,t[0].length-2)));
       txt = tr(txt.substr(t[0].length));
     } else 
-      while (txt[0] !== ")" && txt[0] !== "]") {
+      while (txt.charAt(0) !== ")" && txt.charAt(0) !== "]") {
         t = parseSexp(txt);
         if (! t)
           throw new HLispParseError("unexpected EOF");
@@ -16459,16 +16387,875 @@ console.time("load");
         txt = tr(t[1]);
       }
 
-    if (txt[0] === "]")
+    if (txt.charAt(0) === "]")
       txt = ")" + txt.substr(1);
 
-    if (txt[0] !== ")")
+    if (txt.charAt(0) !== ")")
       throw new HLispParseError("expected ), got: \n"+txt);
 
     txt = tr(txt.substr(1));
 
+    if (quoted)
+      ret = mkSexp("quote", [ret]);
+
     return [ret, txt];
   }
+
+  /***************************************************************************
+   * HLisp expression wrapper                                                *
+   ***************************************************************************/
+
+  function hl(exp) {
+    return new hl.fn.init(exp);
+  }
+
+  window.hl = hl;
+
+  $.extend(hl, {
+
+    invoke :
+      function(meth) {
+        var args = rest(arguments);
+        return function() {
+          return hl(this)[meth].apply(hl(this), args);
+        }
+      },
+
+    accessor :
+      function(key) {
+        return function() {
+          if (arguments.length) {
+            this[0][key] = arguments[0];
+            return this;
+          } else
+            return this[0][key];
+        };
+      },
+
+    /* --- */
+
+    genv : {},
+
+    gensym :
+      (function(count) {
+        return function() {
+          return "gensym_"+String(count++);
+        };
+      })(1),
+
+    toExps :
+      function(coll) {
+        return semiflat(mapn(function(x) {
+          return x instanceof hl ? x.get() : hl(x).get();
+        }, coll));
+      },
+
+    parse :
+      function(txt) {
+        var ret, p;
+        ret     = [];
+        tr.line = 1;
+        while ( (p = parseSexp(txt)) ) {
+          ret.push(p[0]);
+          txt = p[1];
+        }
+        return ret;
+      },
+
+    box :
+      function(val) {
+        switch ($.type(val)) {
+          case "undefined":
+          case "function":
+            return hl.box("");
+          case "null":
+            return hl("nil");
+          case "boolean":
+            return hl(String(val));
+          case "array":
+            return hl("list").appendChld(hl.toExps(map(hl.box, val)));
+          case "object":
+            return hl("hash").appendChld(hl.toExps(map(hl.box, outof(val))));
+          default:
+            return hl('^"'+val+'"');
+        }
+      },
+
+    eval :
+      function(txt) {
+        ret = $();
+        hl(txt).each(function() {
+          (hl(this).eval(hl.genv) || hl("nil")).each(function() {
+            ret = ret.add(hl(this).toElem());
+          });
+        });
+        return ret;
+      }
+
+  });
+
+  hl.fn = hl.prototype = {
+
+    init :
+      function(exp) {
+        if (exp instanceof hl)
+          return exp;
+        this.setArray($.type(exp) === "string" ? hl.parse(exp) : exp);
+      },
+
+    setArray :
+      function(exps) {
+        this.length = 0;
+        [].push.apply(this, wraparr(exps));
+        return this;
+      },
+
+    size :
+      function() {
+        return this.length;
+      },
+
+    eq :
+      function(i) {
+        i = +i;
+        return this.slice(i, (i===-1 ? undefined : i+1));
+      },
+
+    get :
+      function(i) {
+        if (arguments.length > 0)
+          return this[i];
+        else
+          return [].slice.call(this);
+      },
+
+    first :
+      function() {
+        return this.eq(0);
+      },
+
+    rest :
+      function() {
+        return this.slice(1);
+      },
+
+    last :
+      function() {
+        return this.eq(-1);
+      },
+
+    butlast :
+      function() {
+        return this.slice(0, this.size()-1);
+      },
+
+    push    : [].push,
+    pop     : [].pop,
+    shift   : [].shift,
+    unshift : [].unshift,
+    splice  : [].splice,
+
+    slice :
+      function() {
+        return hl([].slice.apply(this, arguments));
+      },
+
+    map :
+      function(fn) {
+        return hl(mapn(function(x) {
+          return fn.call(x, x);
+        }, this.get()));
+      },
+
+    each :
+      function(fn) {
+        mapn(function(x) {
+          return fn.call(x, x);
+        }, this.get());
+        return this;
+      },
+
+    filter :
+      function() {
+        var fn = arguments[0] || identity;
+        return hl(filter(function(x) {
+          return fn.call(x, x);
+        }, this.get()));
+      },
+
+    append :
+      function() {
+        this.setArray(this.get().concat(hl.toExps(arguments)));
+        return this;
+      },
+
+    prepend :
+      function() {
+        this.setArray(hl.toExps(arguments).concat(this.get()));
+        return this;
+      },
+
+    /* --- */
+
+    hlisp   : "0.1",
+    tag     : hl.accessor("name"),
+    text    : hl.accessor("text"),
+    proc    : hl.accessor("proc"),
+    aargs   : hl.accessor("aargs"),
+    cargs   : hl.accessor("cargs"),
+    env     : hl.accessor("env"),
+    attrMap : hl.accessor("attr"),
+
+    clone :
+      function() {
+        var ret = hl("");
+        this.each(function(x) {
+          x = hl(x);
+          var e = hl(x.tag()).attrMap(dup(x.attrMap()))
+                             .text(x.text()),
+              c = x.chld().clone();
+          ret.append(e.appendChld(c));
+        });
+        return ret;
+      },
+
+    elems :
+      function() {
+        return this.filter(hl.invoke("isElem"));
+      },
+
+    isElem :
+      function() {
+        return this.tag().charAt(0) !== "#";
+      },
+
+    attr :
+      function(key) {
+        if (arguments.length > 1) {
+          this[0].attr[key] = arguments[1];
+          return this;
+        } else
+          return this[0].attr[key];
+      },
+
+    echld :
+      function(i) {
+        return arguments.length == 0
+          ? this.chld().elems()
+          : this.echld().eq(i);
+      },
+
+    chld :
+      function(i) {
+        return arguments.length == 0
+          ? hl(this[0].chld)
+          : hl(this[0].chld[i]);
+      },
+
+    emptyChld :
+      function(c) {
+        this[0].chld = [];
+        return this;
+      },
+
+    appendChld :
+      function() {
+        this[0].chld = this[0].chld.concat(hl.toExps(arguments));
+        return this;
+      },
+
+    prependChld :
+      function() {
+        this[0].chld = hl.toExps(arguments).concat(this[0].chld);
+        return this;
+      },
+
+    replaceChld :
+      function() {
+        return this.emptyChld().appendChld.apply(this, arguments);
+      },
+
+    wrap :
+      function(p) {
+        return hl(p).appendChld(this);
+      },
+
+    unbox :
+      function() {
+        if (this.tag() === "true" || this.tag() === "false")
+          return this.tag() === "true";
+        else if (this.tag() === "nil")
+          return null;
+        else if (this.tag() === "val")
+          return this.chld(0).text() || "";
+        else if (this.tag() === "list")
+          return this.echld().map(hl.invoke("unbox"));
+        else if (this.tag() === "hash")
+          return into({}, this.echld().map(hl.invoke("unbox")));
+        else
+          return sexp;
+      },
+
+    boxed :
+      function() {
+        switch(this.tag()) {
+          case "list":
+          case "hash":
+          case "val":
+          case "true":
+          case "false":
+            return true;
+          default:
+            return false;
+        }
+      },
+
+    isElemNode :
+      function(sexp) {
+        return this.tag().substr(0,1) !== "#";
+      },
+
+    toElem :
+      function() {
+        function createElem(sexp) {
+          var tag = sexp.tag(),
+              txt = sexp.text();
+          return $(tag === "#text"
+            ? document.createTextNode(txt)
+            : (tag === "#comment"
+                ? document.createComment(txt)
+                : document.createElement(tag)));
+        }
+
+        if (! this[0])
+          return $();
+
+        var ret = createElem(this.eq(0));
+        
+        return isElemNode(this[0])
+          ? reduce(function(x, xs) {
+              return xs.append(hl(x).toElem());
+            }, ret.attr(this.attrMap()), this.chld().get())
+          : ret;
+      },
+
+    eval :
+      function(env) {
+        return (this.analyze())(env);
+      },
+
+    evalAll :
+      function(env) {
+        var ret = hl("");
+        this.each(function(x) { ret.append(x(env)) });
+        return ret;
+      },
+
+    analyze :
+      function() {
+        return this.analyzeObject()       ||
+               this.analyzeQuoted()       ||
+               this.analyzeDefinition()   ||
+               this.analyzeFnDefinition() ||
+               this.analyzeIf()           ||
+               this.analyzeCond()         ||
+               this.analyzeBegin()        ||
+               this.analyzeEval()         ||
+               this.analyzeApply()        ||
+               this.analyzeCall()         ||
+               this.analyzeLambda()       ||
+               this.analyzeApplication()  ||
+               this.analyzeVariable()     ||
+               this.analyzeError();
+      },
+
+    analyzeError :
+      function() {
+        throw "hlisp: unknown expression type: '"+this.tag()+"'";
+      },
+
+    analyzeObject :
+      function() {
+        if (! (this.tag() in this.analyzeObject.tags) && this.isElem())
+          return;
+
+        var jself = this,
+            chlds = this.chld().map(hl.invoke("analyze"));
+
+        return function(env) {
+          return jself.replaceChld(chlds.evalAll(env));
+        };
+      },
+
+    analyzeQuoted :
+      function() {
+        if (this.tag() !== "quote")
+          return;
+
+        var jself = this;
+
+        return function(env) { return jself.echld() };
+      },
+
+    analyzeDefinition :
+      function() {
+        if (this.tag() !== "def")
+          return;
+
+        var jself = this,
+            c     = this.echld(),
+            name  = c.eq(0).tag(),
+            proc  = c.eq(1).analyze();
+
+        return function(env) { env[name] = proc(env) };
+      },
+
+    analyzeFnDefinition :
+      function() {
+        if (this.tag() !== "defn")
+          return;
+
+        var jself   = this,
+            c       = this.echld(),
+            aparam  = c.eq(0).attrMap(),
+            cparam  = c.eq(1),
+            proc    = c.slice(2),
+            name    = hl(c.eq(0).tag())
+            fn      = hl("fn").attrMap(aparam).appendChld(cparam, proc);
+
+        return hl("def").appendChld(name, fn).analyze();
+      },
+
+    analyzeLambda :
+      function() {
+        if (this.tag() !== "fn")
+          return;
+
+        function mkParam() {
+          var jself = hl(this);
+          return "..." in jself.attrMap() ? [jself.tag()] : jself.tag();
+        }
+
+        var cargs = this.echld(0).echld().map(mkParam).get(),
+            aargs = this.attrMap(),
+            proc  = this.echld().slice(1).analyzeSequence();
+
+        return function(env) {
+          return hl("procedure").proc(proc)
+                                .cargs(cargs)
+                                .aargs(aargs)
+                                .env(env);
+        };
+      },
+
+    analyzeSequence :
+      function() {
+        function sequentially(proc1, proc2) {
+          return hl(function(env) {
+            proc1[0](env);
+            return proc2[0](env);
+          });
+        }
+
+        function loop(proc, procs) {
+          return procs.size()
+            ? loop(sequentially(proc, procs.first()), procs.rest())
+            : proc[0];
+        }
+
+        var procs = this.map(hl.invoke("analyze"));
+
+        if (! procs.size())
+          throw "hlisp: empty sequence of expressions";
+
+        return loop(procs.first(), procs.rest());
+      },
+
+    cond2if :
+      function() {
+        var pred = this.first().echld(0),
+            cons = this.first().echld(1);
+
+        return pred.tag() === "else"
+          ? cons
+          : hl("if").appendChld(pred)
+                    .appendChld(cons)
+                    .appendChld(this.rest().cond2if());
+      },
+
+    analyzeCond :
+      function() {
+        if (this.tag() !== "cond")
+          return;
+
+        return this.echld().cond2if().analyze();
+      },
+
+    analyzeIf :
+      function() {
+        if (this.tag() !== "if")
+          return;
+
+        var c    = this.echld(),
+            pred = c.eq(0).analyze(),
+            cons = c.eq(1).analyze(),
+            altr = (c.size() > 2 ? c.eq(2) : hl("false")).analyze();
+
+        return function(env) {
+          return ((pred(env)).tag() === "true" ? cons : altr)(env);
+        }
+      },
+
+    analyzeBegin :
+      function() {
+        if (this.tag() !== "do")
+          return;
+
+        return this.echld().analyzeSequence();
+      },
+
+    analyzeEval :
+      function() {
+        if (this.tag() !== "eval")
+          return;
+
+        var proc = this.echld(0).analyze();
+
+        return function(env) {
+          return (proc(env)).eval(env);
+        };
+      },
+
+    analyzeApply :
+      function() {
+        if (this.tag() !== "apply")
+          return;
+
+        var c     = this.echld(),
+            proc  = c.eq(0).analyze(),
+            aargs = dup(this.attrMap()),
+            cargs = c.eq(1).echld().map(hl.invoke("analyze"));
+
+        return function(env) {
+          return (proc(env)).exec(cargs.evalAll(env), aargs);
+        };
+      },
+
+    analyzeCall :
+      function() {
+        if (this.tag() !== "call")
+          return;
+
+        var c     = this.echld(),
+            proc  = c.first().analyze(),
+            aargs = this.attrMap(),
+            cargs = c.rest().map(hl.invoke("analyze"));
+
+        return function(env) {
+          return (proc(env)).exec(cargs.evalAll(env), aargs);
+        };
+      },
+
+    analyzeVariable :
+      function() {
+        if (this.echld().size())
+          return;
+
+        var name  = this.tag(),
+            jself = this;
+
+        return function(env) {
+          var ret;
+
+          while (env && ! (ret = env[name]))
+            env = env.prnt;
+
+          if (! env)
+            throw "hlisp: unbound variable: '"+name+"'";
+
+          return env[name];
+        };
+      },
+
+    analyzeApplication :
+      function() {
+        if (! this.echld().size())
+          return;
+
+        var proc  = hl(this.tag()).analyze(),
+            cargs = this.echld().map(hl.invoke("analyze")),
+            aargs = dup(this.attrMap());
+
+        return function(env) {
+          return (proc(env)).exec(cargs.evalAll(env), aargs);
+        };
+      },
+
+    extendEnv :
+      function(cargs, aargs) {
+        var ret = { prnt: this.env() };
+
+        map(function(x, i) {
+          var more  = $.type(x) === "array",
+              x     = more ? x[0] : x,
+              args  = hl(cargs.splice(0, more ? cargs.size() : 1));
+          ret[x] = more ? hl("list").appendChld(args) : args;
+        }, this.cargs());
+
+        mapn(function(x) {
+          if (x[0] in aargs)
+            ret[x[1] || x[0]] = hl.box(aargs[x[0]]);
+        }, outof(this.aargs()));
+
+        ret.callee = hl("list").attrMap(aargs);
+
+        return ret;
+      },
+
+    execCall :
+      function() {
+        var cargs = hl(""),
+            aargs = {};
+        cargs.append.apply(cargs, arguments);
+        return this.exec(cargs, aargs);
+      },
+
+    exec :
+      function(cargs, aargs) {
+        if (this.tag() === "primitive")
+          return (this.proc())(cargs, aargs);
+        else if (this.tag() === "procedure")
+          return (this.proc())(this.extendEnv(cargs, aargs));
+        else
+          throw "hlisp: unknown procedure type: '"+this.tag()+"'";
+      }
+
+  };
+
+  hl.fn.init.prototype = hl.fn;
+
+  /***************************************************************************
+   * HLisp self-evaluating tags                                              *
+   ***************************************************************************/
+
+  hl.fn.analyzeObject.tags = {
+    // Union of HTML 4.01 and HTML 5 tags //
+    "a": true, "abbr": true, "acronym": true, "address": true, "applet":
+    true, "area": true, "article": true, "aside": true, "audio": true,
+    "b": true, "base": true, "basefont": true, "bdi": true, "bdo": true,
+    "big": true, "blockquote": true, "body": true, "br": true, "button":
+    true, "canvas": true, "caption": true, "center": true, "cite": true,
+    "code": true, "col": true, "colgroup": true, "command": true, "data":
+    true, "datalist": true, "dd": true, "del": true, "details": true,
+    "dfn": true, "dir": true, "div": true, "dl": true, "dt": true,
+    "em": true, "embed": true, "eventsource": true, "fieldset": true,
+    "figcaption": true, "figure": true, "font": true, "footer": true,
+    "form": true, "frame": true, "frameset": true, "h1": true, "h2":
+    true, "h3": true, "h4": true, "h5": true, "h6": true, "head": true,
+    "header": true, "hgroup": true, "hr": true, "html": true, "i": true,
+    "iframe": true, "img": true, "input": true, "ins": true, "isindex":
+    true, "kbd": true, "keygen": true, "label": true, "legend": true,
+    "li": true, "link": true, "map": true, "mark": true, "menu":
+    true, "meta": true, "meter": true, "nav": true, "noframes": true,
+    "noscript": true, "object": true, "ol": true, "optgroup": true,
+    "option": true, "output": true, "p": true, "param": true, "pre": true,
+    "progress": true, "q": true, "rp": true, "rt": true, "ruby": true,
+    "s": true, "samp": true, "script": true, "section": true, "select":
+    true, "small": true, "source": true, "span": true, "strike": true,
+    "strong": true, "style": true, "sub": true, "summary": true, "sup":
+    true, "table": true, "tbody": true, "td": true, "textarea": true,
+    "tfoot": true, "th": true, "thead": true, "time": true, "title":
+    true, "tr": true, "track": true, "tt": true, "u": true, "ul": true,
+    "var": true, "video": true, "wbr": true,
+
+    // HLisp-specific self-evaluating symbols //
+    "#text":true, "#comment":true, "val":true, "list":true, "hash":true,
+    "true":true, "false":true, "nil":true, "null":true
+  };
+
+  hl.primitive = {
+
+    attr :
+      function(cargs, aargs) {
+        var ret;
+        if (cargs.size() === 2 && cargs.eq(1).tag() === "val")
+          return hl.box(cargs.eq(0).attr(cargs.eq(1).unbox()));
+        else {
+          ret = cargs.eq(0).clone();
+          cargs.rest().each(function() {
+            var y = hl(this).unbox();
+            ret.attr(y[0], y[1]);
+          });
+        }
+        return ret;
+      },
+
+    attrs :
+      function(cargs, aargs) {
+        var ret;
+        if (cargs.size() === 1)
+          return reduce(function(x, xs) {
+            return xs.appendChld(
+              hl("list").appendChld(hl.box(x[0]), hl.box(x[1])));
+          }, hl("list"), outof(cargs.eq(0).attrMap()));
+        else {
+          ret = cargs.eq(0).clone();
+          return cargs.eq(1).tag() === "nil"
+            ? cargs.eq(0).attrMap({})
+            : reduce(function(x, xs) {
+                return xs.attr(x[0], x[1]);
+              }, ret, cargs.eq(1).echld().map(hl.invoke("unbox")));
+        }
+      },
+
+    cat :
+      function(cargs, aargs) {
+        return reduce(function(x, xs) {
+          return xs.appendChld(hl(x).echld());
+        }, cargs.eq(0).clone(), cargs.rest().clone().get());
+      },
+
+    conj :
+      function(cargs, aargs) {
+        var p = cargs.first().clone(),
+            c = cargs.rest().clone();
+        return p.appendChld(c);
+      },
+
+    cons :
+      function(cargs, aargs) {
+        var p = cargs.first().clone(),
+            c = cargs.rest().clone();
+        return p.prependChld(c);
+      },
+
+    count :
+      function(cargs, aargs) {
+        return hl.box(cargs.eq(0).echld().size());
+      },
+
+    eq :
+      function(cargs, aargs) {
+        return hl.box(cargs.eq(0).unbox() === cargs.eq(1).unbox());
+      },
+
+    first :
+      function(cargs, aargs) {
+        return cargs.eq(0).echld(0).clone();
+      },
+
+    fmap :
+      function(cargs, aargs) {
+        var proc = cargs.eq(0),
+            coll = cargs.eq(1).clone(),
+            c    = coll.echld().clone();
+
+        coll.emptyChld();
+
+        c.each(function(x) {
+          coll.appendChld(proc.exec(hl(x),{}));
+        });
+
+        return coll;
+      },
+
+    gensym :
+      function(cargs, aargs) {
+        return hl.box(hl.gensym());
+      },
+
+    id :
+      function(cargs, aargs) {
+        return cargs.eq(0).clone();
+      },
+
+    insert :
+      function insert(cargs, aargs) {
+        var proc = cargs.eq(0),
+            coll = cargs.eq(1).echld().clone(),
+            dfl  = cargs.eq(2).clone(),
+            x, xs, rst;
+
+        if (dfl.size())
+          coll.append(dfl);
+
+        if (coll.size() === 0)
+          return hl("nil");
+        else if (coll.size() === 1)
+          return coll;
+        else {
+          x   = coll.first();
+          rst = hl("list").appendChld(coll.rest());
+          xs  = insert(proc.append(rst), aargs);
+          return proc.execCall(x, xs);
+        }
+      },
+
+    isnull :
+      function(cargs, aargs) {
+        return hl.box(cargs.eq(0).echld().size() === 0);
+      },
+
+    log :
+      function(cargs, aargs) {
+        console.log.apply(console, cargs.map(hl.invoke("unbox")).get());
+      },
+
+    times :
+      function(cargs, aargs) {
+        var n   = aargs.n,
+            ret = hl("");
+        while (n-- > 0)
+          ret.append(cargs.clone());
+        return ret;
+      },
+
+    range :
+      function(cargs, aargs) {
+        var start = cargs.size() === 2 ? cargs.eq(0).unbox() : 0,
+            end   = (cargs.size() === 2 ? cargs.eq(1) : cargs.eq(0)).unbox(),
+            ret   = hl("list"), i;
+
+        for (i=start; i<end; i++)
+          ret.appendChld(hl.box(i));
+
+        return ret;
+      },
+
+    rest :
+      function(cargs, aargs) {
+        return hl("list").appendChld(cargs.eq(0).echld().slice(1).clone());
+      },
+
+    strcat :
+      function(cargs, aargs) {
+        return hl.box(cargs.map(hl.invoke("unbox")).get().join(""));
+      },
+
+    text :
+      function(cargs, aargs) {
+        return cargs.size() === 1
+          ? hl.box(cargs.eq(0).toElem().text())
+          : cargs.eq(0).clone().replaceChld(mkSexp.text(cargs.eq(1).unbox()));
+      }
+
+  };
+
+  /***************************************************************************
+   * HLisp initial global environment setup                                  * 
+   ***************************************************************************/
+
+  hl.setenv = function() {
+    mapn(function(x) {
+      if (x[0] in hl.fn.analyzeObject.tags)
+        console.warn("hlisp: primitive shadowed by DOM element: '"+x[0]+"'");
+      hl.genv[x[0]] = hl("primitive").proc(x[1]);
+    }, outof(hl.primitive));
+  };
+
+  /***************************************************************************
+   * HLisp <--> DOM element conversion functions                             * 
+   ***************************************************************************/
 
   function toSexp(elem) {
     var ret = mkSexp(elem.nodeName.toLowerCase(), ''+elem.nodeValue),
@@ -16479,11 +17266,8 @@ console.time("load");
       t       = s ? fetchSync(s, "text") : $(elem).text();
       ret     = [];
       tr.line = 1;
-      tr.file = s || "<script>";
-      while ( (p = parseSexp(t)) ) {
-        ret.push(p[0]);
-        t = p[1];
-      }
+      tr.file = s || "#<script>";
+      ret = t;
     } else if (isElemNode(ret)) {
       ret.attr = into({}, mapn(function(x) {
         var n = x.nodeName.toLowerCase();
@@ -16498,7 +17282,7 @@ console.time("load");
       ret.chld = semiflat(mapn(toSexp, seq2vec(elem.childNodes)));
     }
 
-    return ret;
+    return hl(ret);
   }
 
   function createElem(sexp) {
@@ -16509,68 +17293,10 @@ console.time("load");
           : document.createElement(sexp.name)));
   }
 
-  function fromSexp(sexp) {
-    var ret = createElem(sexp);
-    
-    return isElemNode(sexp)
-      ? reduce(function(x, xs) {
-          return xs.append(fromSexp(x));
-        }, ret.attr(sexp.attr), sexp.chld)
-      : ret;
-  }
-
   function evalSexp(env, sexp) {
-    sexp    = dup(sexp || { type: T_NIL, expr: null });
-
-    var sym = dup(env[sexp.name] || genv[sexp.name] ||
-                  { type: T_OBJECT, expr: sexp }),
-        typ = sym.type,
-        val = sym.expr,
-        arg = sexp.chld,
-        f, e, i;
-    
-    if (typ !== T_SPECIAL_FORM && typ !== T_NLAMBDA && typ !== T_DEFINED)
-      arg = keep(mapn(partial(evalSexp, env), arg));
-
-    switch (typ) {
-      case T_NIL:
-        return val;
-      case T_NLAMBDA:
-      case T_LAMBDA:
-        if (sym.free.length && ! elems(sexp.chld).length)
-          return sexp;
-
-        arg = elems(arg);
-
-        map(function(x) {
-          if (x[0] in sexp.attr)
-            sym.env[x[1]] = { type: T_DEFINED, expr: box(sexp.attr[x[0]]) };
-        }, outof(sym.freeAttr));
-
-        map(function(x,i) {
-          var expr = $.type(x) === "array"
-            ? mkSexp("list", arg.slice(i))
-            : arg[i];
-          sym.env[x] = { type: T_DEFINED, expr: expr || mkSexp.nil() };
-        }, sym.free);
-
-        sym.env.arguments = {
-          type: T_DEFINED,
-          expr: mkSexp("list", sexp.attr)
-        };
-
-        return evalSexp(sym.env, sym.expr);
-      case T_FUNCTION:
-      case T_SPECIAL_FORM:
-        return sexp.chld.length
-          ? apply(val, [env, sexp.attr].concat(elems(arg)))
-          : sexp;
-      case T_DEFINED:
-        return evalSexp(env, assoc(val, "attr", dup(val.attr, sexp.attr),
-                                        "chld", val.chld.concat(arg)));
-      default:
-        return assoc(sexp, "chld", arg);
-    }
+    var ret;
+    hl(sexp).each(function() { ret = hl(this).eval(env) });
+    return ret;
   }
 
   /***************************************************************************
@@ -16578,7 +17304,7 @@ console.time("load");
    ***************************************************************************/
 
   $.fromSexp = function(sexp) {
-    return sexp ? $(fromSexp(sexp)) : $();
+    return sexp ? hl(sexp).toElem() : $();
   };
 
   $.fn.toSexp = function() {
@@ -16586,292 +17312,26 @@ console.time("load");
   };
 
   $.fn.evalSexp = function() {
-    return this.replaceWith($.fromSexp(this.evalSexps()));
+    var ret;
+    this.toSexp().each(function() { ret = hl(this).eval(hl.genv) });
+    this.replaceWith(ret ? ret.toElem() : $());
+    return ret;
   };
-
-  $.fn.evalSexps = function() {
-    return reduce(partial(evalSexp, genv), null, wraparr(this.toSexp()));
-  }
 
   /***************************************************************************
    * Declarify.js hooks                                                      *
    ***************************************************************************/
 
   $UI.init.push(function() {
+    console.time("hlisp init");
+    hl.setenv();
     console.time("hlisp xhr");
     $("head script[type='text/hlisp']").each($.invoke("evalSexp"));
     console.timeEnd("hlisp xhr");
     console.time("hlisp eval");
     $("body").evalSexp();
     console.timeEnd("hlisp eval");
-  });
-
-  /***************************************************************************
-   * Special forms                                                           *
-   ***************************************************************************/
-
-  function mkLambda(type) {
-    return function mlambda(env, meta, sym, body) {
-      function mkfree(sexp) {
-        return "..." in sexp.attr ? [sexp.name] : sexp.name;
-      }
-
-      function mkFreeAttr(obj) {
-        return into({}, map(function(x) {
-          return [x[0], x[1] || x[0]];
-        }, outof(obj)));
-      }
-
-      var name      = gensym(),
-          e         = dup(env),
-          free      = mapn(mkfree, elems(sym.chld)),
-          freeAttr  = mkFreeAttr(sym.attr);
-
-      genv[name] = {
-        type:     type,
-        expr:     body,
-        free:     free,
-        freeAttr: freeAttr,
-        env:      e
-      };
-
-      return mkSexp(name);
-    };
-  }
-
-  $UI.m.hlisp.fm({
-
-    def :
-      function mdef(env, meta, sym, val) {
-        var v = evalSexp(env, dup(val));
-        env[sym.name] = { type: T_DEFINED, expr: v };
-        return null;
-      },
-
-    quote :
-      function mquote(env, meta, sym) {
-        return sym;
-      },
-
-    fn :
-      mkLambda(T_LAMBDA),
-
-    nlambda :
-      mkLambda(T_NLAMBDA),
-
-    defn :
-      function mdefn(env, meta, sym, args, body) {
-        var e, l;
-        
-        args.attr = sym.attr;
-        l = evalSexp(env, mkSexp("fn", [ args, body ]));
-
-        env[sym.name] = { type: T_DEFINED, expr: l };
-        genv[l.name].env[sym.name] = dup(env[sym.name]);
-      },
-
-    cond :
-      function mcond(env, meta) {
-        var args = vec(arguments).slice(2), x;
-        while (x = args.shift()) {
-          if (x.chld[0].name === "else" || unbox(evalSexp(env, x.chld[0])))
-            return evalSexp(env, x.chld[1]);
-        }
-      },
-
-    time :
-      function mtime(env, meta, str, form) {
-        var ret, s = unbox(str);
-        console.time(s);
-        ret = evalSexp(env, form);
-        console.timeEnd(s);
-        return ret;
-      }
-  });
-
-  /***************************************************************************
-   * Functions                                                               *
-   ***************************************************************************/
-
-  $UI.m.hlisp.fn({
-
-    apply :
-      function mapply(env, meta, fn, args) {
-        fn.chld = fn.chld.concat(elems(args.chld));
-        fn.attr = dup(fn.attr, args.attr);
-        return evalSexp(env, fn);
-      },
-
-    "do" :
-      function mdo(env, meta) {
-        return reduce(identity, null, vec(arguments).slice(2));
-      },
-
-    identity :
-      function midentity(env, meta, sym) {
-        return sym;
-      },
-
-    attr :
-      function mattr(env, meta, sym) {
-        var attrs = vec(arguments).slice(3);
-        if (attrs.length == 1)
-          return box(sym.attr[unbox(attrs[0])]);
-        while (attrs.length > 1)
-          sym.attr[unbox(attrs.shift())] = unbox(attrs.shift());
-        return sym;
-      },
-
-    attrs :
-      function mattrs(env, meta, sym) {
-        return mkSexp("list", mapn(box, outof(sym.attr)));
-      },
-
-    text :
-      function mtext(env, meta, sym, txt) {
-        if (!txt)
-          return box($.fromSexp(sym).text());
-        sym.chld = [ mkSexp.text(unbox(txt)) ];
-        return sym;
-      },
-
-    cat :
-      function mcat(env, meta) {
-        return reduce(function(x, xs) {
-          xs.chld = xs.chld.concat(x.chld);
-        }, arguments[2], vec(arguments).slice(3));
-      },
-
-    cons :
-      function mcons() {
-        var arg   = mapn(dup, arguments),
-            env   = arg[0],
-            meta  = arg[1],
-            par   = evalSexp(env, arg[2]);
-        par.chld = mapn(partial(evalSexp, env), arg.slice(3)).concat(par.chld);
-        return par;
-      },
-
-    conj :
-      function mconj() {
-        var arg   = mapn(dup, arguments),
-            env   = arg[0],
-            meta  = arg[1],
-            par   = evalSexp(env, arg[2]);
-        par.chld = par.chld.concat(mapn(partial(evalSexp, env), arg.slice(3)));
-        return par;
-      },
-
-    gensym :
-      function mgensym(env, meta, sexp) {
-        return box(gensym());
-      },
-
-    comp :
-      function mcomp(env, meta) {
-
-      },
-
-    ddepends :
-      function mdepends(env, meta, sexp) {
-        var sym = gensym(), attr;
-        attr = into({}, keep(mapn(function(x) {
-          return x[0].substr(0,1) === ":"
-            ? [ "data-"+sym+"::"+x[0].substr(1), x[1] ]
-            : null;
-        }, outof(meta))));
-        attr["data-dep::"+meta.ref+":"+meta.attr] = sym;
-        return assoc(dup(sexp), "attr", dup(sexp.attr, attr));
-      },
-
-    map :
-      function mmap(env, meta, fn, list) {
-        return assoc(list, "chld", mapn(function(x) {
-          var f = dup(fn);
-          f.chld = f.chld.concat([x]);
-          return evalSexp(env, f);
-        }, elems(list.chld)));
-      },
-
-    ins :
-      function mins(env, meta, fn, list, dfl) {
-        var x;
-        switch (list.chld.length) {
-          case 0:
-            fn = dfl;
-            break;
-          case 1:
-            fn      = dup(fn);
-            fn.chld = fn.chld.concat([first(list.chld), dfl]);
-            break;
-          default:
-            fn = dup(fn);
-            x = mins(env, meta, fn, mkSexp("list", rest(list.chld)), dfl);
-            fn.chld = fn.chld.concat([first(list.chld), x]);
-            break;
-        }
-        return evalSexp(env, fn);
-      },
-
-    first :
-      function mfirst(env, meta, list) {
-        return first(list.chld);
-      },
-
-    rest :
-      function mrest(env, meta, list) {
-        return mkSexp(list.name, rest(list.chld));
-      },
-
-    count :
-      function mcount(env, meta, list) {
-        return box(elems(list.chld).length);
-      },
-
-    eq :
-      function meq(env, meta, x, y) {
-        return box(unbox(x) == unbox(y));
-      },
-
-    log :
-      function mlog(env, meta) {
-        console.log.apply(
-          console,
-          map(function(x) {
-            return "name" in x && isBoxed(x)
-              ? unbox(x)
-              : x;
-          }, vec(arguments).slice(2)));
-        return mkSexp.nil();
-      },
-
-    strcat :
-      function mstrcat(env, meta) {
-        return box(mapn(unbox, vec(arguments).slice(2)).join(""));
-      },
-
-    js :
-      function mjs(env, meta, js) {
-        var jsenv, defs;
-
-        function isDef(x) { return x[1] && x[1].type === T_DEFINED }
-
-        defs = keep(map(function(x) {
-          var name = x[0], n;
-          while (x[1].expr && (n = x[1].expr.name) in env && isDef([n, env[n]]))
-            x = [n, env[n]];
-          return env[n] ? null : x;
-        }, filter(isDef, outof(env))));
-
-        jsenv = into({}, keep(map(function bar(x) {
-          return isBoxed(x[1].expr)
-            ? [x[0], unbox(x[1].expr)]
-            : [x[0], x[1].expr];
-        }, defs)));
-
-        return box(evalenv(unbox(js), jsenv));
-      }
-
+    console.timeEnd("hlisp init");
   });
 
 })();

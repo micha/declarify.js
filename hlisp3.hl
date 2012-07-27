@@ -1,0 +1,37 @@
+
+; <defn>
+;   <partial></partial>
+;   <list>
+;     <f></f>
+;     <vals ...></vals>
+;   </list>
+;   <fn>
+;     <list>
+;       <args ...></args>
+;     </list>
+;     <eval>
+;       <cat>
+;         <quote>
+;           <f></f>
+;         </quote>
+;         <vals></vals>
+;         <args></args>
+;       </cat>
+;     </eval>
+;   </fn>
+; </defn>
+;
+(defn partial
+  [f (vals {...})]
+  (fn [(args {...})]
+    (apply f (cat vals args))))
+
+(defn (foo {title})
+  [(elems {...})]
+  (cat (div (text h1 ^"foo")) elems))
+
+(defn many
+  [n (elems {...})]
+  (insert cat elems (range n)))
+
+

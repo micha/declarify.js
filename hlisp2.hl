@@ -1,0 +1,68 @@
+
+(defn (dep {ref on})
+  [elem]
+  (def sym  (gensym nil))
+  (def elem2 (attr elem [ (strcat ^"data-dep::" ref ^":" on) sym ]))
+  (insert
+    (fn [x xs]
+      (cond
+        [ (eq (first x) ^"ref") xs ]
+        [ (eq (first x) ^"on") xs ]
+        [ else (do (def k (strcat ^"data-" sym ^"::" (first x)))
+                   (def v (first (rest x)))
+                   (attr xs [ k v ])) ]))
+    (attrs callee)
+    elem2))
+
+(defn dep2
+  ; This is a test.
+  [elem ref on (args {...})]
+  (def args (conj list [^"ref" ref] [^"on" on] args))
+  (eval (attrs '(dep elem) args)))
+
+(defn dep-status
+  [ref elem]
+  (dep2 elem
+        ref
+        ^"-status"
+        [^"class.success"    ^"$$['-status'] == 'success'"]
+        [^"class.error"      ^"$$['-status'] == 'error'"]
+        [^"class.warning"    ^"$$['-status'] == 'warning'"]
+        [^"class.disabled"   ^"$$['-status'] == 'disabled'"]))
+
+(defn dep-state
+  [ref elem]
+  (eval
+    (insert
+      conj
+      [ (attrs 'dep
+               [ [^"ref"              ref]
+                 [^"on"               ^"-status"]
+                 [^"class.disabled"   ^"$$['-status'] == 'disabled'"] ])
+        (attrs 'dep
+               [ [^"ref"              ref]
+                 [^"on"               ^"-value"]
+                 [^"value"            ^"$$['-value']"] ]) ]
+      elem)))
+
+(defn (ctl-group {-label})
+  [(elems {...})]
+  (div {class "control-group"}
+    (text label -label)
+    (cat (div {class "controls"}) elems)))
+
+(defn ctl-input
+  [inp]
+  (def sym (gensym nil))
+  (def cls (strcat ^"control control-" (attr inp ^"type")))
+  (conj
+    (attr div [^"data-name" sym])
+    (conj
+      (dep-status sym (attr div [^"class" cls]))
+      (dep-status sym (dep-state sym inp)))
+    (dep2 (dep-status sym (p {class "message"}))
+          sym
+          ^"-message"
+          [^"text" ^"$$['-message']"])
+    (dep2 p sym ^"-help" [^"text" ^"$$['-help']"])))
+

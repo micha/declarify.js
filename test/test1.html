@@ -2,22 +2,23 @@
 <html>
   <head>
     <script type="text/javascript" src="declarify.js"></script>
+    <script type="text/hlisp" src="hlisp3.hl"></script>
   </head>
   <body>
 
-    <h3>Testing</h3>
-    <label>foo: <input type="radio" name="r1" value="foo" /></label><br>
-    <label>bar: <input type="radio" name="r1" value="bar" checked /></label><br>
-    <label>baz: <input type="radio" name="r1" value="baz" /></label><br>
+    <many>
+      <foo title="Hello World">
+        <p>Hello.</p>
+        <p>Hello.</p>
+        <p>Hello.</p>
+      </foo>
+      <code style="color:blue">ASDF</code>
+    </times>
 
-    <h4>Testing</h4>
-    <p
-      data-dep::r1:checked  = "a b"
-      data-a::text          = "'The value is <' + $$.value + '>.'"
-      data-b::foobar        = "$$.name + ':' + $$.value"
-      >
-      Heyho.
-    </p>
+    <range>
+      <val>10</val>
+    </range>
+
   </body>
 </html>
 

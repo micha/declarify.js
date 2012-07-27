@@ -27,7 +27,7 @@
 
     <link rel="stylesheet" href="helpers.css" type="text/css" />
     <script type="text/javascript" src="declarify.js"></script>
-    <script type="text/hlisp" src="hlisp.hl"></script>
+    <script type="text/hlisp" src="hlisp2.hl"></script>
   </head>
   <body>
     <div class="wrapper">
@@ -62,13 +62,11 @@
                   </div>
                 </div>
 
-                <input-text _name="foo1" _label="Full Name"
-                  _help="Example: John Doe" _value="asdf">
-                </input-text>
-
-                <input-text _name="foo2" _label="Email"
-                  _help="Example: john.doe@example.com">
-                </input-text>
+                <ctl-group -label="Full Name">
+                  <ctl-input>
+                    <input type="text" name="foo1"/>
+                  </ctl-input>
+                </ctl-group>
 
                 <div class="form-actions">
                   <button type="submit" class="main">Submit</button>
