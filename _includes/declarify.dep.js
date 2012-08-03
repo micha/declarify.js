@@ -22,10 +22,17 @@
       return;
 
     map(function(x) {
+      var action  = dep.tfdAttrMap()[x],
+          same    = {},
+          opts    = { "$val" : ref.attr(attr) };
+
+      if (action["if"] && ! dep.tfdEval(action["if"], ref, same, opts))
+          return;
+
+      delete action["if"];
+
       map(function(y) {
-        var same = {},
-            opts = { "$val" : ref.attr(attr) },
-            expr = dep.tfdEval(y[1], ref, same, opts),
+        var expr = dep.tfdEval(y[1], ref, same, opts),
             tmp;
         if (expr !== same) {
           if (y[0] in mods)
@@ -37,7 +44,7 @@
           } else
             dep.attr("data-"+y[0], expr);
         }
-      }, outof(dep.tfdAttrMap()[x]));
+      }, outof(action));
     }, depset.split(" "));
   }
 
@@ -52,7 +59,7 @@
 
   $.fn.tfdEval = function(expr, ref, same, opts) {
     var env = {
-      "$this":  this,
+      "$this":  this.tfdAsMap(),
       "$same":  same,
       "$$":     $(ref).tfdAsMapFn()
     };

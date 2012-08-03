@@ -15388,6 +15388,13 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
      * STRING FUNCTIONS                                                      *
      *************************************************************************/
 
+    str :
+      function(x) {
+        if (x === null || x === undefined)
+          x = '';
+        return ''+x;
+      },
+
     strcmp :
       function(x, y) { return ((x == y) ? 0 : (( x > y) ? 1 : -1)) },
 
@@ -16146,6 +16153,11 @@ console.time("load");
         })
         .end()
         .filter("[data-"+$.sq(x)+"]")
+        .each(function() {
+          if (flag)
+            $UI._attr(this, "data-"+x, "data-"+x);
+        })
+        .filter("input,select,textarea")
         .not("["+$.sq(x)+"]")
         .each(function() {
           $UI._attr(this, x, flag ? x : $(this).attr("data-"+x));
@@ -16178,7 +16190,7 @@ console.time("load");
   };
 
   $UI.init.push(function() {
-    var radios  = "input[type='radio']",
+    var radios  = "input[type='radio'],[data-type='radio']",
         checks  = "input[type='checkbox']",
         others  = "input[type!='radio'][type!='checkbox'],select,textarea",
         i;
@@ -16188,15 +16200,18 @@ console.time("load");
 
     function radioClick(elem, event) {
       var jself = $(elem),
-          nm = jself.attr("data-name") || jself.attr("name");
+          nm    = jself.attr("data-name") || jself.attr("name");
       $("[data-name='"+$.sq(nm)+"']").not(jself).removeAttr("data-checked");
       jself.attr("data-checked", true);
       $UI.run(0);
     }
 
     function checkboxClick(elem, event) {
-      var jself = $(elem);
-      jself.attr("data-checked", !! jself.is(":checked"));
+      var jself = $(elem),
+          fin   = jself.is("input")
+                    ? jself.is(":checked")
+                    : ! jself.is("[data-checked]");
+      jself.attr("data-checked", fin);
       $UI.run(0);
     }
 
@@ -16316,7 +16331,7 @@ console.time("load");
   }
 
   function parseSexp(txt) {
-    var ret = mkSexp(""), quoted=false, t, k, v;
+    var ret = mkSexp(""), quoted=false, andMore=false, t, k, v;
 
     txt = tr(txt);
 
@@ -16326,16 +16341,26 @@ console.time("load");
     if (txt === "#text")
       return [mkSexp("#text"), ""];
 
+    if (txt.charAt(0) === "[")
+      txt = "(list "+txt.substr(1);
+
     if (txt.charAt(0) === "'") {
-      quoted  = true;
-      txt     = txt.substr(1);
+      if (txt.charAt(1) === '"') {
+        txt = txt.replace(/^'("[^"]*")/, "(val $1)");
+      } else {
+        quoted  = true;
+        txt     = txt.substr(1);
+      }
+    }
+
+    if (txt.charAt(0) === "&") {
+      andMore = true;
+      txt = tr(txt.substr(1));
     }
 
     txt = txt.replace(/^([a-zA-Z0-9_-]+)/, "($1)");
 
-    if (txt.charAt(0) === "[")
-      txt = "(list "+txt.substr(1);
-
+    // legacy, remove this
     if (txt.charAt(0) === "^")
       txt = txt.replace(/^[\^]("[^"]*")/, "(val $1)");
 
@@ -16371,6 +16396,9 @@ console.time("load");
 
       txt = tr(txt.substr(1));
     }
+
+    if (andMore)
+      ret.attr["more..."] = "";
 
     if (txt.charAt(0) === '"') {
       t = /^"[^"]*"/.exec(txt);
@@ -16611,8 +16639,12 @@ console.time("load");
         var ret = hl("");
         this.each(function(x) {
           x = hl(x);
-          var e = hl(x.tag()).attrMap(dup(x.attrMap()))
-                             .text(x.text()),
+          var e = hl(x.tag()).text(x.text())
+                             .proc(x.proc())
+                             .aargs(dup(x.aargs()))
+                             .cargs(dup(x.cargs()))
+                             .env(dup(x.env()))
+                             .attrMap(dup(x.attrMap()));
               c = x.chld().clone();
           ret.append(e.appendChld(c));
         });
@@ -16693,7 +16725,7 @@ console.time("load");
         else if (this.tag() === "hash")
           return into({}, this.echld().map(hl.invoke("unbox")));
         else
-          return sexp;
+          return this;
       },
 
     boxed :
@@ -16754,9 +16786,10 @@ console.time("load");
     analyze :
       function() {
         return this.analyzeObject()       ||
+               this.analyzeTxt()          ||
                this.analyzeQuoted()       ||
-               this.analyzeDefinition()   ||
-               this.analyzeFnDefinition() ||
+               this.analyzeDef()          ||
+               this.analyzeDefn()         ||
                this.analyzeIf()           ||
                this.analyzeCond()         ||
                this.analyzeBegin()        ||
@@ -16787,6 +16820,18 @@ console.time("load");
         };
       },
 
+    analyzeTxt :
+      function() {
+        if (this.tag() !== "txt")
+          return;
+
+        var txt = this.text();
+
+        return function(env) {
+          return hl("#text").text(txt);
+        };
+      },
+
     analyzeQuoted :
       function() {
         if (this.tag() !== "quote")
@@ -16797,27 +16842,52 @@ console.time("load");
         return function(env) { return jself.echld() };
       },
 
-    analyzeDefinition :
+    analyzeDef :
       function() {
         if (this.tag() !== "def")
           return;
 
         var jself = this,
             c     = this.echld(),
-            name  = c.eq(0).tag(),
-            proc  = c.eq(1).analyze();
+            name, proc;
+
+        if (c.size() > 2)
+          return this.analyzeDefValues();
+
+        name  = c.eq(0).tag(),
+        proc  = c.eq(1).analyze();
 
         return function(env) { env[name] = proc(env) };
       },
 
-    analyzeFnDefinition :
+    analyzeDefValues :
+      function() {
+        var jself = this,
+            c     = this.echld(),
+            proc  = hl(c.splice(-1,1)).analyze(),
+            names = c;
+
+        return function(env) {
+          var defs = proc(env).elems();
+
+          if (defs.size() !== names.size())
+            throw "hlisp: definition has "+names.size()+" symbols, but "+
+                  defs.size()+" values.";
+
+          names.map(function() {
+            env[hl(this).tag()] = hl(defs.shift());
+          });
+        };
+      },
+
+    analyzeDefn :
       function() {
         if (this.tag() !== "defn")
           return;
 
         var jself   = this,
             c       = this.echld(),
-            aparam  = c.eq(0).attrMap(),
+            aparam  = c.eq(1).attrMap(),
             cparam  = c.eq(1),
             proc    = c.slice(2),
             name    = hl(c.eq(0).tag())
@@ -16833,7 +16903,7 @@ console.time("load");
 
         function mkParam() {
           var jself = hl(this);
-          return "..." in jself.attrMap() ? [jself.tag()] : jself.tag();
+          return "more..." in jself.attrMap() ? [jself.tag()] : jself.tag();
         }
 
         var cargs = this.echld(0).echld().map(mkParam).get(),
@@ -16934,10 +17004,10 @@ console.time("load");
         var c     = this.echld(),
             proc  = c.eq(0).analyze(),
             aargs = dup(this.attrMap()),
-            cargs = c.eq(1).echld().map(hl.invoke("analyze"));
+            cargs = c.eq(1).analyze();
 
         return function(env) {
-          return (proc(env)).exec(cargs.evalAll(env), aargs);
+          return (proc(env)).exec(cargs(env).echld(), aargs);
         };
       },
 
@@ -16984,7 +17054,7 @@ console.time("load");
 
         var proc  = hl(this.tag()).analyze(),
             cargs = this.echld().map(hl.invoke("analyze")),
-            aargs = dup(this.attrMap());
+            aargs = this.attrMap();
 
         return function(env) {
           return (proc(env)).exec(cargs.evalAll(env), aargs);
@@ -16995,6 +17065,17 @@ console.time("load");
       function(cargs, aargs) {
         var ret = { prnt: this.env() };
 
+        cargs = cargs.filter(function() {
+          var jself = hl(this), c, k, v;
+          if (jself.tag() === "meta") {
+            c = jself.echld();
+            k = c.eq(0).unbox();
+            v = c.eq(1).unbox();
+            aargs[k] = v;
+          }
+          return jself.tag() !== "meta";
+        });
+
         map(function(x, i) {
           var more  = $.type(x) === "array",
               x     = more ? x[0] : x,
@@ -17003,8 +17084,7 @@ console.time("load");
         }, this.cargs());
 
         mapn(function(x) {
-          if (x[0] in aargs)
-            ret[x[1] || x[0]] = hl.box(aargs[x[0]]);
+          ret[x[1] || x[0]] = hl.box(x[0] in aargs ? aargs[x[0]] : undefined);
         }, outof(this.aargs()));
 
         ret.callee = hl("list").attrMap(aargs);
@@ -17023,11 +17103,13 @@ console.time("load");
     exec :
       function(cargs, aargs) {
         if (this.tag() === "primitive")
-          return (this.proc())(cargs, aargs);
+          return (this.proc())(cargs.clone(), dup(aargs));
         else if (this.tag() === "procedure")
-          return (this.proc())(this.extendEnv(cargs, aargs));
-        else
-          throw "hlisp: unknown procedure type: '"+this.tag()+"'";
+          return (this.proc())(this.extendEnv(cargs.clone(), aargs));
+        else {
+          this.appendChld(cargs);
+          return this;
+        }
       }
 
   };
@@ -17070,7 +17152,7 @@ console.time("load");
 
     // HLisp-specific self-evaluating symbols //
     "#text":true, "#comment":true, "val":true, "list":true, "hash":true,
-    "true":true, "false":true, "nil":true, "null":true
+    "true":true, "false":true, "nil":true, "null":true, "meta":true
   };
 
   hl.primitive = {
@@ -17081,12 +17163,22 @@ console.time("load");
         if (cargs.size() === 2 && cargs.eq(1).tag() === "val")
           return hl.box(cargs.eq(0).attr(cargs.eq(1).unbox()));
         else {
-          ret = cargs.eq(0).clone();
+          ret = cargs.eq(0);
           cargs.rest().each(function() {
             var y = hl(this).unbox();
             ret.attr(y[0], y[1]);
           });
         }
+        return ret;
+      },
+
+    "attr-add" :
+      function(cargs, aargs) {
+        var ret = cargs.eq(0);
+        cargs.rest().each(function() {
+          var y = hl(this).unbox();
+          ret.attr(y[0], $.trim([ret.attr(y[0]), y[1]].join(" ")));
+        });
         return ret;
       },
 
@@ -17099,7 +17191,7 @@ console.time("load");
               hl("list").appendChld(hl.box(x[0]), hl.box(x[1])));
           }, hl("list"), outof(cargs.eq(0).attrMap()));
         else {
-          ret = cargs.eq(0).clone();
+          ret = cargs.eq(0);
           return cargs.eq(1).tag() === "nil"
             ? cargs.eq(0).attrMap({})
             : reduce(function(x, xs) {
@@ -17112,20 +17204,20 @@ console.time("load");
       function(cargs, aargs) {
         return reduce(function(x, xs) {
           return xs.appendChld(hl(x).echld());
-        }, cargs.eq(0).clone(), cargs.rest().clone().get());
+        }, cargs.eq(0), cargs.rest().get());
       },
 
     conj :
       function(cargs, aargs) {
-        var p = cargs.first().clone(),
-            c = cargs.rest().clone();
+        var p = cargs.first(),
+            c = cargs.rest();
         return p.appendChld(c);
       },
 
     cons :
       function(cargs, aargs) {
-        var p = cargs.first().clone(),
-            c = cargs.rest().clone();
+        var p = cargs.first(),
+            c = cargs.rest();
         return p.prependChld(c);
       },
 
@@ -17141,14 +17233,14 @@ console.time("load");
 
     first :
       function(cargs, aargs) {
-        return cargs.eq(0).echld(0).clone();
+        return cargs.eq(0).echld(0);
       },
 
     fmap :
       function(cargs, aargs) {
         var proc = cargs.eq(0),
-            coll = cargs.eq(1).clone(),
-            c    = coll.echld().clone();
+            coll = cargs.eq(1),
+            c    = coll.echld();
 
         coll.emptyChld();
 
@@ -17166,14 +17258,14 @@ console.time("load");
 
     id :
       function(cargs, aargs) {
-        return cargs.eq(0).clone();
+        return cargs.eq(0);
       },
 
     insert :
       function insert(cargs, aargs) {
         var proc = cargs.eq(0),
-            coll = cargs.eq(1).echld().clone(),
-            dfl  = cargs.eq(2).clone(),
+            coll = cargs.eq(1).echld(),
+            dfl  = cargs.eq(2),
             x, xs, rst;
 
         if (dfl.size())
@@ -17191,6 +17283,11 @@ console.time("load");
         }
       },
 
+    truthy :
+      function(cargs, aargs) {
+        return hl.box(!! cargs.eq(0).unbox());
+      },
+
     isnull :
       function(cargs, aargs) {
         return hl.box(cargs.eq(0).echld().size() === 0);
@@ -17199,15 +17296,6 @@ console.time("load");
     log :
       function(cargs, aargs) {
         console.log.apply(console, cargs.map(hl.invoke("unbox")).get());
-      },
-
-    times :
-      function(cargs, aargs) {
-        var n   = aargs.n,
-            ret = hl("");
-        while (n-- > 0)
-          ret.append(cargs.clone());
-        return ret;
       },
 
     range :
@@ -17224,7 +17312,7 @@ console.time("load");
 
     rest :
       function(cargs, aargs) {
-        return hl("list").appendChld(cargs.eq(0).echld().slice(1).clone());
+        return hl("list").appendChld(cargs.eq(0).echld().slice(1));
       },
 
     strcat :
@@ -17236,10 +17324,30 @@ console.time("load");
       function(cargs, aargs) {
         return cargs.size() === 1
           ? hl.box(cargs.eq(0).toElem().text())
-          : cargs.eq(0).clone().replaceChld(mkSexp.text(cargs.eq(1).unbox()));
+          : cargs.eq(0).replaceChld(mkSexp.text(cargs.eq(1).unbox()));
+      },
+
+    value :
+      function(cargs, aargs) {
+        return hl.box(cargs.eq(0).toElem().val());
+      },
+
+    values :
+      function(cargs, aargs) {
+        return cargs;
       }
 
   };
+
+  function callJsBoxed(fn) {
+    return function(cargs, aargs) {
+      return hl.box(apply(fn, cargs.map(hl.invoke("unbox")).get()));
+    };
+  }
+
+  mapn(function(x) {
+    hl.primitive[x] = callJsBoxed(window[x]);
+  }, ["eq","lt","le","gt","ge","re","nre","not","and","or","inc"]);
 
   /***************************************************************************
    * HLisp initial global environment setup                                  * 
@@ -17258,7 +17366,7 @@ console.time("load");
    ***************************************************************************/
 
   function toSexp(elem) {
-    var ret = mkSexp(elem.nodeName.toLowerCase(), ''+elem.nodeValue),
+    var ret = mkSexp(elem.nodeName.toLowerCase(), ''+(elem.nodeValue || '')),
         s, p, t;
 
     if ($(elem).is("script[type='text/hlisp']")) {
@@ -17282,7 +17390,7 @@ console.time("load");
       ret.chld = semiflat(mapn(toSexp, seq2vec(elem.childNodes)));
     }
 
-    return hl(ret);
+    return ret;
   }
 
   function createElem(sexp) {
@@ -17313,7 +17421,7 @@ console.time("load");
 
   $.fn.evalSexp = function() {
     var ret;
-    this.toSexp().each(function() { ret = hl(this).eval(hl.genv) });
+    hl(this.toSexp()).each(function() { ret = hl(this).eval(hl.genv) });
     this.replaceWith(ret ? ret.toElem() : $());
     return ret;
   };
@@ -17361,10 +17469,17 @@ console.time("load");
       return;
 
     map(function(x) {
+      var action  = dep.tfdAttrMap()[x],
+          same    = {},
+          opts    = { "$val" : ref.attr(attr) };
+
+      if (action["if"] && ! dep.tfdEval(action["if"], ref, same, opts))
+          return;
+
+      delete action["if"];
+
       map(function(y) {
-        var same = {},
-            opts = { "$val" : ref.attr(attr) },
-            expr = dep.tfdEval(y[1], ref, same, opts),
+        var expr = dep.tfdEval(y[1], ref, same, opts),
             tmp;
         if (expr !== same) {
           if (y[0] in mods)
@@ -17376,7 +17491,7 @@ console.time("load");
           } else
             dep.attr("data-"+y[0], expr);
         }
-      }, outof(dep.tfdAttrMap()[x]));
+      }, outof(action));
     }, depset.split(" "));
   }
 
@@ -17391,7 +17506,7 @@ console.time("load");
 
   $.fn.tfdEval = function(expr, ref, same, opts) {
     var env = {
-      "$this":  this,
+      "$this":  this.tfdAsMap(),
       "$same":  same,
       "$$":     $(ref).tfdAsMapFn()
     };
@@ -17475,6 +17590,14 @@ console.time("load");
 
   $UI.m.dep("class", function attrlib_class(elem, val, classname) {
     elem[(val ? "add" : "remove") + "Class"](classname);
+  });
+
+  $UI.m.dep("log", function attrlib_text(elem, val, tag) {
+    console.log(tag+":", val);
+  });
+
+  $UI.attr("data-hide", function(elem, ini, fin, op) {
+    $(elem)[fin ? "hide" : "show"]();
   });
 
 })();

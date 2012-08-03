@@ -82,7 +82,7 @@
   }
 
   function parseSexp(txt) {
-    var ret = mkSexp(""), quoted=false, t, k, v;
+    var ret = mkSexp(""), quoted=false, andMore=false, t, k, v;
 
     txt = tr(txt);
 
@@ -92,16 +92,26 @@
     if (txt === "#text")
       return [mkSexp("#text"), ""];
 
+    if (txt.charAt(0) === "[")
+      txt = "(list "+txt.substr(1);
+
     if (txt.charAt(0) === "'") {
-      quoted  = true;
-      txt     = txt.substr(1);
+      if (txt.charAt(1) === '"') {
+        txt = txt.replace(/^'("[^"]*")/, "(val $1)");
+      } else {
+        quoted  = true;
+        txt     = txt.substr(1);
+      }
+    }
+
+    if (txt.charAt(0) === "&") {
+      andMore = true;
+      txt = tr(txt.substr(1));
     }
 
     txt = txt.replace(/^([a-zA-Z0-9_-]+)/, "($1)");
 
-    if (txt.charAt(0) === "[")
-      txt = "(list "+txt.substr(1);
-
+    // legacy, remove this
     if (txt.charAt(0) === "^")
       txt = txt.replace(/^[\^]("[^"]*")/, "(val $1)");
 
@@ -137,6 +147,9 @@
 
       txt = tr(txt.substr(1));
     }
+
+    if (andMore)
+      ret.attr["more..."] = "";
 
     if (txt.charAt(0) === '"') {
       t = /^"[^"]*"/.exec(txt);
@@ -377,8 +390,12 @@
         var ret = hl("");
         this.each(function(x) {
           x = hl(x);
-          var e = hl(x.tag()).attrMap(dup(x.attrMap()))
-                             .text(x.text()),
+          var e = hl(x.tag()).text(x.text())
+                             .proc(x.proc())
+                             .aargs(dup(x.aargs()))
+                             .cargs(dup(x.cargs()))
+                             .env(dup(x.env()))
+                             .attrMap(dup(x.attrMap()));
               c = x.chld().clone();
           ret.append(e.appendChld(c));
         });
@@ -459,7 +476,7 @@
         else if (this.tag() === "hash")
           return into({}, this.echld().map(hl.invoke("unbox")));
         else
-          return sexp;
+          return this;
       },
 
     boxed :
@@ -520,9 +537,10 @@
     analyze :
       function() {
         return this.analyzeObject()       ||
+               this.analyzeTxt()          ||
                this.analyzeQuoted()       ||
-               this.analyzeDefinition()   ||
-               this.analyzeFnDefinition() ||
+               this.analyzeDef()          ||
+               this.analyzeDefn()         ||
                this.analyzeIf()           ||
                this.analyzeCond()         ||
                this.analyzeBegin()        ||
@@ -553,6 +571,18 @@
         };
       },
 
+    analyzeTxt :
+      function() {
+        if (this.tag() !== "txt")
+          return;
+
+        var txt = this.text();
+
+        return function(env) {
+          return hl("#text").text(txt);
+        };
+      },
+
     analyzeQuoted :
       function() {
         if (this.tag() !== "quote")
@@ -563,27 +593,52 @@
         return function(env) { return jself.echld() };
       },
 
-    analyzeDefinition :
+    analyzeDef :
       function() {
         if (this.tag() !== "def")
           return;
 
         var jself = this,
             c     = this.echld(),
-            name  = c.eq(0).tag(),
-            proc  = c.eq(1).analyze();
+            name, proc;
+
+        if (c.size() > 2)
+          return this.analyzeDefValues();
+
+        name  = c.eq(0).tag(),
+        proc  = c.eq(1).analyze();
 
         return function(env) { env[name] = proc(env) };
       },
 
-    analyzeFnDefinition :
+    analyzeDefValues :
+      function() {
+        var jself = this,
+            c     = this.echld(),
+            proc  = hl(c.splice(-1,1)).analyze(),
+            names = c;
+
+        return function(env) {
+          var defs = proc(env).elems();
+
+          if (defs.size() !== names.size())
+            throw "hlisp: definition has "+names.size()+" symbols, but "+
+                  defs.size()+" values.";
+
+          names.map(function() {
+            env[hl(this).tag()] = hl(defs.shift());
+          });
+        };
+      },
+
+    analyzeDefn :
       function() {
         if (this.tag() !== "defn")
           return;
 
         var jself   = this,
             c       = this.echld(),
-            aparam  = c.eq(0).attrMap(),
+            aparam  = c.eq(1).attrMap(),
             cparam  = c.eq(1),
             proc    = c.slice(2),
             name    = hl(c.eq(0).tag())
@@ -599,7 +654,7 @@
 
         function mkParam() {
           var jself = hl(this);
-          return "..." in jself.attrMap() ? [jself.tag()] : jself.tag();
+          return "more..." in jself.attrMap() ? [jself.tag()] : jself.tag();
         }
 
         var cargs = this.echld(0).echld().map(mkParam).get(),
@@ -700,10 +755,10 @@
         var c     = this.echld(),
             proc  = c.eq(0).analyze(),
             aargs = dup(this.attrMap()),
-            cargs = c.eq(1).echld().map(hl.invoke("analyze"));
+            cargs = c.eq(1).analyze();
 
         return function(env) {
-          return (proc(env)).exec(cargs.evalAll(env), aargs);
+          return (proc(env)).exec(cargs(env).echld(), aargs);
         };
       },
 
@@ -750,7 +805,7 @@
 
         var proc  = hl(this.tag()).analyze(),
             cargs = this.echld().map(hl.invoke("analyze")),
-            aargs = dup(this.attrMap());
+            aargs = this.attrMap();
 
         return function(env) {
           return (proc(env)).exec(cargs.evalAll(env), aargs);
@@ -761,6 +816,17 @@
       function(cargs, aargs) {
         var ret = { prnt: this.env() };
 
+        cargs = cargs.filter(function() {
+          var jself = hl(this), c, k, v;
+          if (jself.tag() === "meta") {
+            c = jself.echld();
+            k = c.eq(0).unbox();
+            v = c.eq(1).unbox();
+            aargs[k] = v;
+          }
+          return jself.tag() !== "meta";
+        });
+
         map(function(x, i) {
           var more  = $.type(x) === "array",
               x     = more ? x[0] : x,
@@ -769,8 +835,7 @@
         }, this.cargs());
 
         mapn(function(x) {
-          if (x[0] in aargs)
-            ret[x[1] || x[0]] = hl.box(aargs[x[0]]);
+          ret[x[1] || x[0]] = hl.box(x[0] in aargs ? aargs[x[0]] : undefined);
         }, outof(this.aargs()));
 
         ret.callee = hl("list").attrMap(aargs);
@@ -789,11 +854,13 @@
     exec :
       function(cargs, aargs) {
         if (this.tag() === "primitive")
-          return (this.proc())(cargs, aargs);
+          return (this.proc())(cargs.clone(), dup(aargs));
         else if (this.tag() === "procedure")
-          return (this.proc())(this.extendEnv(cargs, aargs));
-        else
-          throw "hlisp: unknown procedure type: '"+this.tag()+"'";
+          return (this.proc())(this.extendEnv(cargs.clone(), aargs));
+        else {
+          this.appendChld(cargs);
+          return this;
+        }
       }
 
   };
@@ -836,7 +903,7 @@
 
     // HLisp-specific self-evaluating symbols //
     "#text":true, "#comment":true, "val":true, "list":true, "hash":true,
-    "true":true, "false":true, "nil":true, "null":true
+    "true":true, "false":true, "nil":true, "null":true, "meta":true
   };
 
   hl.primitive = {
@@ -847,12 +914,22 @@
         if (cargs.size() === 2 && cargs.eq(1).tag() === "val")
           return hl.box(cargs.eq(0).attr(cargs.eq(1).unbox()));
         else {
-          ret = cargs.eq(0).clone();
+          ret = cargs.eq(0);
           cargs.rest().each(function() {
             var y = hl(this).unbox();
             ret.attr(y[0], y[1]);
           });
         }
+        return ret;
+      },
+
+    "attr-add" :
+      function(cargs, aargs) {
+        var ret = cargs.eq(0);
+        cargs.rest().each(function() {
+          var y = hl(this).unbox();
+          ret.attr(y[0], $.trim([ret.attr(y[0]), y[1]].join(" ")));
+        });
         return ret;
       },
 
@@ -865,7 +942,7 @@
               hl("list").appendChld(hl.box(x[0]), hl.box(x[1])));
           }, hl("list"), outof(cargs.eq(0).attrMap()));
         else {
-          ret = cargs.eq(0).clone();
+          ret = cargs.eq(0);
           return cargs.eq(1).tag() === "nil"
             ? cargs.eq(0).attrMap({})
             : reduce(function(x, xs) {
@@ -878,20 +955,20 @@
       function(cargs, aargs) {
         return reduce(function(x, xs) {
           return xs.appendChld(hl(x).echld());
-        }, cargs.eq(0).clone(), cargs.rest().clone().get());
+        }, cargs.eq(0), cargs.rest().get());
       },
 
     conj :
       function(cargs, aargs) {
-        var p = cargs.first().clone(),
-            c = cargs.rest().clone();
+        var p = cargs.first(),
+            c = cargs.rest();
         return p.appendChld(c);
       },
 
     cons :
       function(cargs, aargs) {
-        var p = cargs.first().clone(),
-            c = cargs.rest().clone();
+        var p = cargs.first(),
+            c = cargs.rest();
         return p.prependChld(c);
       },
 
@@ -907,14 +984,14 @@
 
     first :
       function(cargs, aargs) {
-        return cargs.eq(0).echld(0).clone();
+        return cargs.eq(0).echld(0);
       },
 
     fmap :
       function(cargs, aargs) {
         var proc = cargs.eq(0),
-            coll = cargs.eq(1).clone(),
-            c    = coll.echld().clone();
+            coll = cargs.eq(1),
+            c    = coll.echld();
 
         coll.emptyChld();
 
@@ -932,14 +1009,14 @@
 
     id :
       function(cargs, aargs) {
-        return cargs.eq(0).clone();
+        return cargs.eq(0);
       },
 
     insert :
       function insert(cargs, aargs) {
         var proc = cargs.eq(0),
-            coll = cargs.eq(1).echld().clone(),
-            dfl  = cargs.eq(2).clone(),
+            coll = cargs.eq(1).echld(),
+            dfl  = cargs.eq(2),
             x, xs, rst;
 
         if (dfl.size())
@@ -957,6 +1034,11 @@
         }
       },
 
+    truthy :
+      function(cargs, aargs) {
+        return hl.box(!! cargs.eq(0).unbox());
+      },
+
     isnull :
       function(cargs, aargs) {
         return hl.box(cargs.eq(0).echld().size() === 0);
@@ -965,15 +1047,6 @@
     log :
       function(cargs, aargs) {
         console.log.apply(console, cargs.map(hl.invoke("unbox")).get());
-      },
-
-    times :
-      function(cargs, aargs) {
-        var n   = aargs.n,
-            ret = hl("");
-        while (n-- > 0)
-          ret.append(cargs.clone());
-        return ret;
       },
 
     range :
@@ -990,7 +1063,7 @@
 
     rest :
       function(cargs, aargs) {
-        return hl("list").appendChld(cargs.eq(0).echld().slice(1).clone());
+        return hl("list").appendChld(cargs.eq(0).echld().slice(1));
       },
 
     strcat :
@@ -1002,10 +1075,30 @@
       function(cargs, aargs) {
         return cargs.size() === 1
           ? hl.box(cargs.eq(0).toElem().text())
-          : cargs.eq(0).clone().replaceChld(mkSexp.text(cargs.eq(1).unbox()));
+          : cargs.eq(0).replaceChld(mkSexp.text(cargs.eq(1).unbox()));
+      },
+
+    value :
+      function(cargs, aargs) {
+        return hl.box(cargs.eq(0).toElem().val());
+      },
+
+    values :
+      function(cargs, aargs) {
+        return cargs;
       }
 
   };
+
+  function callJsBoxed(fn) {
+    return function(cargs, aargs) {
+      return hl.box(apply(fn, cargs.map(hl.invoke("unbox")).get()));
+    };
+  }
+
+  mapn(function(x) {
+    hl.primitive[x] = callJsBoxed(window[x]);
+  }, ["eq","lt","le","gt","ge","re","nre","not","and","or","inc"]);
 
   /***************************************************************************
    * HLisp initial global environment setup                                  * 
@@ -1024,7 +1117,7 @@
    ***************************************************************************/
 
   function toSexp(elem) {
-    var ret = mkSexp(elem.nodeName.toLowerCase(), ''+elem.nodeValue),
+    var ret = mkSexp(elem.nodeName.toLowerCase(), ''+(elem.nodeValue || '')),
         s, p, t;
 
     if ($(elem).is("script[type='text/hlisp']")) {
@@ -1048,7 +1141,7 @@
       ret.chld = semiflat(mapn(toSexp, seq2vec(elem.childNodes)));
     }
 
-    return hl(ret);
+    return ret;
   }
 
   function createElem(sexp) {
@@ -1079,7 +1172,7 @@
 
   $.fn.evalSexp = function() {
     var ret;
-    this.toSexp().each(function() { ret = hl(this).eval(hl.genv) });
+    hl(this.toSexp()).each(function() { ret = hl(this).eval(hl.genv) });
     this.replaceWith(ret ? ret.toElem() : $());
     return ret;
   };

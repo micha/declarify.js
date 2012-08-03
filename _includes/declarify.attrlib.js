@@ -9,4 +9,12 @@
     elem[(val ? "add" : "remove") + "Class"](classname);
   });
 
+  $UI.m.dep("log", function attrlib_text(elem, val, tag) {
+    console.log(tag+":", val);
+  });
+
+  $UI.attr("data-hide", function(elem, ini, fin, op) {
+    $(elem)[fin ? "hide" : "show"]();
+  });
+
 })();

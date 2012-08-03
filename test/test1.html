@@ -1,23 +1,96 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script type="text/javascript" src="flapjax.js"></script>
     <script type="text/javascript" src="declarify.js"></script>
     <script type="text/hlisp" src="hlisp3.hl"></script>
+
+    <script type="text/javascript">
+      $(function() {
+        function dragE(e) {
+          var moveEE = $E(e, "mousedown").mapE(function(md) {
+            var jq    = $(md.target),
+                ev    = jq.offset(),
+                start = {
+                  px: ev.left,
+                  py: ev.top,
+                  mx: md.clientX,
+                  my: md.clientY
+                };
+            md.preventDefault();
+            return $E(document, "mousemove").mapE(function(mm) {
+              mm.preventDefault();
+              return {
+                drag:   e,
+                left:   start.px + (mm.clientX - start.mx),
+                top:    start.py + (mm.clientY - start.my)
+              };
+            });
+          });
+          var dropEE = $E(document, "mouseup").mapE(function(mu) {
+            return zeroE();
+          });
+          return switchE(mergeE(moveEE,dropEE));
+        }
+
+        var posE = dragE(getObj("target"));
+
+        posE.mapE(function(p) {
+          p.drag.style.left = p.left+"px";
+          p.drag.style.top  = p.top+"px";
+        });
+      });
+    </script>
   </head>
   <body>
 
-    <many>
-      <foo title="Hello World">
-        <p>Hello.</p>
-        <p>Hello.</p>
-        <p>Hello.</p>
-      </foo>
-      <code style="color:blue">ASDF</code>
-    </times>
+    <!--
 
-    <range>
-      <val>10</val>
-    </range>
+      Def acts like a combination of scheme's "define" and "define-values"
+      forms. If there are two arguments then it acts like "define" and
+      binds the symbol in the first argument to the result of evaluating
+      the second. If there are more than two arguments then it does a
+      "define-values", expecting that the final argument evaluates to a
+      multi-valued result.
+
+      1. http://community.schemewiki.org/?scheme-faq-language#H-1he5cab
+      2. http://community.schemewiki.org/?scheme-faq-macros#multidefine
+
+      -->
+    
+    <h3 style="position:relative" id="target">Hey! (I'm draggable.)</h3>
+
+    <def>
+      <container1></container1>
+      <open-button></open-button>
+      <container2></container2>
+      <cancel-button></cancel-button>
+
+      <make-toggler>
+        <div></div>
+        <button>Click me.</button>
+        <div></div>
+        <a href="javascript:void(0)">cancel</a>
+      </make-toggler>
+    </def>
+
+    <container1>
+      <p>Do you want to see a form? <open-button></open-button></p>
+    </container1>
+
+    <container2>
+      <form>
+        <fieldset>
+          <legend>This is a form.</legend>
+
+          <label>First Name</label><br> <input type="text"/><br>
+          <label>Last Name</label><br>  <input type="text"/><br>
+          <label>Email</label><br>      <input type="text"/><br>
+          <br>
+          <input type="submit" value="submit"/> <cancel-button></cancel-button>
+        </fieldset>
+      </form>
+    </container2>
 
   </body>
 </html>

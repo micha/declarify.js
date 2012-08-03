@@ -27,6 +27,11 @@
         })
         .end()
         .filter("[data-"+$.sq(x)+"]")
+        .each(function() {
+          if (flag)
+            $UI._attr(this, "data-"+x, "data-"+x);
+        })
+        .filter("input,select,textarea")
         .not("["+$.sq(x)+"]")
         .each(function() {
           $UI._attr(this, x, flag ? x : $(this).attr("data-"+x));
@@ -59,7 +64,7 @@
   };
 
   $UI.init.push(function() {
-    var radios  = "input[type='radio']",
+    var radios  = "input[type='radio'],[data-type='radio']",
         checks  = "input[type='checkbox']",
         others  = "input[type!='radio'][type!='checkbox'],select,textarea",
         i;
@@ -69,15 +74,18 @@
 
     function radioClick(elem, event) {
       var jself = $(elem),
-          nm = jself.attr("data-name") || jself.attr("name");
+          nm    = jself.attr("data-name") || jself.attr("name");
       $("[data-name='"+$.sq(nm)+"']").not(jself).removeAttr("data-checked");
       jself.attr("data-checked", true);
       $UI.run(0);
     }
 
     function checkboxClick(elem, event) {
-      var jself = $(elem);
-      jself.attr("data-checked", !! jself.is(":checked"));
+      var jself = $(elem),
+          fin   = jself.is("input")
+                    ? jself.is(":checked")
+                    : ! jself.is("[data-checked]");
+      jself.attr("data-checked", fin);
       $UI.run(0);
     }
 

@@ -1,37 +1,92 @@
 
-; <defn>
-;   <partial></partial>
-;   <list>
-;     <f></f>
-;     <vals ...></vals>
-;   </list>
-;   <fn>
-;     <list>
-;       <args ...></args>
-;     </list>
-;     <eval>
-;       <cat>
-;         <quote>
-;           <f></f>
-;         </quote>
-;         <vals></vals>
-;         <args></args>
-;       </cat>
-;     </eval>
-;   </fn>
-; </defn>
-;
-(defn partial
-  [f (vals {...})]
-  (fn [(args {...})]
-    (eval (cat 'f vals args))))
+; this is a comment
 
-(defn (foo {title})
-  [(elems {...})]
-  (cat (div (text h1 ^"foo")) elems))
+(defn partial [f & vals]
+  (fn [& args] (apply f (cat vals args))))
 
-(defn many
-  [n (elems {...})]
-  (insert cat elems (range n)))
+(defn merge-attrs [elem atrs]
+  (insert (fn [x xs] (attr xs [(first x) (first (rest x))])) atrs elem))
+
+(defn build-dep-attr [ref on]
+  (strcat '"data-dep::" ref '":" on))
+
+(defn build-dep-action [sym k]
+  (strcat '"data-" sym '"::" k))
+
+(defn dep [{ref on} elem]
+  (def sym  (gensym nil))
+  (insert
+    (fn [x xs]
+      (def k (first x))
+      (def v (first (rest x)))
+      (if (or (eq k '"ref") (eq k '"on"))
+        xs
+        (attr xs [(build-dep-action sym k) v])))
+    (attrs callee)
+    (attr-add elem [(build-dep-attr ref on) sym])))
+
+(defn make-dep [event]
+  (fn [{ref} elem]
+    (eval (attrs '(dep elem) (conj (attrs callee) ['"on" event])))))
+
+(def on-checked   (make-dep '"checked"))
+(def on-value     (make-dep '"value"))
+(def on-validate  (make-dep '"validate"))
+
+(defn validate-changed [elem]
+  (on-value
+    (meta '"ref"      (attr elem '"name"))
+    (meta '"if"       '"$UI.initComplete")
+    (meta '"validate" '"str($$.value) !== str($this['validate-initial'])")
+    (attr elem ['"data-validate-initial" (value elem)])))
+
+(defn validate [{pred} elem]
+  (def not-pred (strcat '"!(" pred '")"))
+  (on-validate
+    (meta '"ref"                      (attr elem '"name"))
+    (meta '"if"                       '"$$.validate")
+    (meta '"validation-error"         not-pred)
+    (meta '"class.validation-error"   not-pred)
+    (meta '"validation-success"       pred)
+    (meta '"class.validation-success" pred)
+    (on-value
+      (meta '"ref"                      (attr elem '"name"))
+      (meta '"if"                       '"! $$.validate")
+      (meta '"validation-error"         '"false") 
+      (meta '"class.validation-error"   '"false") 
+      (meta '"validation-success"       '"false") 
+      (meta '"class.validation-success" '"false") 
+      elem)))
+
+;;-----------------------------------------------------------------------------
+
+;;
+;; Ensures that the 'k' attribute exists. If it doesn't then it's given the
+;; value 'v'.
+;;
+(defn attr-ensure-exists [elem k v]
+  (if (truthy (attr elem k))
+      elem
+      (attr elem [k v])))
+
+;;
+;; Makes any element act like a radio button.
+;;
+(defn make-radio [elem name value]
+  (merge-attrs elem [['"data-name" name] ['"data-type" '"radio"] ['"data-value" value]]))
+
+(defn make-toggler [cont1 trig1 cont2 trig2]
+  (def sym (gensym nil))
+  (values
+    (on-checked
+      (meta '"ref"   sym)
+      (meta '"hide"  '"$$.value == 1")
+      cont1)
+    (make-radio trig1 sym '"1")
+    (on-checked
+      (meta '"ref"   sym)
+      (meta '"hide"  '"$$.value == 2")
+      (attr cont2 ['"data-hide" '"data-hide"]))
+    (make-radio trig2 sym '"2")))
 
 

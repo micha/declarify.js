@@ -1,614 +1,109 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <script type="text/javascript" src="declarify.js"></script>
-  </head>
-  <body>
+<head>
 
-    <h1>Perf Test</h1>
 
-    <input type='checkbox' name='r1' checked/>
-    <span data-dep::r1:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r2'/>
-    <span data-dep::r2:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r3'/>
-    <span data-dep::r3:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r4' checked/>
-    <span data-dep::r4:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r5'/>
-    <span data-dep::r5:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r6'/>
-    <span data-dep::r6:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r7' checked/>
-    <span data-dep::r7:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r8' checked/>
-    <span data-dep::r8:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r9' checked/>
-    <span data-dep::r9:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r10'/>
-    <span data-dep::r10:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r11' checked/>
-    <span data-dep::r11:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r12' checked/>
-    <span data-dep::r12:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r13'/>
-    <span data-dep::r13:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r14'/>
-    <span data-dep::r14:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r15' checked/>
-    <span data-dep::r15:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r16'/>
-    <span data-dep::r16:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r17' checked/>
-    <span data-dep::r17:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r18' checked/>
-    <span data-dep::r18:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r19'/>
-    <span data-dep::r19:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r20' checked/>
-    <span data-dep::r20:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r21' checked/>
-    <span data-dep::r21:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r22' checked/>
-    <span data-dep::r22:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r23' checked/>
-    <span data-dep::r23:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r24' checked/>
-    <span data-dep::r24:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r25'/>
-    <span data-dep::r25:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r26' checked/>
-    <span data-dep::r26:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r27' checked/>
-    <span data-dep::r27:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r28' checked/>
-    <span data-dep::r28:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r29' checked/>
-    <span data-dep::r29:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r30' checked/>
-    <span data-dep::r30:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r31' checked/>
-    <span data-dep::r31:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r32' checked/>
-    <span data-dep::r32:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r33'/>
-    <span data-dep::r33:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r34'/>
-    <span data-dep::r34:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r35'/>
-    <span data-dep::r35:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r36' checked/>
-    <span data-dep::r36:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r37' checked/>
-    <span data-dep::r37:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r38' checked/>
-    <span data-dep::r38:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r39'/>
-    <span data-dep::r39:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r40' checked/>
-    <span data-dep::r40:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r41'/>
-    <span data-dep::r41:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r42' checked/>
-    <span data-dep::r42:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r43' checked/>
-    <span data-dep::r43:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r44' checked/>
-    <span data-dep::r44:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r45' checked/>
-    <span data-dep::r45:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r46'/>
-    <span data-dep::r46:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r47' checked/>
-    <span data-dep::r47:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r48' checked/>
-    <span data-dep::r48:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r49'/>
-    <span data-dep::r49:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r50'/>
-    <span data-dep::r50:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r51'/>
-    <span data-dep::r51:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r52'/>
-    <span data-dep::r52:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r53' checked/>
-    <span data-dep::r53:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r54' checked/>
-    <span data-dep::r54:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r55' checked/>
-    <span data-dep::r55:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r56' checked/>
-    <span data-dep::r56:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r57' checked/>
-    <span data-dep::r57:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r58'/>
-    <span data-dep::r58:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r59'/>
-    <span data-dep::r59:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r60' checked/>
-    <span data-dep::r60:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r61'/>
-    <span data-dep::r61:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r62' checked/>
-    <span data-dep::r62:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r63' checked/>
-    <span data-dep::r63:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r64' checked/>
-    <span data-dep::r64:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r65' checked/>
-    <span data-dep::r65:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r66' checked/>
-    <span data-dep::r66:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r67' checked/>
-    <span data-dep::r67:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r68' checked/>
-    <span data-dep::r68:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r69'/>
-    <span data-dep::r69:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r70'/>
-    <span data-dep::r70:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r71'/>
-    <span data-dep::r71:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r72' checked/>
-    <span data-dep::r72:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r73' checked/>
-    <span data-dep::r73:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r74' checked/>
-    <span data-dep::r74:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r75' checked/>
-    <span data-dep::r75:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r76' checked/>
-    <span data-dep::r76:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r77'/>
-    <span data-dep::r77:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r78' checked/>
-    <span data-dep::r78:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r79'/>
-    <span data-dep::r79:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r80'/>
-    <span data-dep::r80:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r81' checked/>
-    <span data-dep::r81:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r82' checked/>
-    <span data-dep::r82:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r83'/>
-    <span data-dep::r83:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r84'/>
-    <span data-dep::r84:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r85'/>
-    <span data-dep::r85:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r86' checked/>
-    <span data-dep::r86:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r87'/>
-    <span data-dep::r87:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r88' checked/>
-    <span data-dep::r88:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r89' checked/>
-    <span data-dep::r89:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r90'/>
-    <span data-dep::r90:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r91'/>
-    <span data-dep::r91:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r92' checked/>
-    <span data-dep::r92:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r93' checked/>
-    <span data-dep::r93:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r94'/>
-    <span data-dep::r94:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r95'/>
-    <span data-dep::r95:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r96'/>
-    <span data-dep::r96:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r97' checked/>
-    <span data-dep::r97:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r98' checked/>
-    <span data-dep::r98:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r99' checked/>
-    <span data-dep::r99:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r100'/>
-    <span data-dep::r100:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r101'/>
-    <span data-dep::r101:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r102' checked/>
-    <span data-dep::r102:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r103'/>
-    <span data-dep::r103:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r104' checked/>
-    <span data-dep::r104:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r105'/>
-    <span data-dep::r105:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r106' checked/>
-    <span data-dep::r106:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r107'/>
-    <span data-dep::r107:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r108'/>
-    <span data-dep::r108:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r109'/>
-    <span data-dep::r109:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r110' checked/>
-    <span data-dep::r110:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r111'/>
-    <span data-dep::r111:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r112'/>
-    <span data-dep::r112:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r113'/>
-    <span data-dep::r113:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r114' checked/>
-    <span data-dep::r114:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r115' checked/>
-    <span data-dep::r115:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r116'/>
-    <span data-dep::r116:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r117' checked/>
-    <span data-dep::r117:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r118' checked/>
-    <span data-dep::r118:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r119'/>
-    <span data-dep::r119:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r120'/>
-    <span data-dep::r120:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r121'/>
-    <span data-dep::r121:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r122' checked/>
-    <span data-dep::r122:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r123' checked/>
-    <span data-dep::r123:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r124' checked/>
-    <span data-dep::r124:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r125'/>
-    <span data-dep::r125:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r126'/>
-    <span data-dep::r126:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r127'/>
-    <span data-dep::r127:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r128' checked/>
-    <span data-dep::r128:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r129'/>
-    <span data-dep::r129:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r130' checked/>
-    <span data-dep::r130:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r131' checked/>
-    <span data-dep::r131:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r132' checked/>
-    <span data-dep::r132:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r133' checked/>
-    <span data-dep::r133:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r134' checked/>
-    <span data-dep::r134:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r135' checked/>
-    <span data-dep::r135:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r136' checked/>
-    <span data-dep::r136:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r137'/>
-    <span data-dep::r137:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r138'/>
-    <span data-dep::r138:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r139'/>
-    <span data-dep::r139:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r140'/>
-    <span data-dep::r140:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r141' checked/>
-    <span data-dep::r141:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r142' checked/>
-    <span data-dep::r142:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r143'/>
-    <span data-dep::r143:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r144' checked/>
-    <span data-dep::r144:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r145' checked/>
-    <span data-dep::r145:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r146'/>
-    <span data-dep::r146:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r147'/>
-    <span data-dep::r147:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r148' checked/>
-    <span data-dep::r148:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r149'/>
-    <span data-dep::r149:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r150' checked/>
-    <span data-dep::r150:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r151' checked/>
-    <span data-dep::r151:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r152'/>
-    <span data-dep::r152:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r153' checked/>
-    <span data-dep::r153:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r154'/>
-    <span data-dep::r154:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r155'/>
-    <span data-dep::r155:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r156' checked/>
-    <span data-dep::r156:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r157' checked/>
-    <span data-dep::r157:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r158' checked/>
-    <span data-dep::r158:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r159' checked/>
-    <span data-dep::r159:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r160' checked/>
-    <span data-dep::r160:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r161' checked/>
-    <span data-dep::r161:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r162'/>
-    <span data-dep::r162:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r163'/>
-    <span data-dep::r163:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r164'/>
-    <span data-dep::r164:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r165'/>
-    <span data-dep::r165:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r166'/>
-    <span data-dep::r166:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r167' checked/>
-    <span data-dep::r167:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r168' checked/>
-    <span data-dep::r168:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r169' checked/>
-    <span data-dep::r169:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r170' checked/>
-    <span data-dep::r170:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r171'/>
-    <span data-dep::r171:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r172'/>
-    <span data-dep::r172:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r173'/>
-    <span data-dep::r173:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r174'/>
-    <span data-dep::r174:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r175' checked/>
-    <span data-dep::r175:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r176' checked/>
-    <span data-dep::r176:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r177'/>
-    <span data-dep::r177:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r178'/>
-    <span data-dep::r178:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r179' checked/>
-    <span data-dep::r179:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r180' checked/>
-    <span data-dep::r180:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r181' checked/>
-    <span data-dep::r181:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r182' checked/>
-    <span data-dep::r182:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r183'/>
-    <span data-dep::r183:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r184' checked/>
-    <span data-dep::r184:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r185'/>
-    <span data-dep::r185:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r186' checked/>
-    <span data-dep::r186:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r187'/>
-    <span data-dep::r187:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r188' checked/>
-    <span data-dep::r188:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r189'/>
-    <span data-dep::r189:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r190'/>
-    <span data-dep::r190:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r191' checked/>
-    <span data-dep::r191:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r192'/>
-    <span data-dep::r192:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r193'/>
-    <span data-dep::r193:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r194' checked/>
-    <span data-dep::r194:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r195' checked/>
-    <span data-dep::r195:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r196' checked/>
-    <span data-dep::r196:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r197' checked/>
-    <span data-dep::r197:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r198'/>
-    <span data-dep::r198:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r199'/>
-    <span data-dep::r199:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r200' checked/>
-    <span data-dep::r200:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r201'/>
-    <span data-dep::r201:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r202'/>
-    <span data-dep::r202:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r203' checked/>
-    <span data-dep::r203:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r204' checked/>
-    <span data-dep::r204:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r205'/>
-    <span data-dep::r205:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r206' checked/>
-    <span data-dep::r206:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r207' checked/>
-    <span data-dep::r207:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r208'/>
-    <span data-dep::r208:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r209' checked/>
-    <span data-dep::r209:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r210'/>
-    <span data-dep::r210:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r211' checked/>
-    <span data-dep::r211:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r212'/>
-    <span data-dep::r212:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r213' checked/>
-    <span data-dep::r213:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r214'/>
-    <span data-dep::r214:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r215' checked/>
-    <span data-dep::r215:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r216'/>
-    <span data-dep::r216:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r217' checked/>
-    <span data-dep::r217:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r218'/>
-    <span data-dep::r218:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r219'/>
-    <span data-dep::r219:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r220' checked/>
-    <span data-dep::r220:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r221'/>
-    <span data-dep::r221:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r222'/>
-    <span data-dep::r222:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r223'/>
-    <span data-dep::r223:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r224'/>
-    <span data-dep::r224:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r225'/>
-    <span data-dep::r225:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r226' checked/>
-    <span data-dep::r226:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r227'/>
-    <span data-dep::r227:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r228'/>
-    <span data-dep::r228:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r229'/>
-    <span data-dep::r229:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r230' checked/>
-    <span data-dep::r230:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r231' checked/>
-    <span data-dep::r231:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r232' checked/>
-    <span data-dep::r232:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r233'/>
-    <span data-dep::r233:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r234'/>
-    <span data-dep::r234:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r235' checked/>
-    <span data-dep::r235:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r236' checked/>
-    <span data-dep::r236:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r237'/>
-    <span data-dep::r237:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r238' checked/>
-    <span data-dep::r238:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r239'/>
-    <span data-dep::r239:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r240' checked/>
-    <span data-dep::r240:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r241'/>
-    <span data-dep::r241:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r242'/>
-    <span data-dep::r242:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r243'/>
-    <span data-dep::r243:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r244'/>
-    <span data-dep::r244:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r245' checked/>
-    <span data-dep::r245:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r246' checked/>
-    <span data-dep::r246:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r247'/>
-    <span data-dep::r247:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r248' checked/>
-    <span data-dep::r248:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r249'/>
-    <span data-dep::r249:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r250'/>
-    <span data-dep::r250:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r251'/>
-    <span data-dep::r251:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r252' checked/>
-    <span data-dep::r252:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r253' checked/>
-    <span data-dep::r253:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r254' checked/>
-    <span data-dep::r254:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r255' checked/>
-    <span data-dep::r255:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r256' checked/>
-    <span data-dep::r256:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r257' checked/>
-    <span data-dep::r257:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r258'/>
-    <span data-dep::r258:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r259' checked/>
-    <span data-dep::r259:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r260'/>
-    <span data-dep::r260:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r261' checked/>
-    <span data-dep::r261:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r262' checked/>
-    <span data-dep::r262:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r263' checked/>
-    <span data-dep::r263:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r264'/>
-    <span data-dep::r264:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r265' checked/>
-    <span data-dep::r265:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r266'/>
-    <span data-dep::r266:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r267'/>
-    <span data-dep::r267:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r268'/>
-    <span data-dep::r268:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r269' checked/>
-    <span data-dep::r269:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r270' checked/>
-    <span data-dep::r270:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r271'/>
-    <span data-dep::r271:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r272'/>
-    <span data-dep::r272:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r273' checked/>
-    <span data-dep::r273:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r274' checked/>
-    <span data-dep::r274:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r275'/>
-    <span data-dep::r275:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r276'/>
-    <span data-dep::r276:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r277' checked/>
-    <span data-dep::r277:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r278'/>
-    <span data-dep::r278:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r279'/>
-    <span data-dep::r279:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r280'/>
-    <span data-dep::r280:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r281' checked/>
-    <span data-dep::r281:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r282' checked/>
-    <span data-dep::r282:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r283' checked/>
-    <span data-dep::r283:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r284'/>
-    <span data-dep::r284:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r285'/>
-    <span data-dep::r285:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r286'/>
-    <span data-dep::r286:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r287'/>
-    <span data-dep::r287:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r288' checked/>
-    <span data-dep::r288:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r289'/>
-    <span data-dep::r289:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r290'/>
-    <span data-dep::r290:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r291' checked/>
-    <span data-dep::r291:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r292'/>
-    <span data-dep::r292:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r293'/>
-    <span data-dep::r293:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r294'/>
-    <span data-dep::r294:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r295'/>
-    <span data-dep::r295:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r296'/>
-    <span data-dep::r296:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r297'/>
-    <span data-dep::r297:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r298' checked/>
-    <span data-dep::r298:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r299' checked/>
-    <span data-dep::r299:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
-    <input type='checkbox' name='r300' checked/>
-    <span data-dep::r300:checked='a' data-a::text='(!! $$.checked) ? "on" : "off"'>foo</span><br>
+<link rel="stylesheet" href="/demo.css"/>
+<script type="text/javascript" src="flapjax.js"></script>
 
-  </body>
+<title>extracts</title>
+<style type="text/css">
+  div { padding: 5px 5px 5px 5px; }
+</style>
+<script>
+function loader() {
+
+  insertDomB(extractValueB('c1'), 'c1v');
+
+  insertDomB(extractValueB('c2a'), 'c2v');
+    
+  insertDomB(extractValueB('r2'), 'c3v');
+    
+  insertDomB(extractValueB('c4'), 'c4v');
+    
+  insertDomB(
+    extractValueB( 'c5').liftB(
+      function (arr) {
+        return '[' + arr + ']';
+      }),
+    'c5v');
+
+  insertDomB(extractValueB( 'c6'), 'c6v');
+
+  insertDomB(extractValueB( 'c7'), 'c7v');
+
+  insertDomB(extractValueB( 'c8'), 'c8v');
+
+  insertDomB(extractValueB( 'c9'), 'c9v');
+
+}
+</script>
+</head>
+
+<body onload="loader();">
+
+  <ul>
+    <li>
+      <input type="checkbox" id="c1"/> checked: <span id="c1v">stat init</span>
+    </li>
+    
+    <li>
+      <input type="radio" id="c2a" name="r2" value="first"/>
+      <input type="radio" id="c2b" name="r2" value="second"/>
+      
+      <ul>
+        <li>
+          first selected: <span id="c2v">stat init</span>
+        </li>
+        
+        <li>
+          which selected: <span id="c3v">stat..init</span>
+        </li>
+      </ul>
+
+    </li>
+    
+    <li>select-one:
+      <select id="c4">
+        <option value="av">a</option>
+        <option value="bv">b</option>
+        <option value="cv">c</option>
+      </select>
+      
+      which selected: <span id="c4v">stat init</span>
+      
+    </li>
+    
+    <li>select-multiple:
+      <select id="c5" multiple>
+        <option value="av">a</option>
+        <option value="bv">b</option>
+        <option value="cv">c</option>
+      </select>
+      
+      which selected: <span id="c5v">stat init</span>
+      
+    </li>
+
+    <li>text:
+      <input type="text" id="c6"> entered: <span id="c6v">stat init</span>
+    </li>
+
+    <li>textarea:
+      <textarea id="c7">def txt</textarea> entered: <span id="c7v">stat init</span>
+    </li>
+
+    <li>hidden:
+      <input type="hidden" id="c8" value="hidden text"> should be 'hidden text': <span id="c8v">stat init</span>
+    </li>
+
+    <li>password:
+      <input type="password" id="c9"> entered: <span id="c9v">stat init</span>
+    </li>
+
+      
+  </ul>
+
+</body>
 </html>
-
 

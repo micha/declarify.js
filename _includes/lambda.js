@@ -167,6 +167,13 @@
      * STRING FUNCTIONS                                                      *
      *************************************************************************/
 
+    str :
+      function(x) {
+        if (x === null || x === undefined)
+          x = '';
+        return ''+x;
+      },
+
     strcmp :
       function(x, y) { return ((x == y) ? 0 : (( x > y) ? 1 : -1)) },
 
